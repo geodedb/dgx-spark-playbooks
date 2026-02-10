@@ -1,6 +1,6 @@
 torch>=2.6.0
 tqdm
-python-arango
+geode-client
 torch-geometric
 transformers
 numpy 
