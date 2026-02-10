@@ -19,86 +19,69 @@
 import { useState, useEffect } from "react"
 import { Network, Database, Zap, AlertCircle, RefreshCw } from "lucide-react"
 
-interface Neo4jConnectionProps {
+interface GeodeGraphConnectionProps {
   className?: string
 }
 
-export function Neo4jConnection({ className }: Neo4jConnectionProps) {
+export function GeodeGraphConnection({ className }: GeodeGraphConnectionProps) {
   const [connectionStatus, setConnectionStatus] = useState<"connected" | "disconnected" | "checking">("disconnected")
   const [error, setError] = useState<string | null>(null)
   const [nodeCount, setNodeCount] = useState<number | null>(null)
   const [relationshipCount, setRelationshipCount] = useState<number | null>(null)
   const [connectionUrl, setConnectionUrl] = useState<string>("")
 
-  // Check Neo4j connection status
+  // Check Geode graph connection status
   const checkConnection = async () => {
     setConnectionStatus("checking")
     setError(null)
-    
+
     try {
-      // Get credentials from localStorage
-      const dbUrl = localStorage.getItem("NEO4J_URL")
-      const dbUsername = localStorage.getItem("NEO4J_USERNAME")
-      const dbPassword = localStorage.getItem("NEO4J_PASSWORD")
-      
-      // Add query parameters if credentials exist
-      const queryParams = new URLSearchParams()
-      if (dbUrl) queryParams.append("url", dbUrl)
-      if (dbUsername) queryParams.append("username", dbUsername)
-      if (dbPassword) queryParams.append("password", dbPassword)
-      
-      const queryString = queryParams.toString()
-      const endpoint = queryString ? `/api/neo4j?${queryString}` : '/api/neo4j'
-      
-      const response = await fetch(endpoint)
-      
+      const response = await fetch('/api/graph-db')
+
       if (!response.ok) {
         const errorData = await response.json()
-        throw new Error(errorData.error || 'Failed to connect to Neo4j')
+        throw new Error(errorData.error || 'Failed to connect to Geode')
       }
-      
+
       const data = await response.json()
       setNodeCount(data.nodes?.length || 0)
       setRelationshipCount(data.links?.length || 0)
-      // Use the connection URL from the API response
+
       if (data.connectionUrl) {
         setConnectionUrl(data.connectionUrl)
-      } else if (dbUrl) {
-        setConnectionUrl(dbUrl)
+      } else {
+        const geodeUrl = localStorage.getItem("geode_url") || "quic://localhost:3141"
+        setConnectionUrl(geodeUrl)
       }
+
       setConnectionStatus("connected")
     } catch (err) {
-      console.error('Neo4j connection error:', err)
+      console.error('Geode connection error:', err)
       setConnectionStatus("disconnected")
-      setError(err instanceof Error ? err.message : 'Unknown error connecting to Neo4j')
+      setError(err instanceof Error ? err.message : 'Unknown error connecting to Geode')
     }
   }
 
-  // Disconnect from Neo4j
+  // Disconnect from Geode
   const disconnect = async () => {
     try {
-      const response = await fetch('/api/neo4j/disconnect', {
+      const response = await fetch('/api/graph-db/disconnect', {
         method: 'POST',
       })
-      
+
       if (!response.ok) {
         const errorData = await response.json()
-        throw new Error(errorData.error || 'Failed to disconnect from Neo4j')
+        throw new Error(errorData.error || 'Failed to disconnect from Geode')
       }
-      
+
       setConnectionStatus("disconnected")
       setNodeCount(null)
       setRelationshipCount(null)
     } catch (err) {
-      console.error('Neo4j disconnect error:', err)
-      setError(err instanceof Error ? err.message : 'Unknown error disconnecting from Neo4j')
+      console.error('Geode disconnect error:', err)
+      setError(err instanceof Error ? err.message : 'Unknown error disconnecting from Geode')
     }
   }
-
-  // Check connection on component mount
-  // useEffect(() => {
-  //   checkConnection()
-  // }, [])
 
   return (
     <div className={`glass-card rounded-xl overflow-hidden ${className}`}>
@@ -108,7 +91,7 @@ export function Neo4jConnection({ className }: Neo4jConnectionProps) {
           Graph DB
         </h2>
       </div>
-      
+
       <div className="p-5 space-y-4">
         {connectionStatus === "checking" && (
           <div className="flex items-center gap-2 text-sm">
@@ -116,7 +99,7 @@ export function Neo4jConnection({ className }: Neo4jConnectionProps) {
             <span>Checking connection...</span>
           </div>
         )}
-        
+
         {connectionStatus === "connected" && (
           <>
             <div className="flex items-center gap-2 text-sm">
@@ -125,7 +108,7 @@ export function Neo4jConnection({ className }: Neo4jConnectionProps) {
                 {connectionUrl}
               </span>
             </div>
-            
+
             {(nodeCount !== null || relationshipCount !== null) && (
               <div className="text-sm text-muted-foreground">
                 <div className="flex items-center gap-2">
@@ -136,30 +119,28 @@ export function Neo4jConnection({ className }: Neo4jConnectionProps) {
             )}
           </>
         )}
-        
+
         {connectionStatus === "disconnected" && (
-          <>
-            <div className="flex items-center gap-2 text-sm">
-              <span className="h-2 w-2 rounded-full bg-destructive"></span>
-              <span className="text-foreground font-mono text-xs bg-secondary px-2 py-1 rounded">
-                Not connected
-              </span>
-            </div>
-          </>
+          <div className="flex items-center gap-2 text-sm">
+            <span className="h-2 w-2 rounded-full bg-destructive"></span>
+            <span className="text-foreground font-mono text-xs bg-secondary px-2 py-1 rounded">
+              Not connected
+            </span>
+          </div>
         )}
       </div>
-      
+
       <div className="flex p-4 gap-2 border-t border-border/50 bg-card">
-        <button 
+        <button
           className="btn-outline flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-md text-sm"
           onClick={checkConnection}
         >
           <RefreshCw className="h-4 w-4" />
           <span>Refresh</span>
         </button>
-        
+
         {connectionStatus === "connected" ? (
-          <button 
+          <button
             className="btn-outline flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-md text-sm text-destructive border-destructive hover:bg-destructive/10"
             onClick={disconnect}
           >
@@ -167,7 +148,7 @@ export function Neo4jConnection({ className }: Neo4jConnectionProps) {
             <span>Disconnect</span>
           </button>
         ) : (
-          <button 
+          <button
             className="btn-outline flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-md text-sm text-primary border-primary hover:bg-primary/10"
             onClick={checkConnection}
           >

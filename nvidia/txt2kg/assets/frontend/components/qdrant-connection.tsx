@@ -23,11 +23,11 @@ import { InfoIcon } from 'lucide-react'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { VectorDBStats } from '@/types/graph'
 
-interface QdrantConnectionProps {
+interface GeodeVectorConnectionProps {
   className?: string
 }
 
-export function QdrantConnection({ className }: QdrantConnectionProps) {
+export function GeodeVectorConnection({ className }: GeodeVectorConnectionProps) {
   const [connectionStatus, setConnectionStatus] = useState<"connected" | "disconnected" | "checking">("disconnected")
   const [error, setError] = useState<string | null>(null)
   const [stats, setStats] = useState<VectorDBStats>({ nodes: 0, relationships: 0, source: 'none' })
@@ -37,16 +37,15 @@ export function QdrantConnection({ className }: QdrantConnectionProps) {
     try {
       const response = await fetch('/api/vector-db/stats');
       const data = await response.json();
-      
+
       if (response.ok) {
         setStats({
           nodes: typeof data.totalVectorCount === 'number' ? data.totalVectorCount : 0,
-          relationships: 0, // Vector DB doesn't store relationships
+          relationships: 0,
           source: data.source || 'unknown',
           httpHealthy: data.httpHealthy
         });
-        
-        // If we have a healthy HTTP connection, we're connected
+
         if (data.httpHealthy) {
           setConnectionStatus("connected");
           setError(null);
@@ -54,7 +53,7 @@ export function QdrantConnection({ className }: QdrantConnectionProps) {
           setConnectionStatus("disconnected");
           setError(data.error || 'Connection failed');
         }
-        
+
         console.log('Vector DB stats:', data);
       } else {
         console.error('Failed to fetch vector DB stats:', data);
@@ -72,9 +71,9 @@ export function QdrantConnection({ className }: QdrantConnectionProps) {
   const checkConnection = async () => {
     setConnectionStatus("checking")
     setError(null)
-    
+
     try {
-      await fetchStats(); // Fetch stats directly - our status is based on having embeddings
+      await fetchStats();
     } catch (error) {
       console.error('Error connecting to Vector DB:', error)
       setConnectionStatus("disconnected")
@@ -103,12 +102,12 @@ export function QdrantConnection({ className }: QdrantConnectionProps) {
               <InfoIcon className="h-5 w-5 text-muted-foreground" />
             </TooltipTrigger>
             <TooltipContent>
-              <p>Qdrant stores vector embeddings for semantic search</p>
+              <p>Geode stores vector embeddings for semantic search</p>
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
       </div>
-      
+
       <div className="flex items-center space-x-2">
         <span className="text-sm">Status:</span>
         {connectionStatus === "connected" ? (
@@ -119,13 +118,13 @@ export function QdrantConnection({ className }: QdrantConnectionProps) {
           <Badge variant="outline" className="bg-red-50 text-red-700 hover:bg-red-50 border-red-200">Disconnected</Badge>
         )}
       </div>
-      
+
       {error && (
         <div className="text-sm text-red-600 bg-red-50 p-2 rounded w-full overflow-auto max-h-20">
           <p className="whitespace-normal break-words">Error: {error}</p>
           {error.includes('404') && (
             <p className="mt-1 text-xs">
-              The Qdrant server is running but the collection doesn't exist yet.
+              The Geode server is running but the collection doesn't exist yet.
               <button
                 onClick={async () => {
                   setConnectionStatus("checking");
@@ -133,7 +132,6 @@ export function QdrantConnection({ className }: QdrantConnectionProps) {
                   try {
                     const response = await fetch('/api/vector-db/create-collection', { method: 'POST' });
                     if (response.ok) {
-                      // Wait a bit for the collection to be created
                       await new Promise(resolve => setTimeout(resolve, 2000));
                       checkConnection();
                     } else {
@@ -150,18 +148,15 @@ export function QdrantConnection({ className }: QdrantConnectionProps) {
               >
                 Click here to create the collection
               </button>
-              <br />
-              <span className="text-xs text-gray-600">Or using Docker Compose: </span>
-              <code className="mx-1 px-1 bg-gray-100 rounded">docker compose restart qdrant</code>
             </p>
           )}
         </div>
       )}
-      
+
       <div className="text-sm space-y-1 w-full">
         <div className="flex justify-between">
-          <span className="text-muted-foreground">Qdrant</span>
-          <span className="text-xs text-muted-foreground">{(stats as any).url || 'http://qdrant:6333'}</span>
+          <span className="text-muted-foreground">Geode Vector</span>
+          <span className="text-xs text-muted-foreground">{(stats as any).url || 'quic://localhost:3141'}</span>
         </div>
         <div className="flex justify-between">
           <span className="text-muted-foreground">Vectors:</span>
@@ -180,21 +175,21 @@ export function QdrantConnection({ className }: QdrantConnectionProps) {
           </div>
         )}
       </div>
-      
+
       <div className="flex space-x-2">
-        <Button 
-          variant="outline" 
-          size="sm" 
+        <Button
+          variant="outline"
+          size="sm"
           onClick={checkConnection}
           disabled={connectionStatus === "checking"}
         >
           {connectionStatus === "checking" ? "Checking..." : "Check Connection"}
         </Button>
-        
+
         {connectionStatus === "connected" && (
-          <Button 
-            variant="outline" 
-            size="sm" 
+          <Button
+            variant="outline"
+            size="sm"
             onClick={disconnect}
           >
             Disconnect
@@ -204,4 +199,3 @@ export function QdrantConnection({ className }: QdrantConnectionProps) {
     </div>
   )
 }
-

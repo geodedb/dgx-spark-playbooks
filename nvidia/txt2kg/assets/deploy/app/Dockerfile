@@ -6,8 +6,9 @@ WORKDIR /app
 # Install pnpm
 RUN npm install -g pnpm --force --yes
 
-# Copy dependency files
+# Copy dependency files and local packages
 COPY ./frontend/package.json ./frontend/pnpm-lock.yaml* ./
+COPY ./frontend/vendor/ ./vendor/
 
 # Install dependencies with cache mount for faster rebuilds
 RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
@@ -55,6 +56,10 @@ RUN addgroup --system --gid 1001 nodejs && \
 COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+
+# Fix: Copy proto file for @geodedb/client (Next.js standalone doesn't trace dynamic file loads)
+COPY --chown=nextjs:nodejs ./frontend/vendor/geode-proto/geode.proto /tmp/geode.proto
+RUN find /app/node_modules -path "*/@geodedb/client" -type d -exec mkdir -p {}/proto \; -exec cp /tmp/geode.proto {}/proto/ \; && rm /tmp/geode.proto
 
 # Create data directory for query logs with proper permissions
 RUN mkdir -p /app/data && chown -R nextjs:nodejs /app/data

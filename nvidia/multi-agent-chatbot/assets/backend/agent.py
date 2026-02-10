@@ -30,7 +30,7 @@ from openai import AsyncOpenAI
 from client import MCPClient
 from logger import logger
 from prompts import Prompts
-from postgres_storage import PostgreSQLConversationStorage
+from geode_storage import GeodeConversationStorage
 from utils import convert_langgraph_messages_to_openai
 
 
@@ -56,17 +56,17 @@ class ChatAgent:
     - Manage conversation history via Redis
     """
 
-    def __init__(self, vector_store, config_manager, postgres_storage: PostgreSQLConversationStorage):
+    def __init__(self, vector_store, config_manager, geode_storage: GeodeConversationStorage):
         """Initialize the chat agent.
-        
+
         Args:
             vector_store: VectorStore instance for document retrieval
             config_manager: ConfigManager for reading configuration
-            postgres_storage: PostgreSQL storage for conversation persistence
+            geode_storage: Geode storage for conversation persistence
         """
         self.vector_store = vector_store
         self.config_manager = config_manager
-        self.conversation_store = postgres_storage
+        self.conversation_store = geode_storage
         self.current_model = None
         
         self.current_model = None
@@ -82,14 +82,14 @@ class ChatAgent:
         self.last_state = None
 
     @classmethod
-    async def create(cls, vector_store, config_manager, postgres_storage: PostgreSQLConversationStorage):
+    async def create(cls, vector_store, config_manager, geode_storage: GeodeConversationStorage):
         """
         Asynchronously creates and initializes a ChatAgent instance.
-        
+
         This factory method ensures that all async setup, like loading tools,
         is completed before the agent is ready to be used.
         """
-        agent = cls(vector_store, config_manager, postgres_storage)
+        agent = cls(vector_store, config_manager, geode_storage)
         await agent.init_tools()
         
         available_tools = list(agent.tools_by_name.values()) if agent.tools_by_name else []

@@ -54,7 +54,7 @@ export default function RagPage() {
     // Initialize the backend services
     const initializeBackend = async () => {
       try {
-        // Check graph database connection (ArangoDB by default)
+        // Check graph database connection (Geode)
         const graphResponse = await fetch('/api/graph-db', {
           method: 'GET',
           headers: {
@@ -112,11 +112,11 @@ export default function RagPage() {
     });
     
     try {
-      // If using pure RAG (Qdrant + LangChain) without graph search
+      // If using pure RAG (Geode + LangChain) without graph search
       if (params.usePureRag) {
         queryMode = 'pure-rag';
         try {
-          console.log('Using pure RAG with Qdrant and NVIDIA LLM for query:', query);
+          console.log('Using pure RAG with Geode and NVIDIA LLM for query:', query);
           const ragResponse = await fetch('/api/rag-query', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },

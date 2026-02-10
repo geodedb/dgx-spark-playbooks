@@ -17,10 +17,10 @@
 "use client"
 
 import React, { useState, useEffect } from "react"
-import { 
-  Settings, 
-  Database, 
-  Save, 
+import {
+  Settings,
+  Database,
+  Save,
   Eye,
   EyeOff,
   Search as SearchIcon,
@@ -31,7 +31,7 @@ import {
   Check,
   X
 } from "lucide-react"
-import { GraphDBType } from "@/lib/graph-db-service"
+// Geode is the unified graph + vector database
 import { listFilesInS3 } from "@/utils/s3-storage"
 import { useToast } from "@/hooks/use-toast"
 
@@ -59,25 +59,10 @@ export function SettingsModal() {
   const { toast } = useToast()
   const [isOpen, setIsOpen] = useState(false)
   const [activeTab, setActiveTab] = useState("models")
-  const [dbUrl, setDbUrl] = useState("")
-  const [dbUsername, setDbUsername] = useState("")
-  const [dbPassword, setDbPassword] = useState("")
-  const [vectorDbHost, setVectorDbHost] = useState("")
-  const [vectorDbPort, setVectorDbPort] = useState("")
   const [showPassword, setShowPassword] = useState(false)
   
-  // Graph DB settings
-  const [graphDbType, setGraphDbType] = useState<GraphDBType>("arangodb")
-  const [neo4jUrl, setNeo4jUrl] = useState("")
-  const [neo4jUser, setNeo4jUser] = useState("")
-  const [neo4jPassword, setNeo4jPassword] = useState("")
-  const [arangoUrl, setArangoUrl] = useState("http://localhost:8529")
-  const [arangoDb, setArangoDb] = useState("txt2kg")
-  const [arangoUser, setArangoUser] = useState("")
-  const [arangoPassword, setArangoPassword] = useState("")
-  
-  // Vector DB settings - Qdrant
-  const [qdrantUrl, setQdrantUrl] = useState("")
+  // Geode settings (unified graph + vector)
+  const [geodeUrl, setGeodeUrl] = useState("quic://localhost:3141")
   
   // S3 Storage settings
   const [s3Endpoint, setS3Endpoint] = useState("")
@@ -127,18 +112,6 @@ export function SettingsModal() {
   // Load saved settings when modal opens
   useEffect(() => {
     if (isOpen) {
-      const storedDbUrl = localStorage.getItem("NEO4J_URL") || ""
-      const storedDbUsername = localStorage.getItem("NEO4J_USERNAME") || ""
-      const storedDbPassword = localStorage.getItem("NEO4J_PASSWORD") || ""
-      const storedVectorDbHost = localStorage.getItem("VECTOR_DB_HOST") || ""
-      const storedVectorDbPort = localStorage.getItem("VECTOR_DB_PORT") || ""
-      
-      setDbUrl(storedDbUrl)
-      setDbUsername(storedDbUsername)
-      setDbPassword(storedDbPassword)
-      setVectorDbHost(storedVectorDbHost)
-      setVectorDbPort(storedVectorDbPort)
-      
       // Load embeddings settings
       const storedEmbeddingsProvider = localStorage.getItem("embeddings_provider") || "local"
       const storedNvidiaModel = localStorage.getItem("nvidia_embeddings_model") || "nvidia/llama-3.2-nv-embedqa-1b-v2"
@@ -169,53 +142,17 @@ export function SettingsModal() {
       setIsS3Connected(s3Connected)
     }
     
-    // Load graph DB type - fetch from server if not in localStorage
-    const storedGraphDbType = localStorage.getItem("graph_db_type")
-    if (storedGraphDbType) {
-      setGraphDbType(storedGraphDbType as GraphDBType)
-    } else {
-      // Fetch server's default (from GRAPH_DB_TYPE env var)
-      fetch('/api/settings')
-        .then(res => res.json())
-        .then(data => {
-          const serverDefault = data.settings?.graph_db_type || 'neo4j'
-          setGraphDbType(serverDefault as GraphDBType)
-        })
-        .catch(() => setGraphDbType('neo4j'))
-    }
-    
-    // Load Neo4j settings
-    setNeo4jUrl(localStorage.getItem("neo4j_url") || "")
-    setNeo4jUser(localStorage.getItem("neo4j_user") || "")
-    setNeo4jPassword(localStorage.getItem("neo4j_password") || "")
-    
-    // Load ArangoDB settings
-    setArangoUrl(localStorage.getItem("arango_url") || "http://localhost:8529")
-    setArangoDb(localStorage.getItem("arango_db") || "txt2kg")
-    setArangoUser(localStorage.getItem("arango_user") || "")
-    setArangoPassword(localStorage.getItem("arango_password") || "")
-    
-    setQdrantUrl(localStorage.getItem("qdrant_url") || "http://localhost:6333")
+    // Load Geode settings
+    setGeodeUrl(localStorage.getItem("geode_url") || "quic://localhost:3141")
   }, [isOpen])
   
   // Save database settings
   const saveDbSettings = async (e: React.FormEvent) => {
     e.preventDefault()
-    
-    // Save graph DB type
-    localStorage.setItem("graph_db_type", graphDbType)
-    
-    // Save Neo4j settings
-    localStorage.setItem("neo4j_url", neo4jUrl)
-    localStorage.setItem("neo4j_user", neo4jUser)
-    localStorage.setItem("neo4j_password", neo4jPassword)
-    
-    // Save ArangoDB settings
-    localStorage.setItem("arango_url", arangoUrl)
-    localStorage.setItem("arango_db", arangoDb)
-    localStorage.setItem("arango_user", arangoUser)
-    localStorage.setItem("arango_password", arangoPassword)
-    
+
+    // Save Geode settings
+    localStorage.setItem("geode_url", geodeUrl)
+
     // Sync settings with server
     try {
       await fetch('/api/settings', {
@@ -225,14 +162,7 @@ export function SettingsModal() {
         },
         body: JSON.stringify({
           settings: {
-            graph_db_type: graphDbType,
-            neo4j_url: neo4jUrl,
-            neo4j_user: neo4jUser,
-            neo4j_password: neo4jPassword,
-            arango_url: arangoUrl,
-            arango_db: arangoDb,
-            arango_user: arangoUser,
-            arango_password: arangoPassword
+            geode_url: geodeUrl,
           }
         }),
       });
@@ -244,47 +174,15 @@ export function SettingsModal() {
         description: "Failed to sync settings with server"
       });
     }
-    
+
     toast({
       title: "Success",
-      description: "Graph database settings saved"
+      description: "Database settings saved"
     });
     setIsOpen(false)
   }
   
-  // Save vector database settings
-  const saveVectorDbSettings = async (e: React.FormEvent) => {
-    e.preventDefault()
-    
-    localStorage.setItem("qdrant_url", qdrantUrl)
-    
-    // Sync settings with server
-    try {
-      await fetch('/api/settings', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          settings: {
-            qdrant_url: qdrantUrl,
-          }
-        }),
-      });
-    } catch (error) {
-      console.error('Error syncing settings:', error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to sync settings with server"
-      });
-    }
-    
-    toast({
-      title: "Success",
-      description: "Vector database settings saved"
-    })
-  }
+  // Vector DB settings are unified under Geode — no separate save needed
   
   // Save S3 settings and check connection
   const saveS3Settings = async (e: React.FormEvent) => {
@@ -526,139 +424,32 @@ export function SettingsModal() {
                 <div className="space-y-2">
                   <label className="text-sm font-semibold text-foreground flex items-center gap-2">
                     <Database className="h-4 w-4 text-nvidia-green" />
-                    Database Type
+                    Geode Database
                   </label>
-                  <select
-                    value={graphDbType}
-                    onChange={(e) => setGraphDbType(e.target.value as GraphDBType)}
-                    className="w-full bg-background border border-border/60 rounded-md p-2 text-sm text-foreground focus:ring-2 focus:ring-primary/50 focus:border-primary transition-colors"
-                  >
-                    <option value="neo4j">Neo4j</option>
-                    <option value="arangodb">ArangoDB</option>
-                  </select>
+                  <p className="text-xs text-muted-foreground">
+                    Unified graph + vector database for knowledge storage and semantic search
+                  </p>
                 </div>
-              
-                {graphDbType === "neo4j" && (
-                  <div className="bg-background/50 rounded-lg p-3 space-y-3">
-                    <h4 className="text-sm font-medium text-foreground mb-2">Neo4j Configuration</h4>
-                    <div className="grid grid-cols-1 gap-3">
-                      <div>
-                        <label className="text-xs font-medium text-muted-foreground mb-1 block">Connection URL</label>
-                        <input
-                          type="text"
-                          value={neo4jUrl}
-                          onChange={(e) => setNeo4jUrl(e.target.value)}
-                          placeholder="bolt://localhost:7687"
-                          className="w-full bg-background border border-border/60 rounded-md p-2 text-sm text-foreground focus:ring-1 focus:ring-primary/50 focus:border-primary transition-colors"
-                        />
-                      </div>
-                      <div className="grid grid-cols-2 gap-3">
-                        <div>
-                          <label className="text-xs font-medium text-muted-foreground mb-1 block">Username</label>
-                          <input
-                            type="text"
-                            value={neo4jUser}
-                            onChange={(e) => setNeo4jUser(e.target.value)}
-                            placeholder="neo4j"
-                            className="w-full bg-background border border-border/60 rounded-md p-2 text-sm text-foreground focus:ring-1 focus:ring-primary/50 focus:border-primary transition-colors"
-                          />
-                        </div>
-                        <div>
-                          <label className="text-xs font-medium text-muted-foreground mb-1 block">Password</label>
-                          <div className="relative">
-                            <input
-                              type={showPassword ? "text" : "password"}
-                              value={neo4jPassword}
-                              onChange={(e) => setNeo4jPassword(e.target.value)}
-                              placeholder="password"
-                              className="w-full bg-background border border-border/60 rounded-md p-2 pr-8 text-sm text-foreground focus:ring-1 focus:ring-primary/50 focus:border-primary transition-colors"
-                            />
-                            <button
-                              type="button"
-                              className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                              onClick={() => setShowPassword(!showPassword)}
-                            >
-                              {showPassword ? (
-                                <EyeOff className="h-3 w-3" />
-                              ) : (
-                                <Eye className="h-3 w-3" />
-                              )}
-                            </button>
-                          </div>
-                        </div>
-                      </div>
+
+                <div className="bg-background/50 rounded-lg p-3 space-y-3">
+                  <h4 className="text-sm font-medium text-foreground mb-2">Geode Configuration</h4>
+                  <div className="grid grid-cols-1 gap-3">
+                    <div>
+                      <label className="text-xs font-medium text-muted-foreground mb-1 block">Connection URL</label>
+                      <input
+                        type="text"
+                        value={geodeUrl}
+                        onChange={(e) => setGeodeUrl(e.target.value)}
+                        placeholder="quic://localhost:3141"
+                        className="w-full bg-background border border-border/60 rounded-md p-2 text-sm text-foreground focus:ring-1 focus:ring-primary/50 focus:border-primary transition-colors"
+                      />
                     </div>
                   </div>
-                )}
-              
-                {graphDbType === "arangodb" && (
-                  <div className="bg-background/50 rounded-lg p-3 space-y-3">
-                    <h4 className="text-sm font-medium text-foreground mb-2">ArangoDB Configuration</h4>
-                    <div className="grid grid-cols-1 gap-3">
-                      <div className="grid grid-cols-2 gap-3">
-                        <div>
-                          <label className="text-xs font-medium text-muted-foreground mb-1 block">Connection URL</label>
-                          <input
-                            type="text"
-                            value={arangoUrl}
-                            onChange={(e) => setArangoUrl(e.target.value)}
-                            placeholder="http://localhost:8529"
-                            className="w-full bg-background border border-border/60 rounded-md p-2 text-sm text-foreground focus:ring-1 focus:ring-primary/50 focus:border-primary transition-colors"
-                          />
-                        </div>
-                        <div>
-                          <label className="text-xs font-medium text-muted-foreground mb-1 block">Database Name</label>
-                          <input
-                            type="text"
-                            value={arangoDb}
-                            onChange={(e) => setArangoDb(e.target.value)}
-                            placeholder="txt2kg"
-                            className="w-full bg-background border border-border/60 rounded-md p-2 text-sm text-foreground focus:ring-1 focus:ring-primary/50 focus:border-primary transition-colors"
-                          />
-                        </div>
-                      </div>
-                      <div className="grid grid-cols-2 gap-3">
-                        <div>
-                          <label className="text-xs font-medium text-muted-foreground mb-1 block">Username</label>
-                          <input
-                            type="text"
-                            value={arangoUser}
-                            onChange={(e) => setArangoUser(e.target.value)}
-                            placeholder="root"
-                            className="w-full bg-background border border-border/60 rounded-md p-2 text-sm text-foreground focus:ring-1 focus:ring-primary/50 focus:border-primary transition-colors"
-                          />
-                        </div>
-                        <div>
-                          <label className="text-xs font-medium text-muted-foreground mb-1 block">Password</label>
-                          <div className="relative">
-                            <input
-                              type={showPassword ? "text" : "password"}
-                              value={arangoPassword}
-                              onChange={(e) => setArangoPassword(e.target.value)}
-                              placeholder="password"
-                              className="w-full bg-background border border-border/60 rounded-md p-2 pr-8 text-sm text-foreground focus:ring-1 focus:ring-primary/50 focus:border-primary transition-colors"
-                            />
-                            <button
-                              type="button"
-                              className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                              onClick={() => setShowPassword(!showPassword)}
-                            >
-                              {showPassword ? (
-                                <EyeOff className="h-3 w-3" />
-                              ) : (
-                                <Eye className="h-3 w-3" />
-                              )}
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              
+                </div>
+
                 <div className="flex justify-end pt-3 border-t border-border/30">
-                  <button 
-                    type="submit" 
+                  <button
+                    type="submit"
                     className="flex items-center gap-2 px-4 py-2 rounded-md bg-nvidia-green hover:bg-nvidia-green/90 text-white transition-colors text-sm font-medium shadow-sm"
                   >
                     <Save className="h-4 w-4" />
@@ -671,39 +462,26 @@ export function SettingsModal() {
           
           {activeTab === "vectordb" && (
             <div className="bg-muted/30 border border-border/40 rounded-xl p-4">
-              <form onSubmit={saveVectorDbSettings} className="space-y-4">
+              <div className="space-y-4">
                 <div className="space-y-2">
                   <label className="text-sm font-semibold text-foreground flex items-center gap-2">
                     <SearchIcon className="h-4 w-4 text-nvidia-green" />
-                    Qdrant Configuration
+                    Vector Search
                   </label>
                 </div>
-                
+
                 <div className="bg-background/50 rounded-lg p-3 space-y-3">
-                  <div className="grid grid-cols-1 gap-3">
-                    <div>
-                      <label className="text-xs font-medium text-muted-foreground mb-1 block">Qdrant URL</label>
-                      <input
-                        type="text"
-                        value={qdrantUrl}
-                        onChange={(e) => setQdrantUrl(e.target.value)}
-                        placeholder="http://localhost:6333"
-                        className="w-full bg-background border border-border/60 rounded-md p-2 text-sm text-foreground focus:ring-1 focus:ring-primary/50 focus:border-primary transition-colors"
-                      />
+                  <div className="bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800/50 rounded-lg p-3">
+                    <div className="flex items-center gap-2 text-green-800 dark:text-green-300 text-sm">
+                      <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse"></div>
+                      <span className="font-medium">Unified with Geode</span>
                     </div>
+                    <p className="text-xs text-green-700 dark:text-green-400 mt-1">
+                      Vector embeddings are stored alongside graph data in Geode. No separate vector database configuration is needed.
+                    </p>
                   </div>
                 </div>
-                
-                <div className="flex justify-end pt-3 border-t border-border/30">
-                  <button 
-                    type="submit" 
-                    className="flex items-center gap-2 px-4 py-2 rounded-md bg-primary hover:bg-primary/90 text-primary-foreground transition-colors text-sm font-medium shadow-sm"
-                  >
-                    <Save className="h-4 w-4" />
-                    Save Settings
-                  </button>
-                </div>
-              </form>
+              </div>
             </div>
           )}
           

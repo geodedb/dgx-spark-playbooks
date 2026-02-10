@@ -5,8 +5,8 @@ This directory contains all deployment-related configuration for the txt2kg proj
 ## Structure
 
 - **compose/**: Docker Compose configuration
-  - `docker-compose.yml`: ArangoDB + Ollama (default)
-  - `docker-compose.vllm.yml`: Neo4j + vLLM (GPU-accelerated)
+  - `docker-compose.yml`: Geode + Ollama (default)
+  - `docker-compose.vllm.yml`: Geode + vLLM (GPU-accelerated)
 
 - **app/**: Frontend application Docker configuration
   - Dockerfile for Next.js application
@@ -14,7 +14,7 @@ This directory contains all deployment-related configuration for the txt2kg proj
 - **services/**: Containerized services
   - **ollama/**: Ollama LLM inference service (default)
   - **vllm/**: vLLM inference service with GPU support (via `--vllm` flag)
-  - **sentence-transformers/**: Sentence transformer service for embeddings (via `--vector-search` flag)
+  - **sentence-transformers/**: Sentence transformer service for embeddings
   - **gpu-viz/**: GPU-accelerated graph visualization services (run separately)
   - **gnn_model/**: Graph Neural Network model service (experimental)
 
@@ -23,17 +23,11 @@ This directory contains all deployment-related configuration for the txt2kg proj
 **Recommended: Use the start script**
 
 ```bash
-# Default: ArangoDB + Ollama
+# Default: Geode + Ollama
 ./start.sh
 
-# Use Neo4j + vLLM (GPU-accelerated, for DGX Spark/GB300)
+# Use Geode + vLLM (GPU-accelerated, for DGX Spark/GB300)
 ./start.sh --vllm
-
-# Enable vector search (Qdrant + Sentence Transformers)
-./start.sh --vector-search
-
-# Combine options
-./start.sh --vllm --vector-search
 
 # Development mode (run frontend without Docker)
 ./start.sh --dev-frontend
@@ -42,32 +36,24 @@ This directory contains all deployment-related configuration for the txt2kg proj
 **Manual Docker Compose commands:**
 
 ```bash
-# Default: ArangoDB + Ollama
+# Default: Geode + Ollama
 docker compose -f deploy/compose/docker-compose.yml up -d
 
-# Neo4j + vLLM
+# Geode + vLLM
 docker compose -f deploy/compose/docker-compose.vllm.yml up -d
-
-# With vector search services (add --profile vector-search)
-docker compose -f deploy/compose/docker-compose.yml --profile vector-search up -d
-docker compose -f deploy/compose/docker-compose.vllm.yml --profile vector-search up -d
 ```
 
 ## Services Included
 
-### Default Stack (ArangoDB + Ollama)
+### Default Stack (Geode + Ollama)
 - **Next.js App**: Web UI on port 3001
-- **ArangoDB**: Graph database on port 8529
+- **Geode**: Graph + vector database on port 3141 (QUIC)
 - **Ollama**: Local LLM inference on port 11434
 
-### vLLM Stack (`--vllm` flag) - Neo4j + vLLM
+### vLLM Stack (`--vllm` flag) - Geode + vLLM
 - **Next.js App**: Web UI on port 3001
-- **Neo4j**: Graph database on ports 7474 (HTTP) and 7687 (Bolt)
+- **Geode**: Graph + vector database on port 3141 (QUIC)
 - **vLLM**: GPU-accelerated LLM inference on port 8001
-
-### Vector Search (`--vector-search` profile)
-- **Qdrant**: Vector database on port 6333
-- **Sentence Transformers**: Embedding generation on port 8000
 
 ### Optional Services (run separately)
 - **GPU-Viz Services**: See `services/gpu-viz/README.md` for GPU-accelerated visualization
@@ -85,11 +71,12 @@ docker compose -f deploy/compose/docker-compose.vllm.yml --profile vector-search
 │  └──────┬──────┘                     │  └──────┬──────┘         │
 │         │                            │         │                │
 │  ┌──────┴──────┐  ┌─────────────┐    │  ┌──────┴──────┐  ┌─────┐│
-│  │  ArangoDB   │  │   Ollama    │    │  │   Neo4j     │  │vLLM ││
-│  │  port 8529  │  │ port 11434  │    │  │  port 7474  │  │8001 ││
+│  │   Geode     │  │   Ollama    │    │  │   Geode     │  │vLLM ││
+│  │  port 3141  │  │ port 11434  │    │  │  port 3141  │  │8001 ││
+│  │  (QUIC)     │  │             │    │  │  (QUIC)     │  │     ││
 │  └─────────────┘  └─────────────┘    │  └─────────────┘  └─────┘│
 │                                      │                          │
 └──────────────────────────────────────┴──────────────────────────┘
 
-Optional (--vector-search): Qdrant (6333) + Sentence Transformers (8000)
+Geode provides both graph and vector storage in a single database.
 ```

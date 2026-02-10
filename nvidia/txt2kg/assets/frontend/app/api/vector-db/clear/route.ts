@@ -14,31 +14,27 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-import { NextRequest, NextResponse } from 'next/server';
-import { QdrantService } from '@/lib/qdrant';
+import { NextResponse } from 'next/server';
+import { GeodeService } from '@/lib/geode';
 
 /**
- * Clear all data from the Qdrant vector database
+ * Clear all vector data from Geode
  * POST /api/vector-db/clear
  */
-export async function POST() {
-  // Get the Qdrant service instance
-  const qdrantService = QdrantService.getInstance();
-  
-  // Clear all vectors from the database
-  const deleteSuccess = await qdrantService.deleteAllEntities();
-  
-  // Get updated stats after clearing
-  const stats = await qdrantService.getStats();
-  
-  // Return response based on operation success
+export async function POST(): Promise<NextResponse> {
+  const geode = GeodeService.getInstance();
+  await geode.initialize();
+
+  const deleteSuccess = await geode.deleteAllEntities();
+
+  const stats = await geode.getStats();
+
   return NextResponse.json({
     success: deleteSuccess,
-    message: deleteSuccess 
-      ? 'Successfully cleared all data from Qdrant vector database'
-      : 'Failed to clear Qdrant database - service may not be available',
+    message: deleteSuccess
+      ? 'Successfully cleared all vector data from Geode'
+      : 'Failed to clear vector data - service may not be available',
     totalVectorCount: stats.totalVectorCount || 0,
     httpHealthy: stats.httpHealthy || false
   });
 }
-

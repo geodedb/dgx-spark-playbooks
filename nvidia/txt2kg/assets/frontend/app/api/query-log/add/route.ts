@@ -15,85 +15,55 @@
 // limitations under the License.
 //
 import { NextRequest, NextResponse } from 'next/server';
-import neo4jService from '@/lib/neo4j';
+import { GeodeService } from '@/lib/geode';
 
 /**
- * Simple endpoint to directly add a query log with a high count
+ * Simple endpoint to directly add a query log entry
  */
-export async function GET(request: NextRequest) {
+export async function GET(request: NextRequest): Promise<NextResponse> {
   try {
-    // Get the query text from URL params or use a default
     const query = request.nextUrl.searchParams.get('query') || 'How does machine learning work?';
     const count = parseInt(request.nextUrl.searchParams.get('count') || '20');
-    
-    // Initialize Neo4j
-    if (!neo4jService.isInitialized()) {
-      neo4jService.initialize();
-    }
-    
-    // Execute direct Cypher query to create a query log with a high count
-    const session = neo4jService.getSession();
-    
-    try {
-      const cypher = `
-        MERGE (q:QueryLog {query: $query})
-        ON CREATE SET 
-          q.firstQueried = datetime(),
-          q.count = $count
-        ON MATCH SET 
-          q.lastQueried = datetime(),
-          q.count = $count
-        
-        CREATE (e:QueryExecution {
-          timestamp: datetime(),
-          queryMode: 'traditional',
-          executionTimeMs: 0,
-          relevanceScore: 0,
-          precision: 0,
-          recall: 0,
-          resultCount: 0
-        })
-        
-        CREATE (q)-[:HAS_EXECUTION]->(e)
-        
-        RETURN q.query as query, q.count as count
-      `;
-      
-      const result = await session.run(cypher, { 
-        query, 
-        count 
+
+    const geode = GeodeService.getInstance();
+    await geode.initialize();
+
+    // Log the primary query
+    await geode.logQuery(query, 'traditional', {
+      executionTimeMs: 0,
+      relevanceScore: 0,
+      precision: 0,
+      recall: 0,
+      resultCount: 0
+    });
+
+    // Log additional queries when count is high enough
+    if (count >= 10) {
+      await geode.logQuery('What are the applications of artificial intelligence?', 'traditional', {
+        executionTimeMs: 0,
+        relevanceScore: 0,
+        precision: 0,
+        recall: 0,
+        resultCount: 0
       });
-      
-      const addedQuery = result.records.length > 0 ? {
-        query: result.records[0].get('query'),
-        count: result.records[0].get('count').toNumber()
-      } : null;
-      
-      // Also add a few more queries
-      if (count >= 10) {
-        await session.run(cypher, { 
-          query: 'What are the applications of artificial intelligence?', 
-          count: count - 4 
-        });
-        
-        await session.run(cypher, { 
-          query: 'Explain the principles of deep learning', 
-          count: count - 8 
-        });
-      }
-      
-      // Get the current logs to verify
-      const logs = await neo4jService.getQueryLogs(5);
-      
-      return NextResponse.json({
-        success: true,
-        message: `Added query log for "${query}" with count ${count}`,
-        addedQuery,
-        logs
+
+      await geode.logQuery('Explain the principles of deep learning', 'traditional', {
+        executionTimeMs: 0,
+        relevanceScore: 0,
+        precision: 0,
+        recall: 0,
+        resultCount: 0
       });
-    } finally {
-      session.close();
     }
+
+    const logs = await geode.getQueryLogs(5);
+
+    return NextResponse.json({
+      success: true,
+      message: `Added query log for "${query}" with count ${count}`,
+      addedQuery: { query, count },
+      logs
+    });
   } catch (error) {
     console.error('Error adding query log:', error);
     return NextResponse.json({
@@ -101,4 +71,4 @@ export async function GET(request: NextRequest) {
       error: error instanceof Error ? error.message : String(error)
     }, { status: 500 });
   }
-} 
+}

@@ -520,8 +520,8 @@ export function DocumentProvider({ children }: { children: React.ReactNode }) {
     setIsProcessing(true);
     
     try {
-      // Check which documents are already processed in ArangoDB
-      console.log('🔍 Checking which documents are already processed in ArangoDB...');
+      // Check which documents are already processed in Geode
+      console.log('🔍 Checking which documents are already processed in Geode...');
       let alreadyProcessedDocs: Set<string> = new Set();
       
       try {
@@ -541,7 +541,7 @@ export function DocumentProvider({ children }: { children: React.ReactNode }) {
                 alreadyProcessedDocs.add(docName);
               }
             });
-            console.log(`✅ Found ${alreadyProcessedDocs.size} documents already processed in ArangoDB:`, Array.from(alreadyProcessedDocs));
+            console.log(`✅ Found ${alreadyProcessedDocs.size} documents already processed in Geode:`, Array.from(alreadyProcessedDocs));
           }
         }
       } catch (checkError) {
@@ -550,9 +550,9 @@ export function DocumentProvider({ children }: { children: React.ReactNode }) {
 
       // Process each document sequentially
       for (const doc of docsToProcess) {
-        // Skip if document is already processed in ArangoDB
+        // Skip if document is already processed in Geode
         if (alreadyProcessedDocs.has(doc.name)) {
-          console.log(`⏭️ Skipping document "${doc.name}" - already processed in ArangoDB`);
+          console.log(`⏭️ Skipping document "${doc.name}" - already processed in Geode`);
           updateDocumentStatus(doc.id, "Processed", {
             triples: doc.triples || [],
             graph: doc.graph,
@@ -560,7 +560,7 @@ export function DocumentProvider({ children }: { children: React.ReactNode }) {
           });
           toast({
             title: "Document Skipped",
-            description: `"${doc.name}" is already stored in ArangoDB`,
+            description: `"${doc.name}" is already stored in Geode`,
             duration: 3000,
           });
           continue;
@@ -649,8 +649,8 @@ export function DocumentProvider({ children }: { children: React.ReactNode }) {
               );
               
               // Call the process-document API endpoint with useLangChain flag
-              // NOTE: This no longer automatically stores triples in Neo4j.
-              // Storage in Neo4j is now handled manually through the UI's "Store in Graph DB" button.
+              // NOTE: This no longer automatically stores triples in Geode.
+              // Storage in Geode is now handled manually through the UI's "Store in Graph DB" button.
               console.log(`Sending ${triples.length} triples to process-document API with useLangChain=true ${useGraphTransformer ? 'using GraphTransformer' : ''}`);
               
               // Include prompt configurations in the request body
@@ -771,8 +771,8 @@ export function DocumentProvider({ children }: { children: React.ReactNode }) {
                 );
               }
               
-              // Send to process-document API - no longer automatically stores in Neo4j
-              // Storage in Neo4j is now handled manually through the UI's "Store in Graph DB" button
+              // Send to process-document API - no longer automatically stores in Geode
+              // Storage in Geode is now handled manually through the UI's "Store in Graph DB" button
               const requestBody: any = { 
                 text: processedContent,
                 filename: doc.name,

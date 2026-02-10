@@ -14,19 +14,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+"""Geode-based vector store for document embedding and retrieval."""
+
 import glob
-from typing import List, Tuple
+import json
 import os
-from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_milvus import Milvus
-from langchain_core.documents import Document
-from typing_extensions import List
-from langchain_openai import OpenAIEmbeddings
-from langchain_unstructured import UnstructuredLoader
-from dotenv import load_dotenv
-from logger import logger
-from typing import Optional, Callable
+import uuid
+from typing import List, Optional, Callable
+
 import requests
+from geode_client import Client
+from langchain_core.documents import Document
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+from langchain_unstructured import UnstructuredLoader
+
+from logger import logger
 
 
 class CustomEmbeddings:
@@ -48,74 +50,99 @@ class CustomEmbeddings:
             embeddings.append(data["data"][0]["embedding"])
         return embeddings
 
-    
     def embed_documents(self, texts: list[str]) -> list[list[float]]:
-        """Embed a list of document texts. Required by Milvus library."""
+        """Embed a list of document texts."""
         return self.__call__(texts)
-    
+
     def embed_query(self, text: str) -> list[float]:
-        """Embed a single query text. Required by Milvus library."""
+        """Embed a single query text."""
         return self.__call__([text])[0]
 
 
-class VectorStore:
-    """Vector store for document embedding and retrieval.
-    
+def _escape_gql_string(value: str) -> str:
+    """Escape single quotes in a string for use in GQL literals."""
+    return value.replace("'", "\\'")
+
+
+def _val(row: dict, key: str, default=None):
+    """Extract a plain Python value from a Geode row entry."""
+    v = row.get(key)
+    if v is None:
+        return default
+    if isinstance(v, (str, int, float, bool)):
+        return v
+    if hasattr(v, 'as_string'):
+        return v.as_string
+    return default
+
+
+class GeodeVectorStore:
+    """Vector store for document embedding and retrieval using Geode.
+
     Decoupled from ConfigManager - uses optional callbacks for source management.
     """
-    
+
     def __init__(
-        self, 
-        embeddings=None, 
-        uri: str = "http://milvus:19530",
+        self,
+        embeddings=None,
+        host: str = "geode",
+        port: int = 3141,
+        username: str = "",
+        password: str = "",
         on_source_deleted: Optional[Callable[[str], None]] = None
     ):
         """Initialize the vector store.
-        
+
         Args:
-            embeddings: Embedding model to use (defaults to OllamaEmbeddings)
-            uri: Milvus connection URI
+            embeddings: Embedding model to use (defaults to CustomEmbeddings)
+            host: Geode server host
+            port: Geode server port
+            username: Geode authentication username
+            password: Geode authentication password
             on_source_deleted: Optional callback when a source is deleted
         """
         try:
             self.embeddings = embeddings or CustomEmbeddings(model="qwen3-embedding-custom")
-            self.uri = uri
+            self.host = host
+            self.port = port
+            self.username = username
+            self.password = password
             self.on_source_deleted = on_source_deleted
-            self._initialize_store()
-            
+            kwargs = {"skip_verify": True}
+            if username:
+                kwargs["username"] = username
+            if password:
+                kwargs["password"] = password
+            self.client = Client(host=self.host, port=self.port, **kwargs)
+
             self.text_splitter = RecursiveCharacterTextSplitter(
                 chunk_size=1000,
                 chunk_overlap=200
             )
-            
+
             logger.debug({
-                "message": "VectorStore initialized successfully"
+                "message": "GeodeVectorStore initialized successfully"
             })
         except Exception as e:
             logger.error({
-                "message": "Error initializing VectorStore",
+                "message": "Error initializing GeodeVectorStore",
                 "error": str(e)
             }, exc_info=True)
             raise
-    
+
     def _initialize_store(self):
-        self._store = Milvus(
-            embedding_function=self.embeddings,
-            collection_name="context",
-            connection_args={"uri": self.uri},
-            auto_id=True
-        )
+        """No-op for API compatibility. Geode does not require explicit store initialization."""
         logger.debug({
-            "message": "Milvus vector store initialized",
-            "uri": self.uri,
-            "collection": "context"
+            "message": "Geode vector store ready",
+            "host": self.host,
+            "port": self.port
         })
 
-    def _load_documents(self, file_paths: List[str] = None, input_dir: str = None) -> List[str]:
+    def _load_documents(self, file_paths: List[str] = None, input_dir: str = None) -> List[Document]:
         try:
             documents = []
             source_name = None
-            
+
             if input_dir:
                 source_name = os.path.basename(os.path.normpath(input_dir))
                 logger.debug({
@@ -125,26 +152,26 @@ class VectorStore:
                 })
                 file_paths = glob.glob(os.path.join(input_dir, "**"), recursive=True)
                 file_paths = [f for f in file_paths if os.path.isfile(f)]
-            
+
             logger.info(f"Processing {len(file_paths)} files: {file_paths}")
-            
+
             for file_path in file_paths:
                 try:
                     if not source_name:
                         source_name = os.path.basename(file_path)
                         logger.info(f"Using filename as source: {source_name}")
-                    
+
                     logger.info(f"Loading file: {file_path}")
-                    
+
                     file_ext = os.path.splitext(file_path)[1].lower()
                     logger.info(f"File extension: {file_ext}")
-                    
+
                     try:
                         loader = UnstructuredLoader(file_path)
                         docs = loader.load()
                         logger.info(f"Successfully loaded {len(docs)} documents from {file_path}")
                     except Exception as pdf_error:
-                        logger.error(f'error with unstructured loader, trying to load from scratch')
+                        logger.error('error with unstructured loader, trying to load from scratch')
                         file_text = None
                         if file_ext == ".pdf":
                             logger.info("Attempting PyPDF text extraction fallback")
@@ -191,23 +218,23 @@ class VectorStore:
                                     "filename": os.path.basename(file_path),
                                 }
                             )]
-                    
+
                     for doc in docs:
                         if not doc.metadata:
                             doc.metadata = {}
-                        
+
                         cleaned_metadata = {}
                         cleaned_metadata["source"] = source_name
                         cleaned_metadata["file_path"] = file_path
                         cleaned_metadata["filename"] = os.path.basename(file_path)
-                        
+
                         for key, value in doc.metadata.items():
                             if key not in ["source", "file_path"]:
                                 if isinstance(value, (list, dict, set)):
                                     cleaned_metadata[key] = str(value)
                                 elif value is not None:
                                     cleaned_metadata[key] = str(value)
-                        
+
                         doc.metadata = cleaned_metadata
                     documents.extend(docs)
                     logger.debug({
@@ -225,7 +252,7 @@ class VectorStore:
 
             logger.info(f"Total documents loaded: {len(documents)}")
             return documents
-            
+
         except Exception as e:
             logger.error({
                 "message": "Error loading documents",
@@ -233,25 +260,41 @@ class VectorStore:
             }, exc_info=True)
             raise
 
-    def index_documents(self, documents: List[Document]) -> List[Document]:
+    def index_documents(self, documents: List[Document]) -> None:
+        """Index documents by generating embeddings and storing them in Geode."""
         try:
             logger.debug({
                 "message": "Starting document indexing",
                 "document_count": len(documents)
             })
-            
+
             splits = self.text_splitter.split_documents(documents)
             logger.debug({
                 "message": "Split documents into chunks",
                 "chunk_count": len(splits)
             })
-            
-            self._store.add_documents(splits)
+
+            texts = [doc.page_content for doc in splits]
+            embeddings = self.embeddings.embed_documents(texts)
+
+            import asyncio
+            loop = None
+            try:
+                loop = asyncio.get_running_loop()
+            except RuntimeError:
+                pass
+
+            if loop and loop.is_running():
+                # We are inside an async context; schedule as a coroutine
+                asyncio.ensure_future(self._store_documents(splits, embeddings))
+            else:
+                asyncio.run(self._store_documents(splits, embeddings))
+
             self.flush_store()
-            
+
             logger.debug({
                 "message": "Document indexing completed"
-            })            
+            })
         except Exception as e:
             logger.error({
                 "message": "Error during document indexing",
@@ -259,61 +302,78 @@ class VectorStore:
             }, exc_info=True)
             raise
 
+    async def _store_documents(self, splits: List[Document], embeddings: List[List[float]]) -> None:
+        """Store document chunks with embeddings in Geode as RagDocument nodes."""
+        async with self.client.connection() as conn:
+            for doc, embedding in zip(splits, embeddings):
+                doc_id = str(uuid.uuid4())
+                source = _escape_gql_string(doc.metadata.get("source", "unknown"))
+                text = _escape_gql_string(doc.page_content)
+                embedding_str = ", ".join(str(v) for v in embedding)
+
+                await conn.execute(
+                    f"CREATE (d:RagDocument {{"
+                    f"docId: '{doc_id}', "
+                    f"text: '{text}', "
+                    f"source: '{source}', "
+                    f"embedding: vectorf32([{embedding_str}])"
+                    f"}})"
+                )
+
     def flush_store(self):
-        """
-        Flush the Milvus collection to ensure that all added documents are persisted to disk.
-        """
-        try:
-            from pymilvus import connections
-            
-            connections.connect(uri=self.uri)
-            
-
-            from pymilvus import utility
-            utility.flush_all()
-            
-            logger.debug({
-                "message": "Milvus store flushed (persisted to disk)"
-            })
-        except Exception as e:
-            logger.error({
-                "message": "Error flushing Milvus store",
-                "error": str(e)
-            }, exc_info=True)
-
+        """No-op for Geode. Geode persists data immediately."""
+        logger.debug({
+            "message": "Geode store flush (no-op, data is persisted automatically)"
+        })
 
     def get_documents(self, query: str, k: int = 8, sources: List[str] = None) -> List[Document]:
-        """
-        Get relevant documents using the retriever's invoke method.
-        """
+        """Get relevant documents using vector cosine similarity search in Geode."""
         try:
-            search_kwargs = {"k": k}
-            
+            query_embedding = self.embeddings.embed_query(query)
+            embedding_str = ", ".join(str(v) for v in query_embedding)
+
+            source_filter = ""
             if sources:
-                if len(sources) == 1:
-                    filter_expr = f'source == "{sources[0]}"'
-                else:
-                    source_conditions = [f'source == "{source}"' for source in sources]
-                    filter_expr = " || ".join(source_conditions)
-                
-                search_kwargs["expr"] = filter_expr
-                logger.debug({
-                    "message": "Retrieving with filter",
-                    "filter": filter_expr
-                })
-            
-            retriever = self._store.as_retriever(
-                search_type="similarity",
-                search_kwargs=search_kwargs
+                escaped_sources = [f"'{_escape_gql_string(s)}'" for s in sources]
+                source_list = ", ".join(escaped_sources)
+                source_filter = f" AND d.source IN [{source_list}]"
+
+            gql_query = (
+                f"MATCH (d:RagDocument) "
+                f"WHERE d.embedding IS NOT NULL "
+                f"WITH d, vector_cosine(d.embedding, vectorf32([{embedding_str}])) AS score "
+                f"WHERE score > 0.1{source_filter} "
+                f"RETURN d.text, d.source, score "
+                f"ORDER BY score DESC LIMIT {k}"
             )
-            
-            docs = retriever.invoke(query)
+
+            logger.debug({
+                "message": "Retrieving documents from Geode",
+                "query": query[:100],
+                "k": k,
+                "sources": sources
+            })
+
+            import asyncio
+            loop = None
+            try:
+                loop = asyncio.get_running_loop()
+            except RuntimeError:
+                pass
+
+            if loop and loop.is_running():
+                import concurrent.futures
+                with concurrent.futures.ThreadPoolExecutor() as pool:
+                    docs = pool.submit(asyncio.run, self._query_documents(gql_query)).result()
+            else:
+                docs = asyncio.run(self._query_documents(gql_query))
+
             logger.debug({
                 "message": "Retrieved documents",
-                "query": query,
+                "query": query[:100],
                 "document_count": len(docs)
             })
-            
+
             return docs
         except Exception as e:
             logger.error({
@@ -322,40 +382,57 @@ class VectorStore:
             }, exc_info=True)
             return []
 
+    async def _query_documents(self, gql_query: str) -> List[Document]:
+        """Execute a GQL query and return matching documents."""
+        async with self.client.connection() as conn:
+            page, _ = await conn.query(gql_query)
+
+            docs = []
+            for row in page.rows:
+                text = _val(row, "text", "")
+                source = _val(row, "source", "unknown")
+                score_raw = _val(row, "score", "0.0")
+                score = float(score_raw) if score_raw else 0.0
+                docs.append(Document(
+                    page_content=text,
+                    metadata={"source": source, "score": score}
+                ))
+            return docs
+
     def delete_collection(self, collection_name: str) -> bool:
-        """
-        Delete a collection from Milvus.
-        
+        """Delete all RagDocument nodes matching a source name.
+
         Args:
-            collection_name: Name of the collection to delete
-            
+            collection_name: Source name of documents to delete
+
         Returns:
             bool: True if successful, False otherwise
         """
         try:
-            from pymilvus import connections, Collection, utility
-            
-            connections.connect(uri=self.uri)
-            
-            if utility.has_collection(collection_name):
-                collection = Collection(name=collection_name)
-                
-                collection.drop()
-                
-                if self.on_source_deleted:
-                    self.on_source_deleted(collection_name)
-                
-                logger.debug({
-                    "message": "Collection deleted successfully",
-                    "collection_name": collection_name
-                })
-                return True
+            safe_name = _escape_gql_string(collection_name)
+
+            import asyncio
+            loop = None
+            try:
+                loop = asyncio.get_running_loop()
+            except RuntimeError:
+                pass
+
+            if loop and loop.is_running():
+                import concurrent.futures
+                with concurrent.futures.ThreadPoolExecutor() as pool:
+                    pool.submit(asyncio.run, self._delete_source(safe_name)).result()
             else:
-                logger.warning({
-                    "message": "Collection not found",
-                    "collection_name": collection_name
-                })
-                return False
+                asyncio.run(self._delete_source(safe_name))
+
+            if self.on_source_deleted:
+                self.on_source_deleted(collection_name)
+
+            logger.debug({
+                "message": "Collection deleted successfully",
+                "collection_name": collection_name
+            })
+            return True
         except Exception as e:
             logger.error({
                 "message": "Error deleting collection",
@@ -364,25 +441,53 @@ class VectorStore:
             }, exc_info=True)
             return False
 
+    async def _delete_source(self, safe_name: str) -> None:
+        """Delete all RagDocument nodes with a given source."""
+        async with self.client.connection() as conn:
+            await conn.execute(
+                f"MATCH (d:RagDocument {{source: '{safe_name}'}}) DELETE d"
+            )
 
-def create_vector_store_with_config(config_manager, uri: str = "http://milvus:19530") -> VectorStore:
-    """Factory function to create a VectorStore with ConfigManager integration.
-    
+
+def create_vector_store_with_config(
+    config_manager,
+    host: str = None,
+    port: int = None,
+    username: str = None,
+    password: str = None
+) -> GeodeVectorStore:
+    """Factory function to create a GeodeVectorStore with ConfigManager integration.
+
     Args:
         config_manager: ConfigManager instance for source management
-        uri: Milvus connection URI
-        
+        host: Geode server host (defaults to GEODE_HOST env var or 'geode')
+        port: Geode server port (defaults to GEODE_PORT env var or 3141)
+        username: Geode auth username (defaults to GEODE_USERNAME env var)
+        password: Geode auth password (defaults to GEODE_PASSWORD env var)
+
     Returns:
-        VectorStore instance with source deletion callback
+        GeodeVectorStore instance with source deletion callback
     """
+    if host is None:
+        host = os.getenv("GEODE_HOST", "geode")
+    if port is None:
+        port = int(os.getenv("GEODE_PORT", "3141"))
+    if username is None:
+        username = os.getenv("GEODE_USERNAME", "")
+    if password is None:
+        password = os.getenv("GEODE_PASSWORD", "")
+
     def handle_source_deleted(source_name: str):
         """Handle source deletion by updating config."""
         config = config_manager.read_config()
         if hasattr(config, 'sources') and source_name in config.sources:
             config.sources.remove(source_name)
             config_manager.write_config(config)
-    
-    return VectorStore(
-        uri=uri,
+
+    return GeodeVectorStore(
+        host=host,
+        port=port,
+        username=username,
+        password=password,
         on_source_deleted=handle_source_deleted
     )

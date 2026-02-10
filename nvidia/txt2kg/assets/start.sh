@@ -21,7 +21,6 @@
 # Parse command line arguments
 DEV_FRONTEND=false
 USE_VLLM=false
-USE_VECTOR_SEARCH=false
 
 while [[ $# -gt 0 ]]; do
   case $1 in
@@ -33,26 +32,19 @@ while [[ $# -gt 0 ]]; do
       USE_VLLM=true
       shift
       ;;
-    --vector-search)
-      USE_VECTOR_SEARCH=true
-      shift
-      ;;
     --help|-h)
       echo "Usage: ./start.sh [OPTIONS]"
       echo ""
       echo "Options:"
       echo "  --dev-frontend    Run frontend in development mode (without Docker)"
-      echo "  --vllm            Use Neo4j + vLLM (GPU-accelerated, for DGX Spark/GB300)"
-      echo "  --vector-search   Enable vector search services (Qdrant + Sentence Transformers)"
+      echo "  --vllm            Use vLLM (GPU-accelerated, for DGX Spark/GB300)"
       echo "  --help, -h        Show this help message"
       echo ""
-      echo "Default: Starts ArangoDB + Ollama"
+      echo "Default: Starts Geode + Ollama"
       echo ""
       echo "Examples:"
-      echo "  ./start.sh                       # Default: ArangoDB + Ollama"
-      echo "  ./start.sh --vllm                # Use Neo4j + vLLM (GPU)"
-      echo "  ./start.sh --vector-search       # Add Qdrant + Sentence Transformers"
-      echo "  ./start.sh --vllm --vector-search  # vLLM + vector search"
+      echo "  ./start.sh                       # Default: Geode + Ollama"
+      echo "  ./start.sh --vllm                # Use Geode + vLLM (GPU)"
       exit 0
       ;;
     *)
@@ -130,30 +122,24 @@ echo "✓ Docker permissions OK"
 
 # Select compose file and build command
 COMPOSE_DIR="$(pwd)/deploy/compose"
-PROFILES=""
 
 if [ "$USE_VLLM" = true ]; then
   COMPOSE_FILE="$COMPOSE_DIR/docker-compose.vllm.yml"
-  echo "Using Neo4j + vLLM (GPU-accelerated)..."
+  echo "Using Geode + vLLM (GPU-accelerated)..."
   echo "  ⚡ Optimized for DGX Spark/GB300 with unified memory support"
 else
   COMPOSE_FILE="$COMPOSE_DIR/docker-compose.yml"
-  echo "Using ArangoDB + Ollama configuration..."
+  echo "Using Geode + Ollama configuration..."
 fi
 
 CMD="$DOCKER_COMPOSE_CMD -f $COMPOSE_FILE"
 
-if [ "$USE_VECTOR_SEARCH" = true ]; then
-  PROFILES="--profile vector-search"
-  echo "Enabling vector search (Qdrant + Sentence Transformers)..."
-fi
-
 # Execute the command
 echo ""
 echo "Starting services..."
-echo "Running: $CMD $PROFILES up -d"
+echo "Running: $CMD up -d"
 cd $(dirname "$0")
-eval "$CMD $PROFILES up -d"
+eval "$CMD up -d"
 
 echo ""
 echo "=========================================="
@@ -162,21 +148,14 @@ echo "=========================================="
 echo ""
 echo "Core Services:"
 echo "  • Web UI: http://localhost:3001"
+echo "  • Geode: quic://localhost:3141"
 if [ "$USE_VLLM" = true ]; then
-  echo "  • Neo4j Browser: http://localhost:7474"
   echo "  • vLLM API: http://localhost:8001 (GPU-accelerated)"
 else
-  echo "  • ArangoDB: http://localhost:8529"
   echo "  • Ollama API: http://localhost:11434"
 fi
+echo "  • Sentence Transformers: http://localhost:8000"
 echo ""
-
-if [ "$USE_VECTOR_SEARCH" = true ]; then
-  echo "Vector Search Services:"
-  echo "  • Qdrant: http://localhost:6333"
-  echo "  • Sentence Transformers: http://localhost:8000"
-  echo ""
-fi
 
 echo "Next steps:"
 if [ "$USE_VLLM" = true ]; then
@@ -200,6 +179,5 @@ if [ "$USE_VLLM" = true ]; then
 else
   echo "  • Use vLLM (GPU): ./start.sh --vllm"
 fi
-echo "  • Add vector search: ./start.sh --vector-search"
 echo "  • View logs: docker compose logs -f"
 echo ""

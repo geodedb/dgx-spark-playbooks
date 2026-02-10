@@ -36,7 +36,7 @@ from openai import AsyncOpenAI, OpenAI
 
 project_root = Path(__file__).parent.parent.parent
 sys.path.append(str(project_root))
-from postgres_storage import PostgreSQLConversationStorage
+from geode_storage import GeodeConversationStorage
 
 
 mcp = FastMCP("image-understanding-server")
@@ -47,18 +47,16 @@ model_client = OpenAI(
     base_url=f"http://qwen2.5-vl:8000/v1",
     api_key="api_key"
 )
-POSTGRES_HOST = os.getenv("POSTGRES_HOST", "postgres")
-POSTGRES_PORT = int(os.getenv("POSTGRES_PORT", 5432))
-POSTGRES_DB = os.getenv("POSTGRES_DB", "chatbot")
-POSTGRES_USER = os.getenv("POSTGRES_USER", "chatbot_user")
-POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD", "chatbot_password")
+GEODE_HOST = os.getenv("GEODE_HOST", "geode")
+GEODE_PORT = int(os.getenv("GEODE_PORT", 3141))
+GEODE_USERNAME = os.getenv("GEODE_USERNAME", "")
+GEODE_PASSWORD = os.getenv("GEODE_PASSWORD", "")
 
-postgres_storage = PostgreSQLConversationStorage(
-    host=POSTGRES_HOST,
-    port=POSTGRES_PORT,
-    database=POSTGRES_DB,
-    user=POSTGRES_USER,
-    password=POSTGRES_PASSWORD
+geode_storage = GeodeConversationStorage(
+    host=GEODE_HOST,
+    port=GEODE_PORT,
+    username=GEODE_USERNAME,
+    password=GEODE_PASSWORD,
 )
 
 @mcp.tool()

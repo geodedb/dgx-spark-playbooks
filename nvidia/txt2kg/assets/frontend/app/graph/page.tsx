@@ -30,7 +30,7 @@ export default function GraphPage() {
   const [documentName, setDocumentName] = useState<string>("")
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [dataSource, setDataSource] = useState<"neo4j" | "api" | "local" | "none">("none")
+  const [dataSource, setDataSource] = useState<"graphdb" | "api" | "local" | "none">("none")
 
   useEffect(() => {
     const loadGraphData = async () => {
@@ -45,29 +45,29 @@ export default function GraphPage() {
         
         console.log("Loading graph with params:", { graphId, source, url: window.location.href })
 
-        // First try to load from Neo4j if available
+        // First try to load from graph database if available
         if (source !== "local") {
           try {
-            console.log("Attempting to load graph data from Neo4j")
-            const neo4jResponse = await fetch('/api/neo4j')
-            
-            if (neo4jResponse.ok) {
-              const neo4jData = await neo4jResponse.json()
-              if (neo4jData.triples && Array.isArray(neo4jData.triples) && neo4jData.triples.length > 0) {
-                console.log("Successfully loaded graph data from Neo4j")
-                setTriples(neo4jData.triples)
-                setDocumentName(neo4jData.documentName || "Neo4j Graph")
-                setDataSource("neo4j")
+            console.log("Attempting to load graph data from Geode")
+            const graphDbResponse = await fetch('/api/graph-db')
+
+            if (graphDbResponse.ok) {
+              const graphDbData = await graphDbResponse.json()
+              if (graphDbData.triples && Array.isArray(graphDbData.triples) && graphDbData.triples.length > 0) {
+                console.log("Successfully loaded graph data from Geode")
+                setTriples(graphDbData.triples)
+                setDocumentName(graphDbData.documentName || "Geode Graph")
+                setDataSource("graphdb")
                 setLoading(false)
                 return
               } else {
-                console.warn("Neo4j returned empty or invalid data, trying other methods")
+                console.warn("Graph DB returned empty or invalid data, trying other methods")
               }
             } else {
-              console.warn(`Neo4j returned status ${neo4jResponse.status}, trying other methods`)
+              console.warn(`Graph DB returned status ${graphDbResponse.status}, trying other methods`)
             }
-          } catch (neo4jError) {
-            console.error("Error accessing Neo4j:", neo4jError)
+          } catch (graphDbError) {
+            console.error("Error accessing graph database:", graphDbError)
             console.log("Continuing with other data sources")
           }
         }
@@ -331,7 +331,7 @@ export default function GraphPage() {
           </h1>
 
           <div className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-full">
-            {dataSource === "neo4j" ? "Data from Neo4j" : 
+            {dataSource === "graphdb" ? "Data from Geode" :
              dataSource === "api" ? "Data from API" : "Data from Local Storage"}
           </div>
         </div>

@@ -24,12 +24,12 @@ from typing import List, Dict, Any
 from langchain_core.messages import HumanMessage, AIMessage, ToolMessage, ToolCall
 
 from logger import logger
-from vector_store import VectorStore
+from geode_vector_store import GeodeVectorStore
 
 
 async def process_and_ingest_files_background(
     file_info: List[dict], 
-    vector_store: VectorStore, 
+    vector_store: GeodeVectorStore,
     config_manager, 
     task_id: str, 
     indexing_tasks: Dict[str, str]

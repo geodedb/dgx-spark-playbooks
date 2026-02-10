@@ -98,7 +98,7 @@ export function KnowledgeGraphViewer() {
     }
   }, [isFullscreen]);
 
-  // Fetch stored triples from ArangoDB
+  // Fetch stored triples from Geode
   useEffect(() => {
     const fetchStoredTriples = async () => {
       if (!includeStoredTriples) {
@@ -113,7 +113,7 @@ export function KnowledgeGraphViewer() {
         if (response.ok) {
           const data = await response.json()
           setStoredTriples(data.triples || [])
-          console.log(`Loaded ${data.triples?.length || 0} stored triples from ArangoDB`)
+          console.log(`Loaded ${data.triples?.length || 0} stored triples from Geode`)
         } else {
           console.warn('Failed to fetch stored triples:', response.statusText)
           setStoredTriples([])

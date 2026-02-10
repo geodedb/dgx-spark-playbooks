@@ -14,50 +14,45 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-import { ArangoDBService } from './arangodb';
+import { GeodeService } from './geode';
 
 /**
- * Load triples from ArangoDB for use with the TXT2KG dataset
- * @param url ArangoDB connection URL
- * @param dbName ArangoDB database name
- * @param username ArangoDB username
- * @param password ArangoDB password 
- * @returns Array of triples in the format expected by create_remote_backend_from_triplets
+ * Load triples from Geode for use with the TXT2KG dataset
+ * @param url Geode connection URL
+ * @returns Array of triples as strings in the format "subject predicate object"
  */
-export async function loadTriplesFromArangoDB(
-  url?: string,
-  dbName?: string,
-  username?: string,
-  password?: string
-): Promise<string[]> {
+export async function loadTriplesFromGeode(url?: string): Promise<string[]> {
   try {
-    // Get the ArangoDB service instance
-    const arangoService = ArangoDBService.getInstance();
-    
-    // Initialize the connection if not already initialized
-    if (!arangoService.isInitialized()) {
-      await arangoService.initialize(url, dbName, username, password);
+    const geodeService = GeodeService.getInstance();
+
+    if (!geodeService.isInitialized()) {
+      await geodeService.initialize(url);
     }
-    
-    // Query to get all triples from ArangoDB
-    const query = `
-      FOR e IN relationships
-      LET subject = DOCUMENT(e._from).name
-      LET object = DOCUMENT(e._to).name
-      LET predicate = e.type
-      RETURN subject + " " + predicate + " " + object
-    `;
-    
-    // Execute the query
-    const results = await arangoService.executeQuery(query);
-    
-    // Format the triples as strings in the format "subject predicate object"
-    const triples = results.map(triple => triple);
-    
-    console.log(`Loaded ${triples.length} triples from ArangoDB`);
+
+    const query = `MATCH (s:Entity)-[r:RELATIONSHIP]->(o:Entity) RETURN s.name + ' ' + r.type + ' ' + o.name AS triple`;
+
+    // Use graphTraversal-style approach: query via the client
+    // GeodeService exposes queryAll indirectly; use getGraphData + format
+    const graphData = await geodeService.getGraphData();
+
+    const triples: string[] = [];
+    const nodeIdToName = new Map<string, string>();
+    for (const node of graphData.nodes) {
+      nodeIdToName.set(node.id, node.name);
+    }
+
+    for (const rel of graphData.relationships) {
+      const subject = nodeIdToName.get(rel.source);
+      const object = nodeIdToName.get(rel.target);
+      if (subject && object) {
+        triples.push(`${subject} ${rel.type} ${object}`);
+      }
+    }
+
+    console.log(`Loaded ${triples.length} triples from Geode`);
     return triples;
   } catch (error) {
-    console.error('Error loading triples from ArangoDB:', error);
+    console.error('Error loading triples from Geode:', error);
     throw error;
   }
-} 
+}

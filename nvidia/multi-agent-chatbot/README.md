@@ -14,22 +14,23 @@
 
 ## Basic idea
 
-This playbook shows you how to use DGX Spark to prototype, build, and deploy a fully local multi-agent system. 
+This playbook shows you how to use DGX Spark to prototype, build, and deploy a fully local multi-agent system.
 With 128GB of unified memory, DGX Spark can run multiple LLMs and VLMs in parallel — enabling interactions across agents.
 
-At the core is a supervisor agent powered by gpt-oss-120B, orchestrating specialized downstream agents for coding, retrieval-augmented generation (RAG), and image understanding. 
-Thanks to DGX Spark's out-of-the-box support for popular AI frameworks and libraries, development and prototyping are fast and frictionless. 
+At the core is a supervisor agent powered by gpt-oss-120B, orchestrating specialized downstream agents for coding, retrieval-augmented generation (RAG), and image understanding.
+Thanks to DGX Spark's out-of-the-box support for popular AI frameworks and libraries, development and prototyping are fast and frictionless.
 Together, these components demonstrate how complex, multimodal workflows can be executed efficiently on local, high-performance hardware.
 
 ## What you'll accomplish
 
 You will have a full-stack multi-agent chatbot system running on your DGX Spark, accessible through
-your local web browser. 
+your local web browser.
 The setup includes:
 - LLM and VLM model serving using llama.cpp servers and TensorRT LLM servers
-- GPU acceleration for both model inference and document retrieval
+- GPU acceleration for model inference
 - Multi-agent system orchestration using a supervisor agent powered by gpt-oss-120B
 - MCP (Model Context Protocol) servers as tools for the supervisor agent
+- Geode graph database for unified conversation storage and vector retrieval
 
 ## Prerequisites
 
@@ -38,7 +39,7 @@ The setup includes:
 -  Enough disk space for model downloads
 
 > [!NOTE]
-> This demo uses ~120 out of the 128GB of DGX Spark's memory by default. 
+> This demo uses ~120 out of the 128GB of DGX Spark's memory by default.
 > Please ensure that no other workloads are running on your Spark using `nvidia-smi`, or switch to a smaller supervisor model like gpt-oss-20B.
 
 
@@ -85,8 +86,8 @@ chmod +x model_download.sh
 ./model_download.sh
 ```
 
-The setup script will take care of pulling model GGUF files from HuggingFace. 
-The model files being pulled include gpt-oss-120B (~63GB), Deepseek-Coder:6.7B-Instruct (~7GB) and Qwen3-Embedding-4B (~4GB). 
+The setup script will take care of pulling model GGUF files from HuggingFace.
+The model files being pulled include gpt-oss-120B (~63GB), Deepseek-Coder:6.7B-Instruct (~7GB) and Qwen3-Embedding-4B (~4GB).
 This may take between 30 minutes to 2 hours depending on network speed.
 
 
@@ -95,7 +96,7 @@ This may take between 30 minutes to 2 hours depending on network speed.
 ```bash
   docker compose -f docker-compose.yml -f docker-compose-models.yml up -d --build
 ```
-This step builds the base llama.cpp server image and starts all the required docker services to serve models, the backend API server as well as the frontend UI. 
+This step builds the base llama.cpp server image and starts all the required docker services to serve models, the backend API server as well as the frontend UI.
 This step can take 10 to 20 minutes depending on network speed.
 Wait for all the containers to become ready and healthy.
 
@@ -117,7 +118,7 @@ Open your browser and go to: http://localhost:3000
 Click on any of the tiles on the frontend to try out the supervisor and the other agents.
 
 **RAG Agent**:
-Before trying out the example prompt for the RAG agent, upload the example PDF document [NVIDIA Blackwell Whitepaper](https://images.nvidia.com/aem-dam/Solutions/geforce/blackwell/nvidia-rtx-blackwell-gpu-architecture.pdf) 
+Before trying out the example prompt for the RAG agent, upload the example PDF document [NVIDIA Blackwell Whitepaper](https://images.nvidia.com/aem-dam/Solutions/geforce/blackwell/nvidia-rtx-blackwell-gpu-architecture.pdf)
 as context by going to the link, downloading the PDF to the local filesystem, clicking on the green "Upload Documents" button in the left sidebar under "Context", and then make sure to check the box in the "Select Sources" section.
 
 ## Step 8. Cleanup and rollback
@@ -129,7 +130,7 @@ From the root directory of the multi-agent-chatbot project, run the following co
 ```bash
 docker compose -f docker-compose.yml -f docker-compose-models.yml down
 
-docker volume rm "$(basename "$PWD")_postgres_data"
+docker volume rm "$(basename "$PWD")_geode_data"
 ```
 
 ## Step 9. Next steps
@@ -145,8 +146,8 @@ docker volume rm "$(basename "$PWD")_postgres_data"
 | Cannot access gated repo for URL | Certain HuggingFace models have restricted access | Regenerate your [HuggingFace token](https://huggingface.co/docs/hub/en/security-tokens); and request access to the [gated model](https://huggingface.co/docs/hub/en/models-gated#customize-requested-information) on your web browser |
 
 > [!NOTE]
-> DGX Spark uses a Unified Memory Architecture (UMA), which enables dynamic memory sharing between the GPU and CPU. 
-> With many applications still updating to take advantage of UMA, you may encounter memory issues even when within 
+> DGX Spark uses a Unified Memory Architecture (UMA), which enables dynamic memory sharing between the GPU and CPU.
+> With many applications still updating to take advantage of UMA, you may encounter memory issues even when within
 > the memory capacity of DGX Spark. If that happens, manually flush the buffer cache with:
 ```bash
 sudo sh -c 'sync; echo 3 > /proc/sys/vm/drop_caches'

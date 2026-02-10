@@ -15,53 +15,38 @@
 // limitations under the License.
 //
 import { NextRequest, NextResponse } from 'next/server';
-import { GraphDBType } from '@/lib/graph-db-service';
 
-// In-memory storage for settings - use lazy initialization for env vars
-// because they're not available at build time, only at runtime
+// In-memory storage for settings
 let serverSettings: Record<string, string> = {};
 let settingsInitialized = false;
 
-function ensureSettingsInitialized() {
+function ensureSettingsInitialized(): void {
   if (!settingsInitialized) {
-    // Read environment variables at runtime, not build time
     serverSettings = {
-      graph_db_type: process.env.GRAPH_DB_TYPE || 'arangodb',
-      neo4j_uri: process.env.NEO4J_URI || '',
-      neo4j_user: process.env.NEO4J_USER || process.env.NEO4J_USERNAME || '',
-      neo4j_password: process.env.NEO4J_PASSWORD || '',
-      arangodb_url: process.env.ARANGODB_URL || '',
-      arangodb_db: process.env.ARANGODB_DB || '',
+      graph_db_type: 'geode',
+      geode_url: process.env.GEODE_URL || '',
     };
     settingsInitialized = true;
-    console.log(`[SETTINGS] Initialized at runtime with GRAPH_DB_TYPE: "${serverSettings.graph_db_type}"`);
+    console.log('[SETTINGS] Initialized at runtime with graph_db_type: "geode"');
   }
 }
 
 /**
  * API Route to sync client settings with server environment variables
- * This allows us to use localStorage settings on the client side
- * and still access them as environment variables on the server side
  */
-export async function POST(request: NextRequest) {
+export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
-    // Ensure settings are initialized from env vars first
     ensureSettingsInitialized();
-    
+
     const { settings } = await request.json();
-    
+
     if (!settings || typeof settings !== 'object') {
       return NextResponse.json({ error: 'Settings object is required' }, { status: 400 });
     }
-    
-    // Update server settings (merge with existing)
-    serverSettings = { ...serverSettings, ...settings };
-    
-    // Log some important settings for debugging
-    if (settings.graph_db_type) {
-      console.log(`Setting graph database type to: ${settings.graph_db_type}`);
-    }
-    
+
+    // Merge but always enforce geode as the graph_db_type
+    serverSettings = { ...serverSettings, ...settings, graph_db_type: 'geode' };
+
     return NextResponse.json({
       success: true,
       message: 'Settings updated successfully'
@@ -77,22 +62,19 @@ export async function POST(request: NextRequest) {
  * GET /api/settings
  * Retrieve settings from the server side
  */
-export async function GET(request: NextRequest) {
+export async function GET(request: NextRequest): Promise<NextResponse> {
   try {
-    // Ensure settings are initialized from env vars first
     ensureSettingsInitialized();
-    
+
     const url = new URL(request.url);
     const key = url.searchParams.get('key');
-    
+
     if (key) {
-      // Return specific setting
       return NextResponse.json({
         [key]: serverSettings[key] || null
       });
     }
-    
-    // Return all settings (may want to filter sensitive ones in production)
+
     return NextResponse.json({
       settings: serverSettings
     });
@@ -104,8 +86,7 @@ export async function GET(request: NextRequest) {
 }
 
 /**
- * Helper function to get a setting value
- * For use in other API routes
+ * Helper function to get a setting value (for use in other API routes)
  */
 export function getSetting(key: string): string | null {
   ensureSettingsInitialized();
@@ -113,27 +94,8 @@ export function getSetting(key: string): string | null {
 }
 
 /**
- * Get the currently selected graph database type
- * Priority: serverSettings > environment variable > default 'arangodb'
+ * Get the currently selected graph database type -- always 'geode'
  */
-export function getGraphDbType(): GraphDBType {
-  // Ensure settings are initialized from runtime environment variables
-  ensureSettingsInitialized();
-  
-  // Check serverSettings (initialized from env vars or updated by client)
-  if (serverSettings.graph_db_type) {
-    console.log(`[getGraphDbType] Returning: "${serverSettings.graph_db_type}"`);
-    return serverSettings.graph_db_type as GraphDBType;
-  }
-  
-  // Direct fallback to runtime environment variable
-  const envType = process.env.GRAPH_DB_TYPE;
-  if (envType) {
-    console.log(`[getGraphDbType] Returning from env: "${envType}"`);
-    return envType as GraphDBType;
-  }
-  
-  // Default to arangodb for backwards compatibility
-  console.log(`[getGraphDbType] Returning default: "arangodb"`);
-  return 'arangodb';
-} 
+export function getGraphDbType(): 'geode' {
+  return 'geode';
+}

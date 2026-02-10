@@ -152,8 +152,8 @@ export function DocumentProcessor({ onComplete, className }: DocumentProcessorPr
         setProcessingStatus(`Processing ${triplesToProcess.length} triples...`);
         
         // Process document to create backend with embeddings
-        // NOTE: This API no longer automatically stores triples in Neo4j.
-        // Storage in Neo4j is now handled manually through the UI's "Store in Graph DB" button.
+        // NOTE: This API no longer automatically stores triples in Geode.
+        // Storage in Geode is now handled manually through the UI's "Store in Graph DB" button.
         const processingResponse = await fetch('/api/process-document', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -214,12 +214,12 @@ export function DocumentProcessor({ onComplete, className }: DocumentProcessorPr
     setProcessingStatus("Generating embeddings...");
 
     // Process document to create backend with embeddings
-    // NOTE: This API no longer automatically stores triples in Neo4j.
-    // Storage in Neo4j is now handled manually through the UI's "Store in Graph DB" button.
+    // NOTE: This API no longer automatically stores triples in Geode.
+    // Storage in Geode is now handled manually through the UI's "Store in Graph DB" button.
     const processingResponse = await fetch('/api/process-document', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ 
+      body: JSON.stringify({
         text,
         filename,
         triples

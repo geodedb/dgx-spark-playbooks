@@ -1,12 +1,11 @@
-# txt2kg Docker Compose - ArangoDB + Ollama (Default)
+# txt2kg Docker Compose - Geode + Ollama (Default)
 #
 # Default stack tested and working on DGX Spark
 #
 # Usage:
-#   ./start.sh                    # Default: ArangoDB + Ollama
-#   ./start.sh --vector-search    # Add Qdrant + Sentence Transformers
+#   ./start.sh                    # Default: Geode + Ollama
 #
-# For Neo4j + vLLM, use: ./start.sh --vllm
+# For Geode + vLLM, use: ./start.sh --vllm
 
 services:
   app:
@@ -16,76 +15,61 @@ services:
     ports:
       - '3001:3000'
     environment:
-      # ArangoDB configuration
-      - ARANGODB_URL=http://arangodb:8529
-      - ARANGODB_DB=txt2kg
-      - GRAPH_DB_TYPE=arangodb
-      # Disable Neo4j
-      - NEO4J_URI=bolt://localhost:7687
-      - NEO4J_USER=neo4j
-      - NEO4J_PASSWORD=password123
+      # Geode configuration (gRPC with server cert for TLS)
+      - GEODE_URL=grpc://geode:50051?ca_cert=/geode-data/server.crt&insecure_tls_skip_verify=true
+      - GEODE_USERNAME=geode
+      - GEODE_PASSWORD=${GEODE_ADMIN_PASSWORD:-geodesic}
+      - GRAPH_DB_TYPE=geode
       # Ollama configuration
       - OLLAMA_BASE_URL=http://ollama:11434/v1
       - OLLAMA_MODEL=llama3.1:8b
       # Disable vLLM
       - VLLM_BASE_URL=http://localhost:8001/v1
       - VLLM_MODEL=disabled
-      # Vector DB configuration
-      - QDRANT_URL=http://qdrant:6333
-      - VECTOR_DB_TYPE=qdrant
       # Embeddings configuration
       - LANGCHAIN_TRACING_V2=true
       - SENTENCE_TRANSFORMER_URL=http://sentence-transformers:80
       - MODEL_NAME=all-MiniLM-L6-v2
       - EMBEDDINGS_API_URL=http://sentence-transformers:80
       # Other settings
-      - GRPC_SSL_CIPHER_SUITES=HIGH+ECDSA:HIGH+aRSA
       - NODE_TLS_REJECT_UNAUTHORIZED=0
       - NVIDIA_API_KEY=${NVIDIA_API_KEY:-}
       - NODE_OPTIONS=--max-http-header-size=80000
       - UV_THREADPOOL_SIZE=128
       - HTTP_TIMEOUT=1800000
       - REQUEST_TIMEOUT=1800000
+    volumes:
+      - geode_data:/geode-data:ro
     networks:
       - default
       - txt2kg-network
-      - qdrant-net
     depends_on:
-      arangodb:
-        condition: service_started
+      geode:
+        condition: service_healthy
       ollama:
         condition: service_started
 
-  # ArangoDB - Graph database
-  arangodb:
-    image: arangodb:latest
+  # Geode - Graph + Vector database
+  geode:
+    build:
+      context: ../../../../../../geode
+      dockerfile: Dockerfile
+    container_name: geode
+    command: ["--data-dir", "/data", "--listen-grpc", "0.0.0.0:50051"]
     ports:
-      - '8529:8529'
+      - '3141:3141/udp'
+      - '50051:50051'
     environment:
-      - ARANGO_NO_AUTH=1
+      - GEODE_ADMIN_PASSWORD=${GEODE_ADMIN_PASSWORD:-geodesic}
     volumes:
-      - arangodb_data:/var/lib/arangodb3
-      - arangodb_apps_data:/var/lib/arangodb3-apps
-    networks:
-      - default
+      - geode_data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "geode query 'RETURN 1 AS health' --server 127.0.0.1:3141 --insecure-tls-skip-verify -U geode -P \"$$GEODE_ADMIN_PASSWORD\""]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
     restart: unless-stopped
-
-  # ArangoDB initialization - create database
-  arangodb-init:
-    image: arangodb:latest
-    depends_on:
-      arangodb:
-        condition: service_started
-    restart: on-failure
-    entrypoint: >
-      sh -c "
-        echo 'Waiting for ArangoDB to start...' &&
-        sleep 10 &&
-        echo 'Creating txt2kg database...' &&
-        arangosh --server.endpoint tcp://arangodb:8529 --server.authentication false --javascript.execute-string 'try { db._createDatabase(\"txt2kg\"); console.log(\"Database txt2kg created successfully!\"); } catch(e) { if(e.message.includes(\"duplicate\")) { console.log(\"Database txt2kg already exists\"); } else { throw e; } }'
-      "
-    networks:
-      - default
 
   # Ollama - Local LLM inference
   ollama:
@@ -126,7 +110,7 @@ services:
       retries: 3
       start_period: 60s
 
-  # Optional: Vector search services
+  # Sentence Transformers - Embedding service
   sentence-transformers:
     build:
       context: ../services/sentence-transformers
@@ -138,56 +122,13 @@ services:
     networks:
       - default
     restart: unless-stopped
-    profiles:
-      - vector-search
-
-  qdrant:
-    image: qdrant/qdrant:latest
-    container_name: qdrant
-    ports:
-      - "6333:6333"
-      - "6334:6334"
-    volumes:
-      - qdrant_data:/qdrant/storage
-    networks:
-      - qdrant-net
-    restart: unless-stopped
-    profiles:
-      - vector-search
-
-  qdrant-init:
-    image: curlimages/curl:latest
-    depends_on:
-      - qdrant
-    restart: "no"
-    entrypoint: /bin/sh
-    command:
-      - -c
-      - |
-        echo 'Waiting for Qdrant to start...'
-        sleep 5
-        curl -X PUT http://qdrant:6333/collections/entity-embeddings \
-          -H 'Content-Type: application/json' \
-          -d '{"vectors":{"size":384,"distance":"Cosine"}}' || true
-        curl -X PUT http://qdrant:6333/collections/document-embeddings \
-          -H 'Content-Type: application/json' \
-          -d '{"vectors":{"size":384,"distance":"Cosine"}}' || true
-        echo 'Collections created'
-    networks:
-      - qdrant-net
-    profiles:
-      - vector-search
 
 volumes:
-  arangodb_data:
-  arangodb_apps_data:
+  geode_data:
   ollama_data:
-  qdrant_data:
 
 networks:
   default:
     driver: bridge
   txt2kg-network:
     driver: bridge
-  qdrant-net:
-    name: qdrant-network

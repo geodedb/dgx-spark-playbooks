@@ -1,14 +1,14 @@
-# Chatbot Spark: A Local Multi-Agent System for DGX Spark 
+# Chatbot Spark: A Local Multi-Agent System for DGX Spark
 
 ## Project Overview
 
-Chatbot Spark is a fully local multi-agent system built on DGX Spark. With 128GB of unified memory, DGX Spark can run multiple LLMs and VLMs in parallel — enabling interactions across agents. 
+Chatbot Spark is a fully local multi-agent system built on DGX Spark. With 128GB of unified memory, DGX Spark can run multiple LLMs and VLMs in parallel — enabling interactions across agents.
 
-At the core is a supervisor agent powered by GPT-OSS-120B, orchestrating specialized downstream agents for coding, retrieval-augmented generation (RAG), and image understanding. Thanks to DGX Spark’s out-of-the-box support for popular AI frameworks and libraries, development and prototyping were fast and frictionless. Together, these components demonstrate how complex, multimodal workflows can be executed efficiently on local, high-performance hardware.
+At the core is a supervisor agent powered by GPT-OSS-120B, orchestrating specialized downstream agents for coding, retrieval-augmented generation (RAG), and image understanding. Thanks to DGX Spark's out-of-the-box support for popular AI frameworks and libraries, development and prototyping were fast and frictionless. Together, these components demonstrate how complex, multimodal workflows can be executed efficiently on local, high-performance hardware.
 
 > **Note**: This demo uses ~120 out of the 128GB of DGX Spark's memory by default, so ensure that no other workloads are running on your Spark using `nvidia-smi` or switch to a smaller supervisor model like gpt-oss-20B.
 
-This project was built to be customizable, serving as a framework that developers can customize. 
+This project was built to be customizable, serving as a framework that developers can customize.
 
 ## Key Features
   - **MCP Server Integration**: Chatbot Spark also showcases the ability to connect to custom MCP servers through a simple and customizable multi-server client
@@ -17,9 +17,9 @@ This project was built to be customizable, serving as a framework that developer
 
   - **Easily Swappable Models**: Models are loaded and served using Llama CPP and Ollama and served through the OpenAI API. Any OpenAI-compatible model can be integrated into the project.
 
-  - **Vector Indexing & Retrieval**: GPU-accelerated Milvus for high-performance document retrieval.
+  - **Graph + Vector Database**: Geode unified database for conversation storage, metadata management, and vector similarity search with native GQL support.
 
-  - **Real-time LLM Streaming**: We present custom LLM-streaming infrastructure, making it easy for developers to stream supervisor responses from any OpenAI compatible model. 
+  - **Real-time LLM Streaming**: We present custom LLM-streaming infrastructure, making it easy for developers to stream supervisor responses from any OpenAI compatible model.
 
   - **gpt-oss Integration**: The default chat/tool-calling model is gpt-oss:120b, providing seamless integration with OpenAI's latest open sorce tool-calling model.
 
@@ -68,7 +68,7 @@ docker compose -f docker-compose.yml -f docker-compose-models.yml up -d --build
 ```
 > Note: Qwen2.5 VL model container may be reported as unhealthy while starting up, which can be ignored.
 
-Wait for all the containers to become ready and healthy. 
+Wait for all the containers to become ready and healthy.
 ```bash
 watch 'docker ps --format "table {{.ID}}\t{{.Names}}\t{{.Status}}"'
 ```
@@ -118,7 +118,7 @@ From the root directory of the multi-agent-chatbot project, run the following co
 ```bash
 docker compose -f docker-compose.yml -f docker-compose-models.yml down
 
-docker volume rm "$(basename "$PWD")_postgres_data"
+docker volume rm "$(basename "$PWD")_geode_data"
 sudo sh -c 'sync; echo 3 > /proc/sys/vm/drop_caches'
 ```
 You can optionally run `docker volume prune` to remove all unused volumes at the end of the demo.
@@ -132,7 +132,7 @@ You can use swap the model that the supervisor agent is using, for example to gp
 
 1. In `setup.sh`, uncomment the line to download gpt-oss-20b.
 > Note: If you already have the model files downloaded, you can skip to step 2.
-2. In `docker-compose-models.yml`, uncomment the block for gpt-oss-20b. 
+2. In `docker-compose-models.yml`, uncomment the block for gpt-oss-20b.
 > Note: Since the default models use all of the existing VRAM, you will need to comment out the block for gpt-oss-120b in `docker-compose-models.yml`.
 3. In `docker-compose.yml`, add `gpt-oss-20b` to the `MODELS` environment variable (line 40).
 > Note: This name should match the container name that you set for this model in `docker-compose-models.yml`.

@@ -20,17 +20,17 @@ The unified memory architecture enables running larger, more accurate models tha
 
 This txt2kg playbook transforms unstructured text documents into structured knowledge graphs using:
 - **Knowledge Triple Extraction**: Using Ollama with GPU acceleration for local LLM inference to extract subject-predicate-object relationships
-- **Graph Database Storage**: ArangoDB for storing and querying knowledge triples with relationship traversal
+- **Graph + Vector Database**: Geode for storing knowledge triples, vector embeddings, and document chunks
 - **GPU-Accelerated Visualization**: Three.js WebGPU rendering for interactive 2D/3D graph exploration
 
-> **Future Enhancements**: Vector embeddings and GraphRAG capabilities are planned enhancements.
+> **Future Enhancements**: GraphRAG capabilities with vector-based KNN search for entity retrieval are planned.
 
 ## What you'll accomplish
 
 You will have a fully functional system capable of processing documents, generating and editing knowledge graphs, and providing querying, accessible through an interactive web interface.
 The setup includes:
 - **Local LLM Inference**: Ollama for GPU-accelerated LLM inference with no API keys required
-- **Graph Database**: ArangoDB for storing and querying triples with relationship traversal
+- **Graph + Vector Database**: Geode with unified graph and vector capabilities
 - **Interactive Visualization**: GPU-accelerated graph rendering with Three.js WebGPU
 - **Modern Web Interface**: Next.js frontend with document management and query interface
 - **Fully Containerized**: Reproducible deployment with Docker Compose and GPU support
@@ -54,12 +54,11 @@ The setup includes:
   - Document processing time scales with document size and complexity
 
 - **Rollback**: Stop and remove Docker containers, delete downloaded models if needed
-- **Last Updated**: 01/08/2025
-  - Migrated from Pinecone to Qdrant for ARM64 compatibility
-  - Added vLLM support with Neo4j
+- **Last Updated**: 02/09/2026
+  - Migrated to Geode unified graph+vector database
+  - Added vLLM support for GPU-accelerated inference
   - Added Palette UI components with accessibility improvements
   - Added CPU-only mode for development (`./start.sh --cpu`)
-  - Optimized ArangoDB with deterministic keys and BM25 search
   - Added GNN preprocessing scripts for knowledge graph training
 
 ## Instructions
@@ -75,7 +74,7 @@ cd dgx-spark-playbooks/nvidia/txt2kg/assets
 
 ## Step 2. Start the txt2kg services
 
-Use the provided start script to launch all required services. This will set up Ollama, ArangoDB, and the Next.js frontend:
+Use the provided start script to launch all required services. This will set up Ollama, Geode, and the Next.js frontend:
 
 ```bash
 ./start.sh
@@ -84,7 +83,6 @@ Use the provided start script to launch all required services. This will set up 
 The script will automatically:
 - Check for GPU availability
 - Start Docker Compose services
-- Set up ArangoDB database
 - Launch the web interface
 
 ## Step 3. Pull an Ollama model (optional)
@@ -109,7 +107,7 @@ http://localhost:3001
 ```
 
 You can also access individual services:
-- **ArangoDB Web Interface**: http://localhost:8529 
+- **Geode**: quic://localhost:3141
 - **Ollama API**: http://localhost:11434
 
 ## Step 5. Upload documents and build knowledge graphs
@@ -120,7 +118,7 @@ You can also access individual services:
 
 #### 5.2. Knowledge Graph Generation
 - The system extracts subject-predicate-object triples using Ollama
-- Triples are stored in ArangoDB for relationship querying
+- Triples are stored in Geode for relationship querying and vector search
 
 #### 5.3. Interactive Visualization
 - View your knowledge graph in 2D or 3D with GPU-accelerated rendering
@@ -128,7 +126,7 @@ You can also access individual services:
 
 #### 5.4. Graph-based Queries
 - Ask questions about your documents using the query interface
-- Graph traversal enhances context with entity relationships from ArangoDB
+- Graph traversal enhances context with entity relationships from Geode
 - LLM generates responses using the enriched graph context
 
 > **Future Enhancement**: GraphRAG capabilities with vector-based KNN search for entity retrieval are planned.
@@ -161,11 +159,11 @@ docker exec ollama-compose ollama rm llama3.1:8b
 | Ollama performance issues | Suboptimal settings for DGX Spark | Set environment variables:<br>`OLLAMA_FLASH_ATTENTION=1` (enables flash attention for better performance)<br>`OLLAMA_KEEP_ALIVE=30m` (keeps model loaded for 30 minutes)<br>`OLLAMA_MAX_LOADED_MODELS=1` (avoids VRAM contention)<br>`OLLAMA_KV_CACHE_TYPE=q8_0` (reduces KV cache VRAM with minimal performance impact) |
 | VRAM exhausted or memory pressure (e.g. when switching between Ollama models) | Linux buffer cache consuming GPU memory | Flush buffer cache: `sudo sync; sudo sh -c 'echo 3 > /proc/sys/vm/drop_caches'` |
 | Slow triple extraction | Large model or large context window | Reduce document chunk size or use faster models |
-| ArangoDB connection refused | Service not fully started | Wait 30s after start.sh, verify with `docker ps` |
+| Geode connection refused | Service not fully started | Wait 30s after start.sh, verify with `docker ps` |
 
 > [!NOTE]
-> DGX Spark uses a Unified Memory Architecture (UMA), which enables dynamic memory sharing between the GPU and CPU. 
-> With many applications still updating to take advantage of UMA, you may encounter memory issues even when within 
+> DGX Spark uses a Unified Memory Architecture (UMA), which enables dynamic memory sharing between the GPU and CPU.
+> With many applications still updating to take advantage of UMA, you may encounter memory issues even when within
 > the memory capacity of DGX Spark. If that happens, manually flush the buffer cache with:
 ```bash
 sudo sh -c 'sync; echo 3 > /proc/sys/vm/drop_caches'

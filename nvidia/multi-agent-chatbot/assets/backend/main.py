@@ -38,24 +38,22 @@ from agent import ChatAgent
 from config import ConfigManager
 from logger import logger, log_request, log_response, log_error
 from models import ChatIdRequest, ChatRenameRequest, SelectedModelRequest
-from postgres_storage import PostgreSQLConversationStorage
+from geode_storage import GeodeConversationStorage
 from utils import process_and_ingest_files_background
-from vector_store import create_vector_store_with_config
+from geode_vector_store import create_vector_store_with_config
 
-POSTGRES_HOST = os.getenv("POSTGRES_HOST", "postgres")
-POSTGRES_PORT = int(os.getenv("POSTGRES_PORT", 5432))
-POSTGRES_DB = os.getenv("POSTGRES_DB", "chatbot")
-POSTGRES_USER = os.getenv("POSTGRES_USER", "chatbot_user")
-POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD", "chatbot_password")
+GEODE_HOST = os.getenv("GEODE_HOST", "geode")
+GEODE_PORT = int(os.getenv("GEODE_PORT", "3141"))
+GEODE_USERNAME = os.getenv("GEODE_USERNAME", "")
+GEODE_PASSWORD = os.getenv("GEODE_PASSWORD", "")
 
 config_manager = ConfigManager("./config.json")
 
-postgres_storage = PostgreSQLConversationStorage(
-    host=POSTGRES_HOST,
-    port=POSTGRES_PORT,
-    database=POSTGRES_DB,
-    user=POSTGRES_USER,
-    password=POSTGRES_PASSWORD
+geode_storage = GeodeConversationStorage(
+    host=GEODE_HOST,
+    port=GEODE_PORT,
+    username=GEODE_USERNAME,
+    password=GEODE_PASSWORD
 )
 
 vector_store = create_vector_store_with_config(config_manager)
@@ -70,29 +68,29 @@ indexing_tasks: Dict[str, str] = {}
 async def lifespan(app: FastAPI):
     """Application lifespan manager for startup and shutdown tasks."""
     global agent
-    logger.debug("Initializing PostgreSQL storage and agent...")
-    
+    logger.debug("Initializing Geode storage and agent...")
+
     try:
-        await postgres_storage.init_pool()
-        logger.info("PostgreSQL storage initialized successfully")
+        await geode_storage.init_pool()
+        logger.info("Geode storage initialized successfully")
         logger.debug("Initializing ChatAgent...")
         agent = await ChatAgent.create(
             vector_store=vector_store,
             config_manager=config_manager,
-            postgres_storage=postgres_storage
+            geode_storage=geode_storage
         )
         logger.info("ChatAgent initialized successfully.")
     except Exception as e:
-        logger.error(f"Failed to initialize PostgreSQL storage: {e}")
+        logger.error(f"Failed to initialize Geode storage: {e}")
         raise
 
     yield
-    
+
     try:
-        await postgres_storage.close()
-        logger.debug("PostgreSQL storage closed successfully")
+        await geode_storage.close()
+        logger.debug("Geode storage closed successfully")
     except Exception as e:
-        logger.error(f"Error closing PostgreSQL storage: {e}")
+        logger.error(f"Error closing Geode storage: {e}")
 
 
 app = FastAPI(
@@ -114,7 +112,7 @@ app.add_middleware(
 @app.websocket("/ws/chat/{chat_id}")
 async def websocket_endpoint(websocket: WebSocket, chat_id: str):
     """WebSocket endpoint for real-time chat communication.
-    
+
     Args:
         websocket: WebSocket connection
         chat_id: Unique chat identifier
@@ -123,33 +121,33 @@ async def websocket_endpoint(websocket: WebSocket, chat_id: str):
     try:
         await websocket.accept()
         logger.debug(f"WebSocket connection accepted for chat_id: {chat_id}")
-        
-        history_messages = await postgres_storage.get_messages(chat_id)
-        history = [postgres_storage._message_to_dict(msg) for i, msg in enumerate(history_messages) if i != 0]
+
+        history_messages = await geode_storage.get_messages(chat_id)
+        history = [geode_storage._message_to_dict(msg) for i, msg in enumerate(history_messages) if i != 0]
         await websocket.send_json({"type": "history", "messages": history})
-        
+
         while True:
             data = await websocket.receive_text()
             client_message = json.loads(data)
             new_message = client_message.get("message")
             image_id = client_message.get("image_id")
-            
+
             image_data = None
             if image_id:
-                image_data = await postgres_storage.get_image(image_id)
+                image_data = await geode_storage.get_image(image_id)
                 logger.debug(f"Retrieved image data for image_id: {image_id}, data length: {len(image_data) if image_data else 0}")
-            
+
             try:
                 async for event in agent.query(query_text=new_message, chat_id=chat_id, image_data=image_data):
                     await websocket.send_json(event)
             except Exception as query_error:
                 logger.error(f"Error in agent.query: {str(query_error)}", exc_info=True)
                 await websocket.send_json({"type": "error", "content": f"Error processing request: {str(query_error)}"})
-        
-            final_messages = await postgres_storage.get_messages(chat_id)
-            final_history = [postgres_storage._message_to_dict(msg) for i, msg in enumerate(final_messages) if i != 0]
+
+            final_messages = await geode_storage.get_messages(chat_id)
+            final_history = [geode_storage._message_to_dict(msg) for i, msg in enumerate(final_messages) if i != 0]
             await websocket.send_json({"type": "history", "messages": final_history})
-            
+
     except WebSocketDisconnect:
         logger.debug(f"Client disconnected from chat {chat_id}")
     except Exception as e:
@@ -159,11 +157,11 @@ async def websocket_endpoint(websocket: WebSocket, chat_id: str):
 @app.post("/upload-image")
 async def upload_image(image: UploadFile = File(...), chat_id: str = Form(...)):
     """Upload and store an image for chat processing.
-    
+
     Args:
         image: Uploaded image file
         chat_id: Chat identifier for context
-        
+
     Returns:
         Dictionary with generated image_id
     """
@@ -171,26 +169,26 @@ async def upload_image(image: UploadFile = File(...), chat_id: str = Form(...)):
     image_base64 = base64.b64encode(image_data).decode('utf-8')
     data_uri = f"data:{image.content_type};base64,{image_base64}"
     image_id = str(uuid.uuid4())
-    await postgres_storage.store_image(image_id, data_uri)
+    await geode_storage.store_image(image_id, data_uri)
     return {"image_id": image_id}
 
 
 @app.post("/ingest")
 async def ingest_files(files: Optional[List[UploadFile]] = File(None), background_tasks: BackgroundTasks = None):
     """Ingest documents for vector search and RAG.
-    
+
     Args:
         files: List of uploaded files to process
         background_tasks: FastAPI background tasks manager
-        
+
     Returns:
         Task information for tracking ingestion progress
     """
     try:
         log_request({"file_count": len(files) if files else 0}, "/ingest")
-        
+
         task_id = str(uuid.uuid4())
-        
+
         file_info = []
         for file in files:
             content = await file.read()
@@ -198,9 +196,9 @@ async def ingest_files(files: Optional[List[UploadFile]] = File(None), backgroun
                 "filename": file.filename,
                 "content": content
             })
-        
+
         indexing_tasks[task_id] = "queued"
-        
+
         background_tasks.add_task(
             process_and_ingest_files_background,
             file_info,
@@ -209,17 +207,17 @@ async def ingest_files(files: Optional[List[UploadFile]] = File(None), backgroun
             task_id,
             indexing_tasks
         )
-        
+
         response = {
             "message": f"Files queued for processing. Indexing {len(files)} files in the background.",
             "files": [file.filename for file in files],
             "status": "queued",
             "task_id": task_id
         }
-        
+
         log_response(response, "/ingest")
         return response
-            
+
     except Exception as e:
         log_error(e, "/ingest")
         raise HTTPException(
@@ -231,10 +229,10 @@ async def ingest_files(files: Optional[List[UploadFile]] = File(None), backgroun
 @app.get("/ingest/status/{task_id}")
 async def get_indexing_status(task_id: str):
     """Get the status of a file ingestion task.
-    
+
     Args:
         task_id: Unique task identifier
-        
+
     Returns:
         Current task status
     """
@@ -267,7 +265,7 @@ async def get_selected_sources():
 @app.post("/selected_sources")
 async def update_selected_sources(selected_sources: List[str]):
     """Update the selected document sources for RAG.
-    
+
     Args:
         selected_sources: List of source names to use for retrieval
     """
@@ -291,7 +289,7 @@ async def get_selected_model():
 @app.post("/selected_model")
 async def update_selected_model(request: SelectedModelRequest):
     """Update the selected LLM model.
-    
+
     Args:
         request: Model selection request with model name
     """
@@ -317,7 +315,7 @@ async def get_available_models():
 async def list_chats():
     """Get list of all chat conversations."""
     try:
-        chat_ids = await postgres_storage.list_conversations()
+        chat_ids = await geode_storage.list_conversations()
         return {"chats": chat_ids}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error listing chats: {str(e)}")
@@ -329,20 +327,20 @@ async def get_chat_id():
     try:
         config = config_manager.read_config()
         current_chat_id = config.current_chat_id
-        
-        if current_chat_id and await postgres_storage.exists(current_chat_id):
+
+        if current_chat_id and await geode_storage.exists(current_chat_id):
             return {
                 "status": "success",
                 "chat_id": current_chat_id
             }
-        
+
         new_chat_id = str(uuid.uuid4())
-        
-        await postgres_storage.save_messages_immediate(new_chat_id, [])
-        await postgres_storage.set_chat_metadata(new_chat_id, f"Chat {new_chat_id[:8]}")
-        
+
+        await geode_storage.save_messages_immediate(new_chat_id, [])
+        await geode_storage.set_chat_metadata(new_chat_id, f"Chat {new_chat_id[:8]}")
+
         config_manager.updated_current_chat_id(new_chat_id)
-        
+
         return {
             "status": "success",
             "chat_id": new_chat_id
@@ -357,7 +355,7 @@ async def get_chat_id():
 @app.post("/chat_id")
 async def update_chat_id(request: ChatIdRequest):
     """Update the current active chat ID.
-    
+
     Args:
         request: Chat ID update request
     """
@@ -378,15 +376,15 @@ async def update_chat_id(request: ChatIdRequest):
 @app.get("/chat/{chat_id}/metadata")
 async def get_chat_metadata(chat_id: str):
     """Get metadata for a specific chat.
-    
+
     Args:
         chat_id: Unique chat identifier
-        
+
     Returns:
         Chat metadata including name
     """
     try:
-        metadata = await postgres_storage.get_chat_metadata(chat_id)
+        metadata = await geode_storage.get_chat_metadata(chat_id)
         return metadata
     except Exception as e:
         raise HTTPException(
@@ -398,12 +396,12 @@ async def get_chat_metadata(chat_id: str):
 @app.post("/chat/rename")
 async def rename_chat(request: ChatRenameRequest):
     """Rename a chat conversation.
-    
+
     Args:
         request: Chat rename request with chat_id and new_name
     """
     try:
-        await postgres_storage.set_chat_metadata(request.chat_id, request.new_name)
+        await geode_storage.set_chat_metadata(request.chat_id, request.new_name)
         return {
             "status": "success",
             "message": f"Chat {request.chat_id} renamed to {request.new_name}"
@@ -420,11 +418,11 @@ async def create_new_chat():
     """Create a new chat conversation and set it as current."""
     try:
         new_chat_id = str(uuid.uuid4())
-        await postgres_storage.save_messages_immediate(new_chat_id, [])
-        await postgres_storage.set_chat_metadata(new_chat_id, f"Chat {new_chat_id[:8]}")
-        
+        await geode_storage.save_messages_immediate(new_chat_id, [])
+        await geode_storage.set_chat_metadata(new_chat_id, f"Chat {new_chat_id[:8]}")
+
         config_manager.updated_current_chat_id(new_chat_id)
-        
+
         return {
             "status": "success",
             "message": "New chat created",
@@ -440,13 +438,13 @@ async def create_new_chat():
 @app.delete("/chat/{chat_id}")
 async def delete_chat(chat_id: str):
     """Delete a specific chat and its messages.
-    
+
     Args:
         chat_id: Unique chat identifier to delete
     """
     try:
-        success = await postgres_storage.delete_conversation(chat_id)
-        
+        success = await geode_storage.delete_conversation(chat_id)
+
         if success:
             return {
                 "status": "success",
@@ -468,19 +466,19 @@ async def delete_chat(chat_id: str):
 async def clear_all_chats():
     """Clear all chat conversations and create a new default chat."""
     try:
-        chat_ids = await postgres_storage.list_conversations()
+        chat_ids = await geode_storage.list_conversations()
         cleared_count = 0
-        
+
         for chat_id in chat_ids:
-            if await postgres_storage.delete_conversation(chat_id):
+            if await geode_storage.delete_conversation(chat_id):
                 cleared_count += 1
-        
+
         new_chat_id = str(uuid.uuid4())
-        await postgres_storage.save_messages_immediate(new_chat_id, [])
-        await postgres_storage.set_chat_metadata(new_chat_id, f"Chat {new_chat_id[:8]}")
-        
+        await geode_storage.save_messages_immediate(new_chat_id, [])
+        await geode_storage.set_chat_metadata(new_chat_id, f"Chat {new_chat_id[:8]}")
+
         config_manager.updated_current_chat_id(new_chat_id)
-        
+
         return {
             "status": "success",
             "message": f"Cleared {cleared_count} chats and created new chat",
@@ -497,7 +495,7 @@ async def clear_all_chats():
 @app.delete("/collections/{collection_name}")
 async def delete_collection(collection_name: str):
     """Delete a document collection from the vector store.
-    
+
     Args:
         collection_name: Name of the collection to delete
     """

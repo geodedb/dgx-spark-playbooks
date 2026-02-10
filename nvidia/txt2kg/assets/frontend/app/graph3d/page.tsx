@@ -22,7 +22,7 @@
  * This page provides a 3D visualization of knowledge graphs with multiple data source options:
  * 
  * Usage:
- * 1. Stored triples: /graph3d?source=stored - Uses triples from the graph database (ArangoDB/Neo4j)
+ * 1. Stored triples: /graph3d?source=stored - Uses triples from the graph database (Geode)
  * 2. URL triples: /graph3d?triples=[...] - Uses triples passed directly in URL parameters
  * 3. localStorage: /graph3d?storageId=xyz - Uses triples from browser localStorage
  * 4. Sample data: /graph3d - Uses built-in sample data when no other source is available
