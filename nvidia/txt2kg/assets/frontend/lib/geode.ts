@@ -118,10 +118,17 @@ export class GeodeService {
 
         const escaped = (s: string) => s.replace(/'/g, "\\'");
         try {
+          // MERGE nodes first, then MATCH+CREATE the relationship
+          // (Geode does not support MERGE for relationship creation)
           await this.client!.exec(
-            `MERGE (s:Entity {name: '${escaped(subject)}'})
-             MERGE (o:Entity {name: '${escaped(object)}'})
-             MERGE (s)-[:RELATIONSHIP {type: '${escaped(predicate)}'}]->(o)`
+            `MERGE (s:Entity {name: '${escaped(subject)}'})`
+          );
+          await this.client!.exec(
+            `MERGE (o:Entity {name: '${escaped(object)}'})`
+          );
+          await this.client!.exec(
+            `MATCH (s:Entity {name: '${escaped(subject)}'}), (o:Entity {name: '${escaped(object)}'})
+             CREATE (s)-[:RELATIONSHIP {type: '${escaped(predicate)}'}]->(o)`
           );
         } catch (err) {
           console.warn('Error importing triple, skipping:', err);
