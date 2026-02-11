@@ -1,9 +1,14 @@
 # Override for DGX Spark (aarch64) testing
 # - Uses pre-built Geode image
-# - TCP health check workaround: geode query times out properly now (#424 partial fix)
-#   but TLS handshake still fails on aarch64 loopback, so health check can't succeed
+# - gRPC transport (QUIC TLS still hangs on aarch64 loopback - #424)
+# - TCP health check workaround
 
 services:
+  backend:
+    environment:
+      - GEODE_PORT=50051
+      - GEODE_TRANSPORT=grpc
+
   geode:
     image: geode:latest
     build: !reset null

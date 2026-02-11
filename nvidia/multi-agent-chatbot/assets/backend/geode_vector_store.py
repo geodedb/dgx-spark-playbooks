@@ -23,7 +23,7 @@ import uuid
 from typing import List, Optional, Callable
 
 import requests
-from geode_client import Client
+from geode_client import Client, TransportType
 from langchain_core.documents import Document
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_unstructured import UnstructuredLoader
@@ -108,7 +108,9 @@ class GeodeVectorStore:
             self.username = username
             self.password = password
             self.on_source_deleted = on_source_deleted
-            kwargs = {"skip_verify": True}
+            transport_str = os.getenv("GEODE_TRANSPORT", "quic").lower()
+            transport = TransportType.GRPC if transport_str == "grpc" else TransportType.QUIC
+            kwargs = {"skip_verify": True, "transport_type": transport}
             if username:
                 kwargs["username"] = username
             if password:
