@@ -1,0 +1,5 @@
+# Override to use the external chatbot-net network created by the app compose
+networks:
+  default:
+    name: chatbot-net
+    external: true

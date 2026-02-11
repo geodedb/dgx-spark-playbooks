@@ -1,0 +1,15 @@
+# Override for DGX Spark (aarch64) testing
+# - Uses pre-built Geode image
+# - TCP health check workaround: geode query times out properly now (#424 partial fix)
+#   but TLS handshake still fails on aarch64 loopback, so health check can't succeed
+
+services:
+  geode:
+    image: geode:latest
+    build: !reset null
+    healthcheck:
+      test: ["CMD-SHELL", "ss -tlnp | grep -q ':50051'"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
