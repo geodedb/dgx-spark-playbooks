@@ -34,6 +34,9 @@ services:
         restart: false
 
   geode:
+    # Use pre-built image instead of building from source
+    image: geode:latest
+    build: !reset null
     # Replace broken health check (geode query hangs on aarch64 - #424)
     # Check that gRPC port 50051 is listening instead
     healthcheck:
