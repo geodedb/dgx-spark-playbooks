@@ -322,17 +322,16 @@ export class GeodeService {
 
     try {
       const embStr = `[${queryEmbedding.join(',')}]`;
+      // Use RETURN clause for vector_cosine (WITH clause causes TypeMismatch — geode#476)
       const rows = await this.client!.queryAll(
         `MATCH (e:Entity)
          WHERE e.embedding IS NOT NULL
-         WITH e, vector_cosine(e.embedding, vectorf32(${embStr})) AS score
-         WHERE score > 0.1
-         RETURN e.name AS name
+         RETURN e.name AS name, vector_cosine(e.embedding, vectorf32(${embStr})) AS score
          ORDER BY score DESC
          LIMIT ${topK}`
       );
 
-      return rows.map((r: any) => r.name as string);
+      return rows.filter((r: any) => (r.score as number) > 0.1).map((r: any) => r.name as string);
     } catch (error) {
       console.log('Error finding similar entities:', error);
       return [];
@@ -350,19 +349,19 @@ export class GeodeService {
 
     try {
       const embStr = `[${embedding.join(',')}]`;
+      // Use RETURN clause for vector_cosine (WITH clause causes TypeMismatch — geode#476)
       const rows = await this.client!.queryAll(
         `MATCH (e:Entity)
          WHERE e.embedding IS NOT NULL
-         WITH e, vector_cosine(e.embedding, vectorf32(${embStr})) AS score
-         WHERE score > 0.1
-         RETURN e.name AS name, score, e.text AS text
+         RETURN e.name AS name, vector_cosine(e.embedding, vectorf32(${embStr})) AS score, e.text AS text
          ORDER BY score DESC
          LIMIT ${limit}`
       );
 
-      const entities = rows.map((r: any) => r.name as string);
+      const filtered = rows.filter((r: any) => (r.score as number) > 0.1);
+      const entities = filtered.map((r: any) => r.name as string);
       const metadataMap = new Map<string, any>();
-      for (const r of rows) {
+      for (const r of filtered) {
         metadataMap.set(r.name as string, {
           score: r.score,
           text: r.text,
@@ -421,17 +420,16 @@ export class GeodeService {
 
     try {
       const embStr = `[${queryEmbedding.join(',')}]`;
+      // Use RETURN clause for vector_cosine (WITH clause causes TypeMismatch — geode#476)
       const rows = await this.client!.queryAll(
         `MATCH (d:DocumentChunk)
          WHERE d.embedding IS NOT NULL
-         WITH d, vector_cosine(d.embedding, vectorf32(${embStr})) AS score
-         WHERE score > 0.1
-         RETURN d.text AS text, d.source AS source, score, id(d) AS docId
+         RETURN d.text AS text, d.source AS source, vector_cosine(d.embedding, vectorf32(${embStr})) AS score, id(d) AS docId
          ORDER BY score DESC
          LIMIT ${topK}`
       );
 
-      return rows.map((r: any) => ({
+      return rows.filter((r: any) => (r.score as number) > 0.1).map((r: any) => ({
         id: String(r.docId),
         score: r.score as number,
         metadata: {

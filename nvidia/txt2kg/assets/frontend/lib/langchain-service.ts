@@ -285,14 +285,11 @@ export class LangChainService {
       const model = new ChatOpenAI({
         modelName: modelId,
         temperature: options?.temperature || 0.7,
-        maxTokens: options?.maxTokens || 8192,
+        maxTokens: options?.maxTokens || 4096,
         openAIApiKey: 'vllm', // vLLM doesn't require a real API key
         configuration: {
           baseURL: baseURL,
-          timeout: 120000, // 2 minute timeout for vLLM inference
-        },
-        modelKwargs: {
-          "response_format": { "type": "text" }
+          timeout: 900000, // 15 minute timeout for vLLM inference (reasoning models generate long <think> chains)
         }
       });
       

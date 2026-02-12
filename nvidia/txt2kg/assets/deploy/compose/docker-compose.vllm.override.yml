@@ -1,0 +1,23 @@
+# Override for DGX Spark (aarch64) - vLLM variant
+# Fixes Geode health check (geode query hangs on aarch64 - #424)
+# Uses pre-built Geode image
+
+services:
+  app:
+    environment:
+      # Disable LangSmith tracing (no API key available, causes 403 on model test)
+      - LANGCHAIN_TRACING_V2=false
+    depends_on:
+      geode:
+        condition: service_started
+        restart: false
+
+  geode:
+    image: geode:latest
+    build: !reset null
+    healthcheck:
+      test: ["CMD-SHELL", "ss -tlnp | grep -q ':50051'"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 5s

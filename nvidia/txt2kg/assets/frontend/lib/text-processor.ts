@@ -199,16 +199,18 @@ export class TextProcessor {
     const templateString = `
       You are a knowledge graph builder that extracts structured information from text.
       Extract subject-predicate-object triples from the following text.
-      
+
+      IMPORTANT: Do NOT include any reasoning, thinking, or explanation. Output ONLY the JSON array directly.
+
       Guidelines:
       - Extract only factual triples present in the text
       - Normalize entity names to their canonical form
       - Assign appropriate confidence scores (0-1)
       - Include entity types in metadata
       - For each triple, include a brief context from the source text
-      
+
       Text: {text}
-      
+
       {format_instructions}
     `;
 
@@ -244,7 +246,7 @@ export class TextProcessor {
 
     // Step 2: Process chunks in parallel with controlled concurrency
     // DGX Spark has unified memory, so we can prefetch batches into GPU before processing
-    const concurrency = this.selectedLLMProvider === 'ollama' ? 4 : 2; // Higher concurrency for local Ollama
+    const concurrency = this.selectedLLMProvider === 'vllm' ? 1 : (this.selectedLLMProvider === 'ollama' ? 4 : 2);
     const allTriples: Array<Triple & { confidence: number, metadata: any }> = [];
     
     console.log(`Processing with concurrency: ${concurrency} (provider: ${this.selectedLLMProvider})`);
@@ -259,19 +261,62 @@ export class TextProcessor {
       }
       
       console.log(`Processing chunk ${index + 1}/${chunks.length} (${chunk.length} chars)`);
-      
-      // Format the prompt with the chunk and parser instructions
-      const formatInstructions = this.tripleParser!.getFormatInstructions();
-      const prompt = await this.extractionTemplate!.format({
-        text: chunk,
-        format_instructions: formatInstructions
-      });
 
-      // Extract triples using the LLM
-      const response = await this.llm!.invoke(prompt);
-      const responseText = response.content as string;
-      const parsedTriples = await this.tripleParser!.parse(responseText);
-      
+      let parsedTriples;
+
+      if (this.selectedLLMProvider === 'vllm') {
+        // For vLLM: call API directly to avoid LangChain format_instructions conflicts
+        const vllmUrl = `${this.vllmBaseUrl}/chat/completions`;
+        const vllmResponse = await axios.post(vllmUrl, {
+          model: this.vllmModel,
+          messages: [
+            { role: "system", content: "You are a knowledge graph builder. Extract subject-predicate-object triples from text. Respond with ONLY a JSON array of objects, each with: subject, predicate, object, confidence (0-1), and metadata (entityTypes array, source string, context string). No explanation or reasoning - just the JSON array." },
+            { role: "user", content: chunk }
+          ],
+          max_tokens: 8192,
+          temperature: 0
+        }, { timeout: 900000 });
+        const responseText = this.stripThinkingTags(vllmResponse.data.choices[0].message.content);
+        const finishReason = vllmResponse.data.choices[0].finish_reason;
+        const tokens = vllmResponse.data.usage?.completion_tokens;
+        console.log(`[vLLM] Response: ${tokens} tokens, finish: ${finishReason}, content (${responseText.length} chars): ${responseText.substring(0, 200)}`);
+        try {
+          // Try to extract JSON array from response
+          const jsonMatch = responseText.match(/\[[\s\S]*\]/);
+          if (jsonMatch) {
+            const raw = JSON.parse(jsonMatch[0]);
+            parsedTriples = Array.isArray(raw) ? raw : [raw];
+          } else {
+            console.error('[vLLM] No JSON array found in response');
+            parsedTriples = [];
+          }
+          console.log(`[vLLM] Parsed ${parsedTriples.length} triples from chunk`);
+        } catch (e) {
+          console.error('[vLLM] Failed to parse response:', e instanceof Error ? e.message : e);
+          parsedTriples = [];
+        }
+      } else {
+        // For other providers: use LangChain's StructuredOutputParser with format instructions
+        const formatInstructions = this.tripleParser!.getFormatInstructions();
+        const prompt = await this.extractionTemplate!.format({
+          text: chunk,
+          format_instructions: formatInstructions
+        });
+        const response = await this.llm!.invoke(prompt);
+        const responseText = this.stripThinkingTags(response.content as string);
+        try {
+          parsedTriples = await this.tripleParser!.parse(responseText);
+        } catch {
+          try {
+            const raw = JSON.parse(responseText);
+            parsedTriples = Array.isArray(raw) ? raw : [raw];
+          } catch {
+            console.error('Failed to parse LLM response:', responseText.substring(0, 200));
+            parsedTriples = [];
+          }
+        }
+      }
+
       return parsedTriples;
     };
 
@@ -387,8 +432,8 @@ ${formatInstructions}`;
         }
 
         const data = await response.json();
-        const responseText = data.choices[0].message.content;
-        
+        const responseText = this.stripThinkingTags(data.choices[0].message.content);
+
         // Parse the response
         const parsedTriples = await this.tripleParser!.parse(responseText);
         allTriples.push(...parsedTriples);
@@ -643,9 +688,9 @@ ${formatInstructions}`;
 
         // Extract triples using the LLM
         const response = await this.llm!.invoke(prompt);
-        const responseText = response.content as string;
+        const responseText = this.stripThinkingTags(response.content as string);
         const parsedTriples = await this.tripleParser!.parse(responseText);
-        
+
         allTriples.push(...parsedTriples);
       } catch (error) {
         console.error(`Error processing chunk ${i + 1} with custom prompt:`, error);
@@ -694,10 +739,10 @@ ${formatInstructions}`;
           new HumanMessage(chunk)
         ];
         const response = await this.llm!.invoke(messages);
-        
+
         // Convert response to triples
-        const responseText = response.content as string;
-        
+        const responseText = this.stripThinkingTags(response.content as string);
+
         // Create a simple triple parser for the response (since we're not using LangChain's parser)
         const simpleTriples = this.parseTripleLines(responseText);
         
@@ -725,6 +770,19 @@ ${formatInstructions}`;
     return processedTriples;
   }
   
+  /**
+   * Strip <think>...</think> reasoning tags from model output.
+   * Models like Nemotron wrap responses in thinking tags which break JSON parsing.
+   * @private
+   */
+  private stripThinkingTags(text: string): string {
+    // Strip closed <think>...</think> blocks
+    let result = text.replace(/<think>[\s\S]*?<\/think>\s*/g, '').trim();
+    // Strip unclosed <think> blocks (model ran out of tokens mid-reasoning)
+    result = result.replace(/<think>[\s\S]*/g, '').trim();
+    return result;
+  }
+
   /**
    * Helper method to parse triple lines from LLM output
    * @private
