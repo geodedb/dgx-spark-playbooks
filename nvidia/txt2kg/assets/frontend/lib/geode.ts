@@ -27,6 +27,21 @@ export interface DocumentSearchResult {
   metadata?: Record<string, any>;
 }
 
+/**
+ * Format a number array as a vectorf32 literal.
+ * - Uses toFixed(10) to avoid scientific notation (geode#477)
+ * - Prefixes negative first element with "0.0" to work around parser bug (geode#478)
+ */
+function vecLiteral(v: number[]): string {
+  const parts = v.map(n => n.toFixed(10));
+  // Workaround: vectorf32 parser fails when first element is negative (geode#478)
+  // Use "0.0-X" instead of "-X" so parser sees subtraction, not unary minus
+  if (v.length > 0 && v[0] < 0) {
+    parts[0] = `0.0${parts[0]}`; // e.g. "-0.0483" → "0.0-0.0483"
+  }
+  return `[${parts.join(',')}]`;
+}
+
 export class GeodeService {
   private client: GeodeClient | null = null;
   private static instance: GeodeService;
@@ -270,7 +285,7 @@ export class GeodeService {
     try {
       let stored = 0;
       for (const [entityName, embedding] of entityEmbeddings.entries()) {
-        const embStr = `[${embedding.join(',')}]`;
+        const embStr = vecLiteral(embedding);
         const escaped = entityName.replace(/'/g, "\\'");
         await this.client!.exec(
           `MERGE (e:Entity {name: '${escaped}'})
@@ -298,7 +313,7 @@ export class GeodeService {
     try {
       let stored = 0;
       for (const [key, embedding] of embeddings.entries()) {
-        const embStr = `[${embedding.join(',')}]`;
+        const embStr = vecLiteral(embedding);
         const text = (textContent.get(key) || '').replace(/'/g, "\\'");
         const escaped = key.replace(/'/g, "\\'");
         await this.client!.exec(
@@ -321,7 +336,7 @@ export class GeodeService {
     await this.ensureInitialized();
 
     try {
-      const embStr = `[${queryEmbedding.join(',')}]`;
+      const embStr = vecLiteral(queryEmbedding);
       // Use RETURN clause for vector_cosine (WITH clause causes TypeMismatch — geode#476)
       const rows = await this.client!.queryAll(
         `MATCH (e:Entity)
@@ -348,7 +363,7 @@ export class GeodeService {
     await this.ensureInitialized();
 
     try {
-      const embStr = `[${embedding.join(',')}]`;
+      const embStr = vecLiteral(embedding);
       // Use RETURN clause for vector_cosine (WITH clause causes TypeMismatch — geode#476)
       const rows = await this.client!.queryAll(
         `MATCH (e:Entity)
@@ -390,7 +405,7 @@ export class GeodeService {
 
       for (let i = 0; i < documents.length; i++) {
         const text = documents[i].replace(/\\/g, '\\\\').replace(/'/g, "\\'");
-        const embStr = `[${embeddings[i].join(',')}]`;
+        const embStr = vecLiteral(embeddings[i]);
         const source = (metadata?.[i]?.source || 'unknown').replace(/'/g, "\\'");
 
         await this.client!.exec(
@@ -419,7 +434,7 @@ export class GeodeService {
     await this.ensureInitialized();
 
     try {
-      const embStr = `[${queryEmbedding.join(',')}]`;
+      const embStr = vecLiteral(queryEmbedding);
       // Use RETURN clause for vector_cosine (WITH clause causes TypeMismatch — geode#476)
       const rows = await this.client!.queryAll(
         `MATCH (d:DocumentChunk)
@@ -656,7 +671,7 @@ export class GeodeService {
       for (const point of points) {
         const text = (point.payload?.text || '').replace(/'/g, "\\'");
         const originalId = (point.payload?.originalId || point.id).replace(/'/g, "\\'");
-        const embStr = `[${point.vector.join(',')}]`;
+        const embStr = vecLiteral(point.vector);
 
         if (point.payload?.type === 'document') {
           await this.client!.exec(
