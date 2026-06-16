@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+{{ ansible_managed | comment }}
+# Wrapper invoked by spark-minimax-m3.service to start/stop the M3 cluster.
+# Kept as a script so systemd has stable start/stop semantics around sparkrun.
+set -uo pipefail
+
+RECIPE="{{ m3_recipe_path }}"
+HOSTS="{{ m3_hosts }}"
+PORT="{{ m3_port }}"
+ACTION="${1:-start}"
+
+case "$ACTION" in
+  start)
+    # --ensure: no-op (exit 0) if already serving; --no-follow: return after launch.
+    exec uvx sparkrun run "$RECIPE" --hosts "$HOSTS" --ensure --no-follow
+    ;;
+  stop)
+    uvx sparkrun stop "$RECIPE" --hosts "$HOSTS" 2>/dev/null || true
+    # Best-effort container cleanup on both nodes.
+    for h in ${HOSTS//,/ }; do
+      ssh -o BatchMode=yes -o ConnectTimeout=6 "$h" \
+        'docker ps -q --filter name=sparkrun_ | xargs -r docker rm -f' 2>/dev/null || true
+    done
+    ;;
+  *)
+    echo "usage: $0 {start|stop}" >&2; exit 2 ;;
+esac

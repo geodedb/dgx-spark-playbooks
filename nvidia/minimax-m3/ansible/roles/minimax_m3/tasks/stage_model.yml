@@ -1,0 +1,46 @@
+---
+# Heavy model staging (~121GB). Opt-in: `ansible-playbook site.yml --tags stage`.
+# Strategy that worked live: authenticated plain-HTTPS download on the HEAD only
+# (HF Xet hangs on this egress; plain HTTPS + retry sustains ~117 MB/s with 8
+# workers), then rsync head→workers over the fabric (single pull, then fan out).
+
+- name: (head) Download model on the head if absent
+  when: inventory_hostname in groups['head'] and (model_index.matched | int == 0)
+  become: true
+  become_user: "{{ m3_run_user }}"
+  ansible.builtin.shell:
+    cmd: |
+      set -o pipefail
+      TOK=$(grep -E '^CONTAINER_HF_TOKEN=' /etc/spark-vllm/cluster.env | head -1 | cut -d= -f2-)
+      export HF_TOKEN="$TOK" HF_HUB_DISABLE_XET=1 HF_HUB_DOWNLOAD_TIMEOUT=30
+      n=0
+      until uvx --from huggingface_hub hf download {{ m3_model }} --max-workers 8; do
+        n=$((n+1)); [ "$n" -ge 200 ] && exit 1
+        echo "retry $n"; sleep 3
+      done
+    executable: /bin/bash
+  register: dl
+  changed_when: "'retry' in dl.stdout or dl.rc == 0"
+
+- name: (workers) Pull model from the head over the fabric (rsync)
+  when: inventory_hostname in groups['workers'] and (model_index.matched | int == 0)
+  become: true
+  become_user: "{{ m3_run_user }}"
+  ansible.posix.synchronize:
+    src: "{{ m3_hf_cache }}/hub/models--sparkarena--Minimax-M3-v0-NVFP4-REAP50/"
+    dest: "{{ m3_hf_cache }}/hub/models--sparkarena--Minimax-M3-v0-NVFP4-REAP50/"
+    mode: pull
+  delegate_to: "{{ groups['head'][0] }}"
+
+- name: Re-verify model presence after staging
+  ansible.builtin.find:
+    paths: "{{ m3_hf_cache }}/hub/models--sparkarena--Minimax-M3-v0-NVFP4-REAP50/snapshots"
+    patterns: "model.safetensors.index.json"
+    recurse: true
+  register: model_index_post
+  changed_when: false
+
+- name: Fail if model still missing
+  ansible.builtin.assert:
+    that: model_index_post.matched | int > 0
+    fail_msg: "Model staging did not complete on {{ inventory_hostname }}"

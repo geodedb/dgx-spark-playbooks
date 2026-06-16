@@ -328,6 +328,28 @@ trt-llm-stop: ## Stop TensorRT-LLM container
 	-docker stop trt-llm
 
 # ==============================================================================
+# MiniMax-M3 (REAP50 NVFP4) — Ansible-driven 2-Spark serving + boot persistence
+# ==============================================================================
+MINIMAX_M3_ANSIBLE := $(NVIDIA)/minimax-m3/ansible
+
+.PHONY: minimax-m3 minimax-m3-stage minimax-m3-start minimax-m3-down minimax-m3-logs
+
+minimax-m3: ## Deploy MiniMax-M3 units (idempotent; assumes model staged)
+	cd $(MINIMAX_M3_ANSIBLE) && ansible-playbook site.yml
+
+minimax-m3-stage: ## Download model on head + rsync to workers (~121GB, one-time)
+	cd $(MINIMAX_M3_ANSIBLE) && ansible-playbook site.yml --tags stage
+
+minimax-m3-start: ## Start the MiniMax-M3 serving cluster now
+	cd $(MINIMAX_M3_ANSIBLE) && ansible-playbook site.yml --tags start
+
+minimax-m3-down: ## Stop the MiniMax-M3 serving cluster
+	ssh 10.0.0.26 'sudo systemctl stop spark-minimax-m3.service'
+
+minimax-m3-logs: ## Follow the SGLang serve log on the head node
+	ssh 10.0.0.26 'cid=$$(docker ps -q --filter name=sparkrun_ | head -1); docker exec "$$cid" tail -f /tmp/sparkrun_serve.log'
+
+# ==============================================================================
 # Utility targets
 # ==============================================================================
 

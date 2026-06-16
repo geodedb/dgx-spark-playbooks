@@ -1,0 +1,14 @@
+---
+- name: reload systemd
+  become: true
+  ansible.builtin.systemd:
+    daemon_reload: true
+
+- name: restart minimax-m3
+  become: true
+  ansible.builtin.systemd:
+    name: spark-minimax-m3.service
+    state: restarted
+  when: inventory_hostname in groups['head']
+  # Only bounce a service that's already meant to be running; first deploy uses --tags start.
+  listen: restart minimax-m3

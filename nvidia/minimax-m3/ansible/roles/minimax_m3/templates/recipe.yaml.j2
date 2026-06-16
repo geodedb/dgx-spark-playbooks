@@ -1,0 +1,54 @@
+{{ ansible_managed | comment }}
+# sparkrun/SGLang recipe for MiniMax-M3 REAP50 NVFP4 on the GB10 DGX Spark pair.
+recipe_version: "2"
+model: {{ m3_model }}
+runtime: sglang
+container: {{ m3_container }}
+min_nodes: 2
+
+metadata:
+  description: MiniMax-M3 REAP50 NVFP4, validated GB10 multi-node NCCL (RoCE) config
+  quantization: nvfp4
+
+executor_config:
+  user: root
+
+defaults:
+  host: 0.0.0.0
+  port: {{ m3_port }}
+  tensor_parallel: {{ m3_tensor_parallel }}
+  gpu_memory_utilization: {{ m3_gpu_mem_util }}
+  max_model_len: {{ m3_context_length }}
+  max_num_batched_tokens: {{ m3_max_num_batched_tokens }}
+  kv_cache_dtype: auto
+  reasoning_parser: minimax-m3
+  tool_call_parser: minimax-m3
+  moe_runner_backend: triton
+  fp4_gemm_backend: cutlass
+  load_format: instanttensor
+  cuda_graph_max_bs: 16
+  cuda_graph_bs: "1 2 4 8 12 16"
+
+env:
+{% for k, v in m3_nccl_env.items() %}
+  {{ k }}: "{{ v }}"
+{% endfor %}
+
+command: |
+  sglang serve \
+    --model-path {model} \
+    --mem-fraction-static {gpu_memory_utilization} \
+    --context-length {max_model_len} \
+    --tp {tensor_parallel} \
+    --chunked-prefill-size {max_num_batched_tokens} \
+    --fp4-gemm-backend {fp4_gemm_backend} \
+    --load-format {load_format} \
+    --kv-cache-dtype {kv_cache_dtype} \
+    --reasoning-parser {reasoning_parser} \
+    --tool-call-parser {tool_call_parser} \
+    --moe-runner-backend {moe_runner_backend} \
+    --trust-remote-code \
+    --cuda-graph-max-bs {cuda_graph_max_bs} \
+    --cuda-graph-bs {cuda_graph_bs} \
+    --host {host} \
+    --port {port}

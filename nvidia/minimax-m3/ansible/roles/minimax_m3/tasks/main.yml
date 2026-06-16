@@ -1,0 +1,169 @@
+---
+# ─────────────────────────────────────────────────────────────────────────────
+# Cluster-wide prerequisites (run on every node)
+# ─────────────────────────────────────────────────────────────────────────────
+- name: Verify uv/uvx is installed (sparkrun runs via uvx)
+  ansible.builtin.command: uvx --version
+  changed_when: false
+
+- name: Ensure run user is in the docker group
+  become: true
+  ansible.builtin.user:
+    name: "{{ m3_run_user }}"
+    groups: docker
+    append: true
+
+- name: Pre-pull the SGLang container image (idempotent)
+  community.docker.docker_image:
+    name: "{{ m3_container }}"
+    source: pull
+    state: present
+  register: pull_img
+  failed_when: false
+
+- name: Fallback image pull via CLI if docker collection unavailable
+  ansible.builtin.command: "docker pull {{ m3_container }}"
+  register: cli_pull
+  changed_when: "'Downloaded newer image' in cli_pull.stdout"
+  when: pull_img is failed or pull_img is skipped
+
+- name: Allow inter-node traffic through ufw (NCCL bootstrap + rsync)
+  become: true
+  community.general.ufw:
+    rule: allow
+    src: "{{ item }}"
+  loop: "{{ m3_cluster_subnets }}"
+  failed_when: false
+
+# ── GB10 GPU-clock pin (firmware-shutdown guard), persistent via systemd ───────
+- name: Install spark-gpu-clock systemd unit
+  become: true
+  ansible.builtin.template:
+    src: spark-gpu-clock.service.j2
+    dest: /etc/systemd/system/spark-gpu-clock.service
+    mode: "0644"
+  notify: reload systemd
+
+- name: Enable + start GPU-clock pin
+  become: true
+  ansible.builtin.systemd:
+    name: spark-gpu-clock.service
+    enabled: true
+    state: started
+    daemon_reload: true
+
+# ── Recipe file (templated with NCCL env + validated context length) ──────────
+- name: Ensure recipe directory exists
+  become: true
+  ansible.builtin.file:
+    path: "{{ m3_recipe_path | dirname }}"
+    state: directory
+    mode: "0755"
+
+- name: Render the sparkrun/SGLang recipe
+  become: true
+  ansible.builtin.template:
+    src: recipe.yaml.j2
+    dest: "{{ m3_recipe_path }}"
+    mode: "0644"
+  notify: restart minimax-m3
+
+# ── Model staging (heavy: ~121GB). Opt-in only: --tags stage ──────────────────
+- name: Check whether the model is present in the HF cache
+  ansible.builtin.find:
+    paths: "{{ m3_hf_cache }}/hub/models--sparkarena--Minimax-M3-v0-NVFP4-REAP50/snapshots"
+    patterns: "model.safetensors.index.json"
+    recurse: true
+  register: model_index
+  changed_when: false
+
+- name: Warn if model is missing and staging was not requested
+  ansible.builtin.debug:
+    msg: >-
+      Model not found in {{ m3_hf_cache }}. Run with `--tags stage` to download
+      (head) + rsync (workers), or stage it manually before starting the service.
+  when: model_index.matched | int == 0
+
+- name: Stage model (download on head, rsync to workers over the fabric)
+  ansible.builtin.include_tasks: stage_model.yml
+  tags: ["stage", "never"]
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Head-only: launch wrapper + service that runs sparkrun on boot
+# ─────────────────────────────────────────────────────────────────────────────
+- name: (head) Trust cluster host keys for sparkrun's internal ssh
+  when: inventory_hostname in groups['head']
+  block:
+    - name: Ensure ~/.ssh exists
+      ansible.builtin.file:
+        path: "/home/{{ m3_run_user }}/.ssh"
+        state: directory
+        mode: "0700"
+        owner: "{{ m3_run_user }}"
+        group: "{{ m3_run_user }}"
+
+    - name: Set StrictHostKeyChecking=accept-new for the run user
+      ansible.builtin.blockinfile:
+        path: "/home/{{ m3_run_user }}/.ssh/config"
+        create: true
+        mode: "0600"
+        owner: "{{ m3_run_user }}"
+        group: "{{ m3_run_user }}"
+        marker: "# {mark} ANSIBLE MINIMAX-M3 SSH"
+        block: |
+          Host *
+            StrictHostKeyChecking accept-new
+
+    # Pre-populate known_hosts ON the head (where the cluster IPs — incl. the
+    # internal 10.177.0.x DAC — are reachable; the control node can't reach them).
+    # accept-new above already covers first-connect; this just avoids the warning.
+    - name: Pre-populate known_hosts for all cluster IPs (run on the head)
+      become: true
+      become_user: "{{ m3_run_user }}"
+      ansible.builtin.shell:
+        cmd: |
+          set -o pipefail
+          touch ~/.ssh/known_hosts
+          for ip in {{ m3_ssh_keyscan_hosts | join(' ') }}; do
+            ssh-keyscan -T 5 "$ip" 2>/dev/null >> ~/.ssh/known_hosts || true
+          done
+          sort -u ~/.ssh/known_hosts -o ~/.ssh/known_hosts
+        executable: /bin/bash
+      changed_when: false
+      failed_when: false
+
+- name: (head) Install the sparkrun launch wrapper
+  when: inventory_hostname in groups['head']
+  become: true
+  ansible.builtin.template:
+    src: spark-m3-launch.sh.j2
+    dest: "{{ m3_launch_wrapper }}"
+    mode: "0755"
+  notify: restart minimax-m3
+
+- name: (head) Install the MiniMax-M3 systemd service
+  when: inventory_hostname in groups['head']
+  become: true
+  ansible.builtin.template:
+    src: spark-minimax-m3.service.j2
+    dest: /etc/systemd/system/spark-minimax-m3.service
+    mode: "0644"
+  notify:
+    - reload systemd
+    - restart minimax-m3
+
+- name: (head) Enable the service for boot (start on demand / via --tags start)
+  when: inventory_hostname in groups['head']
+  become: true
+  ansible.builtin.systemd:
+    name: spark-minimax-m3.service
+    enabled: true
+    daemon_reload: true
+
+- name: (head) Start the service now
+  when: inventory_hostname in groups['head']
+  become: true
+  ansible.builtin.systemd:
+    name: spark-minimax-m3.service
+    state: started
+  tags: ["start", "never"]

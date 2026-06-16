@@ -1,0 +1,29 @@
+{{ ansible_managed | comment }}
+[Unit]
+Description=MiniMax-M3 REAP50 SGLang cluster (sparkrun, TP=2 across {{ m3_hosts }})
+Documentation=https://github.com/spark-arena/sparkrun
+After=network-online.target docker.service spark-gpu-clock.service
+Wants=network-online.target docker.service spark-gpu-clock.service
+Requires=docker.service
+StartLimitIntervalSec=1200
+StartLimitBurst=4
+
+[Service]
+# sparkrun backgrounds the containers (docker run -d on both nodes); the launch
+# command returns once they're up, so oneshot+RemainAfterExit models the state.
+Type=oneshot
+RemainAfterExit=true
+User={{ m3_run_user }}
+Group={{ m3_run_user }}
+WorkingDirectory=/home/{{ m3_run_user }}
+Environment=HOME=/home/{{ m3_run_user }}
+ExecStart={{ m3_launch_wrapper }} start
+ExecStop={{ m3_launch_wrapper }} stop
+Restart=on-failure
+RestartSec=45
+# Cold start = model load (~121GB) + CUDA-graph capture across two nodes.
+TimeoutStartSec=1800
+TimeoutStopSec=300
+
+[Install]
+WantedBy=multi-user.target

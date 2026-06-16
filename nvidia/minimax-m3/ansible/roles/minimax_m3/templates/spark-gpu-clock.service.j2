@@ -1,0 +1,14 @@
+{{ ansible_managed | comment }}
+[Unit]
+Description=Pin GB10 GPU clocks ({{ gpu_clock_min }}-{{ gpu_clock_max }} MHz) — firmware-shutdown guard under heavy inference
+After=nvidia-persistenced.service
+ConditionPathExists=/usr/bin/nvidia-smi
+
+[Service]
+Type=oneshot
+RemainAfterExit=true
+ExecStart=/usr/bin/nvidia-smi -lgc {{ gpu_clock_min }},{{ gpu_clock_max }}
+ExecStop=/usr/bin/nvidia-smi -rgc
+
+[Install]
+WantedBy=multi-user.target
