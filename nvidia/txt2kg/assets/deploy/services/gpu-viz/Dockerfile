@@ -1,5 +1,5 @@
 # Use latest NVIDIA PyG container which includes cuGraph and graph-related packages
-FROM nvcr.io/nvidia/pyg:25.08-py3
+FROM nvcr.io/nvidia/pyg:25.11-py3
 
 # Ensure we're running as root for system package installation
 USER root
