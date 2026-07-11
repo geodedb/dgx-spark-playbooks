@@ -24,6 +24,11 @@ RUN npm install
 
 COPY . .
 
+# Drop root privileges for the running process; node:20-alpine already
+# ships a non-root "node" user (uid 1000).
+RUN chown -R node:node /app
+USER node
+
 EXPOSE 3000
 
 CMD ["npm", "run", "dev"]

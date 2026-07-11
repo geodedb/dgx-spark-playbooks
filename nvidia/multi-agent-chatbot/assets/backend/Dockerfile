@@ -22,12 +22,22 @@ RUN apt-get update && \
 
 WORKDIR /app
 
-RUN . $HOME/.local/bin/env 
+RUN . $HOME/.local/bin/env
 ENV PATH="/root/.local/bin:$PATH"
+
+# uv installs into /root/.local/bin, which is not reachable by a non-root
+# user (home dirs default to 0700). Copy the binaries somewhere on the
+# default PATH so they still work once we drop root below.
+RUN cp /root/.local/bin/uv /root/.local/bin/uvx /usr/local/bin/
 
 COPY pyproject.toml ./
 COPY . .
 
 RUN uv sync
+
+# Drop root privileges for the running process.
+RUN useradd --create-home --uid 1000 appuser && chown -R appuser:appuser /app
+ENV HOME=/home/appuser
+USER appuser
 
 CMD ["uv", "run", "--", "uvicorn", "main:app", "--reload", "--host", "0.0.0.0", "--port", "8000"]

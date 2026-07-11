@@ -19,5 +19,16 @@ RUN python -c "from sentence_transformers import SentenceTransformer; SentenceTr
 # Expose the port
 EXPOSE 80
 
+# Drop root privileges for the running process. Gunicorn binds to port 80
+# (a privileged port), so grant the python interpreter CAP_NET_BIND_SERVICE
+# via setcap rather than running the service as root.
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends libcap2-bin && \
+    rm -rf /var/lib/apt/lists/* && \
+    useradd --create-home --uid 1000 appuser && \
+    setcap 'cap_net_bind_service=+ep' "$(readlink -f "$(command -v python3)")" && \
+    chown -R appuser:appuser /app
+USER appuser
+
 # Use Gunicorn for better performance
 CMD ["gunicorn", "--bind", "0.0.0.0:80", "--workers", "1", "--threads", "8", "app:app"] 
