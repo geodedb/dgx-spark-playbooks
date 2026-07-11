@@ -18,7 +18,7 @@
 # Author: William Benton <wbenton@nvidia.com> 
 
 
-FROM nvidia/cuda:13.0.1-runtime-ubuntu24.04
+FROM nvidia/cuda:13.3.0-runtime-ubuntu24.04
 
 RUN ldconfig
 COPY --from=ghcr.io/astral-sh/uv:latest	/uv /uvx /bin/

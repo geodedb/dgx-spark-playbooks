@@ -1,4 +1,4 @@
-FROM nvcr.io/nvidia/pyg:25.03-py3
+FROM nvcr.io/nvidia/pyg:25.11-py3
 
 WORKDIR /app
 
