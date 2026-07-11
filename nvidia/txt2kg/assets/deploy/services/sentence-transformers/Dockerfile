@@ -30,5 +30,9 @@ RUN apt-get update && \
     chown -R appuser:appuser /app
 USER appuser
 
+# Matches the docker-compose healthcheck already defined for this service.
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=5 \
+    CMD python3 -c "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://localhost:80/health', timeout=5).status < 500 else 1)"
+
 # Use Gunicorn for better performance
 CMD ["gunicorn", "--bind", "0.0.0.0:80", "--workers", "1", "--threads", "8", "app:app"] 
