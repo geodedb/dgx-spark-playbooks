@@ -6,7 +6,7 @@ WORKDIR /app
 RUN pip install --no-cache-dir \
     flask==2.0.1 \
     gunicorn==23.0.0 \
-    tqdm
+    tqdm==4.67.3
 
 # Create model directory
 RUN mkdir -p /app/models

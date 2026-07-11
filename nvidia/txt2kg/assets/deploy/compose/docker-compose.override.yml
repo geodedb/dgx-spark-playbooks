@@ -32,6 +32,12 @@ services:
       geode:
         condition: service_started
         restart: false
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/', r => process.exit(r.statusCode < 500 ? 0 : 1)).on('error', () => process.exit(1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
 
   geode:
     # Use pre-built image instead of building from source

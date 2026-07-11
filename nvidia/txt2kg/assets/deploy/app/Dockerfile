@@ -4,7 +4,7 @@ FROM node:18-slim AS deps
 WORKDIR /app
 
 # Install pnpm
-RUN npm install -g pnpm --force --yes
+RUN npm install -g pnpm@9.15.9 --force --yes
 
 # Copy dependency files and local packages
 COPY ./frontend/package.json ./frontend/pnpm-lock.yaml* ./
@@ -24,7 +24,7 @@ FROM node:18-slim AS builder
 WORKDIR /app
 
 # Install pnpm
-RUN npm install -g pnpm --force --yes
+RUN npm install -g pnpm@9.15.9 --force --yes
 
 # Copy node_modules from deps stage
 COPY --from=deps /app/node_modules ./node_modules

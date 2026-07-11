@@ -11,7 +11,17 @@ services:
       context: ../..
       dockerfile: deploy/app/Dockerfile
     ports:
-      - '3001:3000'
+      - '127.0.0.1:3001:3000'
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/', r => process.exit(r.statusCode < 500 ? 0 : 1)).on('error', () => process.exit(1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
     environment:
       # Geode configuration (gRPC with server cert for TLS)
       - GEODE_URL=grpc://geode:50051?ca_cert=/geode-data/server.crt&insecure_tls_skip_verify=true
@@ -55,8 +65,8 @@ services:
     container_name: geode
     command: ["--data-dir", "/data", "--listen-grpc", "0.0.0.0:50051"]
     ports:
-      - '3141:3141/udp'
-      - '50051:50051'
+      - '127.0.0.1:3141:3141/udp'
+      - '127.0.0.1:50051:50051'
     environment:
       - GEODE_ADMIN_PASSWORD=${GEODE_ADMIN_PASSWORD:-geodesic}
     volumes:
@@ -68,6 +78,10 @@ services:
       retries: 10
       start_period: 10s
     restart: unless-stopped
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
 
   # vLLM - GPU-accelerated LLM with unified memory support
   vllm:
@@ -76,12 +90,21 @@ services:
       dockerfile: Dockerfile
     container_name: vllm-service
     ports:
-      - '8001:8001'
-    ipc: host
+      - '127.0.0.1:8001:8001'
+    # NOTE: VLLM_TENSOR_PARALLEL_SIZE=1 (single GPU, not tensor-parallel), so
+    # ipc:host is not required for cross-process shared memory here; the
+    # already-generous shm_size below covers vLLM's private-namespace
+    # multiprocessing IPC needs. See docker-compose.yml (services/vllm) for a
+    # multi-GPU-capable vLLM service where ipc:host was left in place
+    # (NEEDS_HUMAN_JUDGMENT).
     ulimits:
       memlock: -1
       stack: 67108864
     shm_size: '16gb'
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
     environment:
       - VLLM_MODEL=nvidia/Llama-3_3-Nemotron-Super-49B-v1_5-FP8
       - VLLM_TENSOR_PARALLEL_SIZE=1
@@ -124,12 +147,33 @@ services:
       context: ../services/sentence-transformers
       dockerfile: Dockerfile
     ports:
-      - '8000:80'
+      # NOTE: container listens on privileged port 80 by design (see commit
+      # 917677b, "Privileged Ports Mapped In Container" finding) - the
+      # process binds via setcap CAP_NET_BIND_SERVICE as a non-root user, so
+      # this host:container mapping is intentionally left unchanged. Several
+      # other compose files and the frontend client reference this port.
+      - '127.0.0.1:8000:80'
     environment:
       - MODEL_NAME=all-MiniLM-L6-v2
     networks:
       - default
     restart: unless-stopped
+    # cap_drop ALL, but re-add NET_BIND_SERVICE: this service binds gunicorn
+    # to privileged port 80 as non-root via setcap on the python3
+    # interpreter (see commit 917677b); dropping NET_BIND_SERVICE entirely
+    # would break that startup.
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_BIND_SERVICE
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://localhost:80/health', timeout=5).status < 500 else 1)"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
 
 volumes:
   geode_data:
