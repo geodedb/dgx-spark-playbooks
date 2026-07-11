@@ -8,6 +8,12 @@ services:
     environment:
       - GEODE_PORT=50051
       - GEODE_TRANSPORT=grpc
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/available_models"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
 
   geode:
     image: geode:latest

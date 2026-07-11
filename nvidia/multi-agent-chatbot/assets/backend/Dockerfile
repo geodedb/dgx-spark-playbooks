@@ -17,7 +17,7 @@
 FROM python:3.14
 
 RUN apt-get update && \
-    apt-get install -y curl && \
+    apt-get install -y curl=8.14.1-2+deb13u4 && \
     curl -LsSf https://astral.sh/uv/install.sh | sh
 
 WORKDIR /app

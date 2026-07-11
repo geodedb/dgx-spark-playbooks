@@ -21,7 +21,7 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     ports:
-      - "8000:8000"
+      - "127.0.0.1:8000:8000"
     volumes:
       - ./backend:/app
     depends_on:
@@ -36,6 +36,16 @@ services:
       - MODELS=gpt-oss-120b #,gpt-oss-20b
     networks:
       - chatbot-net
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/available_models"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
 
   frontend:
     container_name: frontend
@@ -43,7 +53,7 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
     ports:
-      - "3000:3000"
+      - "127.0.0.1:3000:3000"
     volumes:
       - /frontend:/app/frontend
       - /app/node_modules
@@ -52,6 +62,16 @@ services:
     restart: unless-stopped
     networks:
       - chatbot-net
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/', r => process.exit(r.statusCode < 500 ? 0 : 1)).on('error', () => process.exit(1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
 
   geode:
     build:
@@ -60,8 +80,8 @@ services:
     container_name: geode
     command: ["--data-dir", "/data", "--listen-grpc", "0.0.0.0:50051"]
     ports:
-      - '3141:3141/udp'
-      - '50051:50051'
+      - '127.0.0.1:3141:3141/udp'
+      - '127.0.0.1:50051:50051'
     environment:
       - GEODE_ADMIN_PASSWORD=${GEODE_ADMIN_PASSWORD:-geodesic}
     volumes:
@@ -75,6 +95,10 @@ services:
     restart: unless-stopped
     networks:
       - chatbot-net
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
 
 volumes:
   geode_data:
