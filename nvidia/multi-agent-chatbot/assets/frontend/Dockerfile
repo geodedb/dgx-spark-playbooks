@@ -31,4 +31,9 @@ USER node
 
 EXPOSE 3000
 
+# node:20-alpine has no curl/wget; reuse Node's built-in http module, matching
+# the docker-compose healthcheck already defined for this service.
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=5 \
+    CMD node -e "require('http').get('http://localhost:3000/', r => process.exit(r.statusCode < 500 ? 0 : 1)).on('error', () => process.exit(1))"
+
 CMD ["npm", "run", "dev"]

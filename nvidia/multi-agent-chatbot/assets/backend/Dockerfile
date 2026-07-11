@@ -17,7 +17,8 @@
 FROM python:3.14
 
 RUN apt-get update && \
-    apt-get install -y curl=8.14.1-2+deb13u4 && \
+    apt-get install -y --no-install-recommends curl=8.14.1-2+deb13u4 && \
+    rm -rf /var/lib/apt/lists/* && \
     curl -LsSf https://astral.sh/uv/install.sh | sh
 
 WORKDIR /app
@@ -39,5 +40,9 @@ RUN uv sync
 RUN useradd --create-home --uid 1000 appuser && chown -R appuser:appuser /app
 ENV HOME=/home/appuser
 USER appuser
+
+# Matches the docker-compose healthcheck already defined for this service.
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=5 \
+    CMD curl -f http://localhost:8000/available_models
 
 CMD ["uv", "run", "--", "uvicorn", "main:app", "--reload", "--host", "0.0.0.0", "--port", "8000"]

@@ -61,7 +61,7 @@ services:
     <<: *build-base
     container_name: qwen3-embedding
     volumes:
-      - ./models:/models
+      - ./models:/models:ro
     deploy:
       resources:
         reservations:
@@ -120,7 +120,7 @@ services:
     <<: *build-base
     container_name: gpt-oss-120b
     volumes:
-      - ./models:/models
+      - ./models:/models:ro
     deploy:
       resources:
         reservations:
@@ -155,7 +155,7 @@ services:
     <<: *build-base
     container_name: deepseek-coder
     volumes:
-      - ./models:/models
+      - ./models:/models:ro
     deploy:
       resources:
         reservations:
