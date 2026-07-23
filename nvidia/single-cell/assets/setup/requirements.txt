@@ -16,7 +16,7 @@ networkx==3.6.1
 numba==0.66.0
 numpy==2.5.1
 optuna==4.9.0
-pandas==3.0.3
+pandas==3.0.5
 patsy==1.0.2
 pillow==12.3.0
 pynndescent==0.6.0
