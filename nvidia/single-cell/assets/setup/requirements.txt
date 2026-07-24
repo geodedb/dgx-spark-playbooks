@@ -21,7 +21,7 @@ patsy==1.0.2
 pillow==12.3.0
 pynndescent==0.6.0
 rapids-singlecell==0.16.0
-scanpy==1.12.2
+scanpy==1.12.3
 scikit-learn==1.9.0
 scikit-image==0.26.0
 scikit-misc==0.5.2
@@ -32,7 +32,7 @@ statsmodels==0.14.6
 streamlit==1.60.0
 threadpoolctl==3.6.0
 tifffile==2026.7.14
-tqdm==4.69.0
+tqdm==4.69.1
 tzdata==2026.3
 umap-learn==0.5.12
 wget==3.2
