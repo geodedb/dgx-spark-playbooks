@@ -27,7 +27,7 @@ scikit-image==0.26.0
 scikit-misc==0.5.2
 scipy==1.18.0
 seaborn==0.13.2
-session-info2==0.4.1
+session-info2==0.4.2
 statsmodels==0.14.6
 streamlit==1.60.0
 threadpoolctl==3.6.0
