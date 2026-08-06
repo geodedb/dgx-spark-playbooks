@@ -22,11 +22,11 @@ dev = [
 ]
 cuda12 = [
     "cuml-cu12==26.8.*",
-    "cuopt-cu12==26.6.*",
+    "cuopt-cu12==26.8.*",
 ]
 cuda13 = [
     "cuml-cu13==26.8.*",
-    "cuopt-cu13==26.6.*",
+    "cuopt-cu13==26.8.*",
 ]
 
 [tool.black]
