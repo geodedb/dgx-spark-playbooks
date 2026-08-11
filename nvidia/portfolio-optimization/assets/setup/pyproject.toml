@@ -18,7 +18,7 @@ dev = [
     "black==26.5.1",
     "isort",
     "flake8",
-    "pre-commit==4.6.1",
+    "pre-commit==4.6.2",
 ]
 cuda12 = [
     "cuml-cu12==26.8.*",
