@@ -1,4 +1,4 @@
-FROM ollama/ollama:0.32.10
+FROM ollama/ollama:0.32.11
 
 # Copy the entrypoint script
 COPY entrypoint.sh /entrypoint.sh
