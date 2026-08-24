@@ -63,6 +63,19 @@ function vecParam(v: number[]): string {
   return JSON.stringify(v);
 }
 
+/**
+ * knn() candidate over-fetch settings — see the `knnRows` doc comment for
+ * why the boost exists. A multiplier this small is cheap even for large
+ * graphs; the cap keeps a huge `k` from forcing an unbounded index scan.
+ */
+const KNN_BOOST_FACTOR = 8;
+const KNN_BOOST_CAP = 512;
+
+/** Requested candidate count for knn(), boosted to survive cross-label crowding (see knnRows). */
+function knnBoost(k: number): number {
+  return Math.min(k * KNN_BOOST_FACTOR, KNN_BOOST_CAP);
+}
+
 export class GeodeService {
   private client: GeodeClient | null = null;
   private static instance: GeodeService;
@@ -395,37 +408,80 @@ export class GeodeService {
   }
 
   /**
-   * knn()-backed nearest-entity lookup. Uses the HNSW index when one covers
-   * the property, otherwise the server scans. vector_cosine returns cosine
-   * SIMILARITY (1 = identical, 0 = orthogonal, -1 = opposite; verified on
-   * v0.8.5), so rows are ordered descending. Scores can arrive as decimal
-   * strings — callers must Number() them.
+   * Shared knn()-with-fallback query executor for both Entity and
+   * DocumentChunk vector lookups.
+   *
+   * IMPORTANT — cross-label crowding: `entity_emb_idx` (on Entity.embedding)
+   * and `chunk_emb_idx` (on DocumentChunk.embedding) both index the property
+   * NAME `embedding`, and `knn('embedding', $vec, $k, 'cosine')` selects its
+   * candidate set by property name across ALL labels *before* the label
+   * filter in MATCH is applied. With only `k` candidates requested, Entity
+   * and DocumentChunk nodes crowd each other's candidate list, so a
+   * label-filtered query can come back with fewer than k rows even when k
+   * matching nodes exist. Renaming the property per label was considered
+   * and rejected — it would break existing data and the ingestion schema.
+   * Instead every knn() call site over-fetches: it asks knn() for
+   * `kBoost = k * KNN_BOOST_FACTOR` (capped at KNN_BOOST_CAP) candidates,
+   * then trims back to `k` with LIMIT after the label filter has narrowed
+   * the candidate set down to matching nodes.
+   *
+   * `label` is the node label to match, `varName` the MATCH variable, and
+   * `returnProjection` the RETURN clause — it must reference a `score`
+   * column bound via a preceding `WITH ${varName}, vector_cosine(...) AS
+   * score` (both the fast and fallback paths bind it that way so one
+   * projection string works for both, preserving identical semantics).
+   * Uses the HNSW index when one covers the property, otherwise the server
+   * falls back to a full scan. vector_cosine returns cosine SIMILARITY
+   * (1 = identical, 0 = orthogonal, -1 = opposite; verified on v0.8.5), so
+   * rows are ordered descending. Scores can arrive as decimal strings —
+   * callers must Number() them.
    */
+  private async knnRows(
+    label: 'Entity' | 'DocumentChunk',
+    varName: string,
+    returnProjection: string,
+    queryEmbedding: number[],
+    k: number
+  ): Promise<Array<Record<string, unknown>>> {
+    const limit = safeLimit(k, 10);
+    const kBoost = knnBoost(limit);
+    try {
+      return await this.client!.queryAll(
+        `MATCH (${varName}:${label})
+         WHERE id(${varName}) IN knn('embedding', $vec, $kBoost, 'cosine')
+         WITH ${varName}, vector_cosine(${varName}.embedding, $vec) AS score
+         RETURN ${returnProjection}
+         ORDER BY score DESC
+         LIMIT ${limit}`,
+        { params: { vec: queryEmbedding, kBoost } }
+      );
+    } catch (error) {
+      // Fallback: full-scan WITH projection.
+      console.warn(`[Geode] knn() fast path unavailable for ${label}, falling back to full scan:`, error);
+      return await this.client!.queryAll(
+        `MATCH (${varName}:${label})
+         WHERE ${varName}.embedding IS NOT NULL
+         WITH ${varName}, vector_cosine(${varName}.embedding, $vec) AS score
+         RETURN ${returnProjection}
+         ORDER BY score DESC
+         LIMIT ${limit}`,
+        { params: { vec: queryEmbedding } }
+      );
+    }
+  }
+
+  /** knn()-backed nearest-entity lookup; see knnRows for the over-fetch rationale. */
   private async knnEntityRows(
     queryEmbedding: number[],
     k: number
   ): Promise<Array<Record<string, unknown>>> {
-    try {
-      return await this.client!.queryAll(
-        `MATCH (e:Entity)
-         WHERE id(e) IN knn('embedding', $vec, $k, 'cosine')
-         RETURN e.name AS name, vector_cosine(e.embedding, $vec) AS score, e.text AS text
-         ORDER BY score DESC`,
-        { params: { vec: queryEmbedding, k } }
-      );
-    } catch (error) {
-      // Fallback: full scan with a WITH projection (works since geode#476 fix).
-      console.warn('[Geode] knn() fast path unavailable, falling back to full scan:', error);
-      return await this.client!.queryAll(
-        `MATCH (e:Entity)
-         WHERE e.embedding IS NOT NULL
-         WITH e, vector_cosine(e.embedding, $vec) AS score
-         RETURN e.name AS name, score, e.text AS text
-         ORDER BY score DESC
-         LIMIT ${safeLimit(k, 10)}`,
-        { params: { vec: queryEmbedding } }
-      );
-    }
+    return this.knnRows(
+      'Entity',
+      'e',
+      'e.name AS name, score, e.text AS text',
+      queryEmbedding,
+      k
+    );
   }
 
   /**
@@ -526,29 +582,14 @@ export class GeodeService {
     await this.ensureInitialized();
 
     const k = safeLimit(topK, 10);
-    let rows: Array<Record<string, unknown>>;
     try {
-      try {
-        rows = await this.client!.queryAll(
-          `MATCH (d:DocumentChunk)
-           WHERE id(d) IN knn('embedding', $vec, $k, 'cosine')
-           RETURN d.text AS text, d.source AS source, vector_cosine(d.embedding, $vec) AS score, toString(id(d)) AS docId
-           ORDER BY score DESC`,
-          { params: { vec: queryEmbedding, k } }
-        );
-      } catch (error) {
-        // Fallback: full scan with a WITH projection (works since geode#476 fix).
-        console.warn('[Geode] knn() fast path unavailable, falling back to full scan:', error);
-        rows = await this.client!.queryAll(
-          `MATCH (d:DocumentChunk)
-           WHERE d.embedding IS NOT NULL
-           WITH d, vector_cosine(d.embedding, $vec) AS score
-           RETURN d.text AS text, d.source AS source, score, toString(id(d)) AS docId
-           ORDER BY score DESC
-           LIMIT ${k}`,
-          { params: { vec: queryEmbedding } }
-        );
-      }
+      const rows = await this.knnRows(
+        'DocumentChunk',
+        'd',
+        'd.text AS text, d.source AS source, score, toString(id(d)) AS docId',
+        queryEmbedding,
+        k
+      );
 
       return rows
         .map((r: any) => ({ row: r, score: Number(r.score) }))
