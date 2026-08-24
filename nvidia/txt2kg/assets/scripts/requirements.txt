@@ -1,6 +1,6 @@
 torch>=2.13.0
 tqdm
-geode-client
+geode-client @ git+https://gitlab.com/devnw/codepros/geode/geode-client-python.git@v0.4.1
 torch-geometric
 transformers
 numpy 
