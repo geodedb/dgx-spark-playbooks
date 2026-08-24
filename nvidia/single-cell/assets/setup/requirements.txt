@@ -31,7 +31,7 @@ session-info2==0.4.2
 statsmodels==0.14.6
 streamlit==1.62.0
 threadpoolctl==3.6.0
-tifffile==2026.8.16
+tifffile==2026.8.23
 tqdm==4.70.0
 tzdata==2026.3
 umap-learn==0.5.12
