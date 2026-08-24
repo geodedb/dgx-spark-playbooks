@@ -267,6 +267,11 @@ export class TextProcessor {
       if (this.selectedLLMProvider === 'vllm') {
         // For vLLM: call API directly to avoid LangChain format_instructions conflicts
         const vllmUrl = `${this.vllmBaseUrl}/chat/completions`;
+        // Remote vLLM endpoints may require Bearer auth (VLLM_API_KEY).
+        const vllmHeaders: Record<string, string> = { 'Content-Type': 'application/json' };
+        if (process.env.VLLM_API_KEY) {
+          vllmHeaders['Authorization'] = `Bearer ${process.env.VLLM_API_KEY}`;
+        }
         const vllmResponse = await axios.post(vllmUrl, {
           model: this.vllmModel,
           messages: [
@@ -275,7 +280,7 @@ export class TextProcessor {
           ],
           max_tokens: 8192,
           temperature: 0
-        }, { timeout: 900000 });
+        }, { timeout: 900000, headers: vllmHeaders });
         const responseText = this.stripThinkingTags(vllmResponse.data.choices[0].message.content);
         const finishReason = vllmResponse.data.choices[0].finish_reason;
         const tokens = vllmResponse.data.usage?.completion_tokens;

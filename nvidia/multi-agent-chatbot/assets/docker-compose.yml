@@ -78,12 +78,16 @@ services:
       context: ../../../../geode
       dockerfile: Dockerfile
     container_name: geode
-    command: ["--data-dir", "/data", "--listen-grpc", "0.0.0.0:50051"]
+    # v0.8.5: `geode serve` no longer supports --listen-grpc (gRPC serving
+    # removed — JIRA ENG-3907); QUIC on 3141 is the only listener.
+    command: ["--data-dir", "/data", "--listen", "0.0.0.0:3141"]
     ports:
       - '127.0.0.1:3141:3141/udp'
-      - '127.0.0.1:50051:50051'
     environment:
       - GEODE_ADMIN_PASSWORD=${GEODE_ADMIN_PASSWORD:-geodesic}
+      # v0.8.5 release builds refuse --insecure-tls-skip-verify (used by the
+      # healthcheck below) unless this env var is set.
+      - GEODE_ALLOW_INSECURE_TLS=1
     volumes:
       - geode_data:/data
     healthcheck:

@@ -9,8 +9,9 @@ services:
       # Point to host Ollama instead of Docker container
       - OLLAMA_BASE_URL=http://host-gateway:11434/v1
       - OLLAMA_MODEL=gpt-oss:20b
-      # Geode configuration (keep same)
-      - GEODE_URL=grpc://geode:50051?ca_cert=/geode-data/server.crt&insecure_tls_skip_verify=true
+      # Geode configuration (keep same; QUIC — gRPC serving removed in
+      # geode v0.8.5, JIRA ENG-3907)
+      - GEODE_URL=quic://geode:3141?ca_cert=/geode-data/server.crt&insecure_tls_skip_verify=true
       - GEODE_USERNAME=geode
       - GEODE_PASSWORD=${GEODE_ADMIN_PASSWORD:-geodesic}
       - GRAPH_DB_TYPE=geode
@@ -44,9 +45,10 @@ services:
     image: geode:latest
     build: !reset null
     # Replace broken health check (geode query hangs on aarch64 - #424)
-    # Check that gRPC port 50051 is listening instead
+    # Check that the QUIC (UDP) port 3141 is bound instead (gRPC serving
+    # removed in geode v0.8.5 — JIRA ENG-3907)
     healthcheck:
-      test: ["CMD-SHELL", "ss -tlnp | grep -q ':50051'"]
+      test: ["CMD-SHELL", "ss -ulnp | grep -q ':3141'"]
       interval: 10s
       timeout: 3s
       retries: 5

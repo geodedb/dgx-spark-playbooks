@@ -21,8 +21,10 @@ services:
   geode:
     image: geode:latest
     build: !reset null
+    # Check that the QUIC (UDP) port 3141 is bound (gRPC serving removed in
+    # geode v0.8.5 — JIRA ENG-3907)
     healthcheck:
-      test: ["CMD-SHELL", "ss -tlnp | grep -q ':50051'"]
+      test: ["CMD-SHELL", "ss -ulnp | grep -q ':3141'"]
       interval: 10s
       timeout: 3s
       retries: 5

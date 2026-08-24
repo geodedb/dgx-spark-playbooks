@@ -29,11 +29,22 @@ export class EmbeddingsService {
   private nvidiaApiKey: string = '';
   private nvidiaModel: string = 'nvidia/llama-3.2-nv-embedqa-1b-v2';
   private nvidiaInputType: string = 'query';
+  // 'legacy' = local sentence-transformers service (POST {apiUrl}/embeddings),
+  // 'openai' = OpenAI-compatible endpoint (POST {apiUrl}/v1/embeddings), e.g. a
+  // remote vLLM/TEI encoder. Selected via EMBEDDINGS_API_FORMAT=openai.
+  private apiFormat: 'legacy' | 'openai' = 'legacy';
 
   private constructor() {
-    this.apiUrl = process.env.EMBEDDINGS_API_URL || 'http://localhost:8000';
+    this.apiUrl = (process.env.EMBEDDINGS_API_URL || 'http://localhost:8000').replace(/\/+$/, '');
     this.modelId = process.env.EMBEDDINGS_MODEL_ID || 'all-MiniLM-L6-v2';
-    
+    this.apiFormat = process.env.EMBEDDINGS_API_FORMAT === 'openai' ? 'openai' : 'legacy';
+    if (process.env.EMBEDDINGS_DIMENSION) {
+      const dim = parseInt(process.env.EMBEDDINGS_DIMENSION, 10);
+      if (Number.isFinite(dim) && dim > 0) {
+        this.dimension = dim;
+      }
+    }
+
     // Always get NVIDIA API key from environment variables
     this.nvidiaApiKey = process.env.NVIDIA_API_KEY || '';
     
@@ -63,7 +74,7 @@ export class EmbeddingsService {
       this.dimension = 4096;
     }
     
-    console.log('EmbeddingsService initialized with useNvidiaApi:', this.useNvidiaApi, 'model:', this.useNvidiaApi ? this.nvidiaModel : this.modelId);
+    console.log('EmbeddingsService initialized with useNvidiaApi:', this.useNvidiaApi, 'format:', this.apiFormat, 'model:', this.useNvidiaApi ? this.nvidiaModel : this.modelId);
   }
 
   /**
@@ -100,8 +111,12 @@ export class EmbeddingsService {
         return;
       }
       
-      // Check if the API is available
-      const response = await fetch(`${this.apiUrl}/health`, {
+      // Check if the API is available. OpenAI-compatible servers don't expose
+      // the sentence-transformers /health route, so probe /v1/models there.
+      const healthUrl = this.apiFormat === 'openai'
+        ? `${this.apiUrl}/v1/models`
+        : `${this.apiUrl}/health`;
+      const response = await fetch(healthUrl, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -213,7 +228,14 @@ export class EmbeddingsService {
    */
   private async encodeBatch(texts: string[]): Promise<number[][]> {
     try {
-      const response = await fetch(`${this.apiUrl}/embeddings`, {
+      // Legacy: local sentence-transformers service ({apiUrl}/embeddings).
+      // OpenAI: any OpenAI-compatible encoder ({apiUrl}/v1/embeddings), e.g.
+      // vLLM serving an embedding model. Both accept a batched `input` array
+      // and return { data: [{ embedding: [...] }, ...] }.
+      const endpoint = this.apiFormat === 'openai'
+        ? `${this.apiUrl}/v1/embeddings`
+        : `${this.apiUrl}/embeddings`;
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -229,7 +251,13 @@ export class EmbeddingsService {
       }
 
       const data = await response.json();
-      return data.data.map((item: any) => item.embedding);
+      const embeddings = data.data.map((item: any) => item.embedding);
+      // Track the real dimension reported by the server (e.g. 2560 for
+      // Qwen/Qwen3-Embedding-4B) so zero-fill fallbacks stay consistent.
+      if (embeddings.length > 0 && Array.isArray(embeddings[0]) && embeddings[0].length > 0) {
+        this.dimension = embeddings[0].length;
+      }
+      return embeddings;
     } catch (error) {
       console.error('Error calling embeddings API:', error);
       throw error;

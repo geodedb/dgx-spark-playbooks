@@ -123,7 +123,10 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // If vLLM is specified, use the vLLM API endpoint
+    // If vLLM is specified, use the vLLM API endpoint.
+    // NOTE: this is an internal call to our own /api/vllm route; that route
+    // (and TextProcessor below) attach `Authorization: Bearer $VLLM_API_KEY`
+    // to the actual upstream vLLM requests when the key is configured.
     if (llmProvider === 'vllm') {
       const vllmResponse = await fetch(`${req.nextUrl.origin}/api/vllm`, {
         method: 'POST',

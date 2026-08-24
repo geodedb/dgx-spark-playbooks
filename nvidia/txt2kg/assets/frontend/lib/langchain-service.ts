@@ -286,7 +286,9 @@ export class LangChainService {
         modelName: modelId,
         temperature: options?.temperature || 0.7,
         maxTokens: options?.maxTokens || 4096,
-        openAIApiKey: 'vllm', // vLLM doesn't require a real API key
+        // Remote vLLM endpoints may require Bearer auth (VLLM_API_KEY);
+        // local vLLM ignores the placeholder key.
+        openAIApiKey: process.env.VLLM_API_KEY || 'vllm',
         configuration: {
           baseURL: baseURL,
           timeout: 900000, // 15 minute timeout for vLLM inference (reasoning models generate long <think> chains)

@@ -1,13 +1,12 @@
 # Override for DGX Spark (aarch64) testing
 # - Uses pre-built Geode image
-# - gRPC transport (QUIC TLS still hangs on aarch64 loopback - #424)
-# - TCP health check workaround
+# - QUIC transport on 3141 (backend defaults). The former
+#   GEODE_PORT=50051/GEODE_TRANSPORT=grpc workaround was removed: gRPC
+#   serving no longer exists in geode v0.8.5 (JIRA ENG-3907).
+# - UDP port-bound health check workaround (geode query hangs on aarch64 - #424)
 
 services:
   backend:
-    environment:
-      - GEODE_PORT=50051
-      - GEODE_TRANSPORT=grpc
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/available_models"]
       interval: 30s
@@ -18,8 +17,10 @@ services:
   geode:
     image: geode:latest
     build: !reset null
+    # Check that the QUIC (UDP) port 3141 is bound (gRPC serving removed in
+    # geode v0.8.5 — JIRA ENG-3907)
     healthcheck:
-      test: ["CMD-SHELL", "ss -tlnp | grep -q ':50051'"]
+      test: ["CMD-SHELL", "ss -ulnp | grep -q ':3141'"]
       interval: 10s
       timeout: 3s
       retries: 5

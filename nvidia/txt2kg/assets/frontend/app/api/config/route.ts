@@ -25,6 +25,10 @@ export async function GET() {
     ollamaModel: process.env.OLLAMA_MODEL || 'qwen3:1.7b',
     vllmBaseUrl: process.env.VLLM_BASE_URL || 'http://localhost:8001/v1',
     vllmModel: process.env.VLLM_MODEL || 'meta-llama/Llama-3.2-3B-Instruct',
+    // Whether the server holds a vLLM API key. The key itself is never
+    // returned to the browser; all authenticated vLLM calls happen
+    // server-side (llm-service, text-processor, /api/vllm routes).
+    vllmApiKeyConfigured: Boolean(process.env.VLLM_API_KEY),
     // Add other config values as needed
   });
 } 
