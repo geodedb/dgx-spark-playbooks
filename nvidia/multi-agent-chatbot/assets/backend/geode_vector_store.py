@@ -23,7 +23,7 @@ import uuid
 from typing import List, Optional, Callable
 
 import requests
-from geode_client import Client, TransportType
+from geode_client import Client, QueryError, TransportType
 from langchain_core.documents import Document
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_unstructured import UnstructuredLoader
@@ -438,8 +438,14 @@ class GeodeVectorStore:
             await self._ensure_index(conn)
             try:
                 page, _ = await conn.query(knn_query, params)
-            except Exception as e:
-                logger.debug({
+            except QueryError as e:
+                # Falling back to a full scan is intentionally resilient (e.g. the
+                # HNSW index may not be built yet right after startup, which is
+                # benign and self-resolves once _ensure_index()/indexing completes).
+                # Log at warning so an unexpected regression in the knn fast path
+                # (e.g. a real query/index bug) doesn't silently degrade to a full
+                # scan on every request without being noticed.
+                logger.warning({
                     "message": "knn fast path unavailable, falling back to full scan",
                     "error": str(e)
                 })
@@ -458,6 +464,11 @@ class GeodeVectorStore:
                     page_content=text,
                     metadata={"source": source, "score": score}
                 ))
+            # Client-side sort is the ranking authority, not just a safety net:
+            # GQL-side ORDER BY score was dropped because float projections
+            # (toString(score)) decode as NULL through ORDER BY, which would
+            # silently scramble ranking. Re-sort here on the parsed floats and
+            # slice to k to enforce the intended similarity ordering.
             docs.sort(key=lambda d: d.metadata["score"], reverse=True)
             return docs[:k]
 

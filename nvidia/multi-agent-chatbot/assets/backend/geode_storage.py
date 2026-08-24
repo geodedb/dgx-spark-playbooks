@@ -395,6 +395,10 @@ class GeodeConversationStorage:
         now_str = now.isoformat()
 
         conn = await self._get_conn()
+        # Unconditional SET (not ON CREATE/ON MATCH) is safe here: both branches
+        # would have set imageData/createdAt/expiresAt to the same values on
+        # every call, so collapsing to a single MERGE ... SET has identical
+        # behavior for both the create and update paths.
         await conn.execute(
             "MERGE (img:Image {imageId: $imageId}) "
             "SET img.imageData = $imageData, "
