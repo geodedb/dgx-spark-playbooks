@@ -59,9 +59,15 @@ class CustomEmbeddings:
         return self.__call__([text])[0]
 
 
-def _escape_gql_string(value: str) -> str:
-    """Escape single quotes in a string for use in GQL literals."""
-    return value.replace("'", "\\'")
+def _vec_param(embedding: List[float]) -> str:
+    """Serialize an embedding for param-bound VectorF32 storage.
+
+    Embeddings must be stored as true VectorF32 values — knn()/HNSW ignore
+    LIST-typed properties entirely. The only fully param-bound form geode
+    v0.8.5 accepts is `vectorf32(toString($vec))` with $vec bound to the
+    JSON string of the float list.
+    """
+    return json.dumps(embedding)
 
 
 def _val(row: dict, key: str, default=None):
@@ -116,6 +122,7 @@ class GeodeVectorStore:
             if password:
                 kwargs["password"] = password
             self.client = Client(host=self.host, port=self.port, **kwargs)
+            self._index_ensured = False
 
             self.text_splitter = RecursiveCharacterTextSplitter(
                 chunk_size=1000,
@@ -304,22 +311,44 @@ class GeodeVectorStore:
             }, exc_info=True)
             raise
 
+    async def _ensure_index(self, conn) -> None:
+        """Create the HNSW vector index for RagDocument embeddings (idempotent)."""
+        if self._index_ensured:
+            return
+        try:
+            await conn.execute(
+                "CREATE INDEX rag_emb_idx ON RagDocument(embedding) "
+                "USING vector WITH (metric: 'cosine')"
+            )
+            logger.debug({"message": "Created HNSW index rag_emb_idx"})
+        except Exception as e:
+            msg = str(e)
+            if "42P07" in msg or "already exists" in msg.lower() or "duplicate" in msg.lower():
+                pass  # index already exists
+            else:
+                raise
+        self._index_ensured = True
+
     async def _store_documents(self, splits: List[Document], embeddings: List[List[float]]) -> None:
         """Store document chunks with embeddings in Geode as RagDocument nodes."""
         async with self.client.connection() as conn:
+            await self._ensure_index(conn)
             for doc, embedding in zip(splits, embeddings):
                 doc_id = str(uuid.uuid4())
-                source = _escape_gql_string(doc.metadata.get("source", "unknown"))
-                text = _escape_gql_string(doc.page_content)
-                embedding_str = ", ".join(str(v) for v in embedding)
 
                 await conn.execute(
-                    f"CREATE (d:RagDocument {{"
-                    f"docId: '{doc_id}', "
-                    f"text: '{text}', "
-                    f"source: '{source}', "
-                    f"embedding: vectorf32([{embedding_str}])"
-                    f"}})"
+                    "CREATE (d:RagDocument {"
+                    "docId: $docId, "
+                    "text: $text, "
+                    "source: $source, "
+                    "embedding: vectorf32(toString($vec))"
+                    "})",
+                    {
+                        "docId": doc_id,
+                        "text": doc.page_content,
+                        "source": doc.metadata.get("source", "unknown"),
+                        "vec": _vec_param(embedding),
+                    }
                 )
 
     def flush_store(self):
@@ -329,25 +358,9 @@ class GeodeVectorStore:
         })
 
     def get_documents(self, query: str, k: int = 8, sources: List[str] = None) -> List[Document]:
-        """Get relevant documents using vector cosine similarity search in Geode."""
+        """Get relevant documents using knn vector similarity search in Geode."""
         try:
             query_embedding = self.embeddings.embed_query(query)
-            embedding_str = ", ".join(str(v) for v in query_embedding)
-
-            source_filter = ""
-            if sources:
-                escaped_sources = [f"'{_escape_gql_string(s)}'" for s in sources]
-                source_list = ", ".join(escaped_sources)
-                source_filter = f" AND d.source IN [{source_list}]"
-
-            gql_query = (
-                f"MATCH (d:RagDocument) "
-                f"WHERE d.embedding IS NOT NULL "
-                f"WITH d, vector_cosine(d.embedding, vectorf32([{embedding_str}])) AS score "
-                f"WHERE score > 0.1{source_filter} "
-                f"RETURN d.text, d.source, score "
-                f"ORDER BY score DESC LIMIT {k}"
-            )
 
             logger.debug({
                 "message": "Retrieving documents from Geode",
@@ -366,9 +379,11 @@ class GeodeVectorStore:
             if loop and loop.is_running():
                 import concurrent.futures
                 with concurrent.futures.ThreadPoolExecutor() as pool:
-                    docs = pool.submit(asyncio.run, self._query_documents(gql_query)).result()
+                    docs = pool.submit(
+                        asyncio.run, self._query_documents(query_embedding, k, sources)
+                    ).result()
             else:
-                docs = asyncio.run(self._query_documents(gql_query))
+                docs = asyncio.run(self._query_documents(query_embedding, k, sources))
 
             logger.debug({
                 "message": "Retrieved documents",
@@ -384,22 +399,67 @@ class GeodeVectorStore:
             }, exc_info=True)
             return []
 
-    async def _query_documents(self, gql_query: str) -> List[Document]:
-        """Execute a GQL query and return matching documents."""
+    async def _query_documents(
+        self, query_embedding: List[float], k: int, sources: List[str] = None
+    ) -> List[Document]:
+        """Run a knn similarity query (with full-scan fallback) and return documents.
+
+        vector_cosine returns SIMILARITY (self = 1), so higher is better.
+        Scores can arrive as decimal strings — projected via toString() and
+        coerced with float(); final ranking is done client-side on the floats.
+        """
+        params = {"vec": _vec_param(query_embedding), "k": int(k)}
+
+        source_filter = ""
+        if sources:
+            placeholders = []
+            for i, source in enumerate(sources):
+                params[f"src{i}"] = source
+                placeholders.append(f"$src{i}")
+            source_filter = f" AND d.source IN [{', '.join(placeholders)}]"
+
+        knn_query = (
+            "MATCH (d:RagDocument) "
+            "WHERE id(d) IN knn('embedding', vectorf32(toString($vec)), $k, 'cosine') "
+            "WITH d, vector_cosine(d.embedding, vectorf32(toString($vec))) AS score "
+            f"WHERE score > 0.1{source_filter} "
+            "RETURN d.text AS text, d.source AS source, toString(score) AS score"
+        )
+        scan_query = (
+            "MATCH (d:RagDocument) "
+            "WHERE d.embedding IS NOT NULL "
+            "WITH d, vector_cosine(d.embedding, vectorf32(toString($vec))) AS score "
+            f"WHERE score > 0.1{source_filter} "
+            "RETURN d.text AS text, d.source AS source, toString(score) AS score "
+            "LIMIT $k"
+        )
+
         async with self.client.connection() as conn:
-            page, _ = await conn.query(gql_query)
+            await self._ensure_index(conn)
+            try:
+                page, _ = await conn.query(knn_query, params)
+            except Exception as e:
+                logger.debug({
+                    "message": "knn fast path unavailable, falling back to full scan",
+                    "error": str(e)
+                })
+                page, _ = await conn.query(scan_query, params)
 
             docs = []
             for row in page.rows:
                 text = _val(row, "text", "")
                 source = _val(row, "source", "unknown")
                 score_raw = _val(row, "score", "0.0")
-                score = float(score_raw) if score_raw else 0.0
+                try:
+                    score = float(score_raw) if score_raw else 0.0
+                except (TypeError, ValueError):
+                    score = 0.0
                 docs.append(Document(
                     page_content=text,
                     metadata={"source": source, "score": score}
                 ))
-            return docs
+            docs.sort(key=lambda d: d.metadata["score"], reverse=True)
+            return docs[:k]
 
     def delete_collection(self, collection_name: str) -> bool:
         """Delete all RagDocument nodes matching a source name.
@@ -411,8 +471,6 @@ class GeodeVectorStore:
             bool: True if successful, False otherwise
         """
         try:
-            safe_name = _escape_gql_string(collection_name)
-
             import asyncio
             loop = None
             try:
@@ -423,9 +481,9 @@ class GeodeVectorStore:
             if loop and loop.is_running():
                 import concurrent.futures
                 with concurrent.futures.ThreadPoolExecutor() as pool:
-                    pool.submit(asyncio.run, self._delete_source(safe_name)).result()
+                    pool.submit(asyncio.run, self._delete_source(collection_name)).result()
             else:
-                asyncio.run(self._delete_source(safe_name))
+                asyncio.run(self._delete_source(collection_name))
 
             if self.on_source_deleted:
                 self.on_source_deleted(collection_name)
@@ -443,11 +501,12 @@ class GeodeVectorStore:
             }, exc_info=True)
             return False
 
-    async def _delete_source(self, safe_name: str) -> None:
+    async def _delete_source(self, source_name: str) -> None:
         """Delete all RagDocument nodes with a given source."""
         async with self.client.connection() as conn:
             await conn.execute(
-                f"MATCH (d:RagDocument {{source: '{safe_name}'}}) DELETE d"
+                "MATCH (d:RagDocument {source: $source}) DELETE d",
+                {"source": source_name}
             )
 
 

@@ -40,11 +40,6 @@ class CacheEntry:
         return time.time() - self.timestamp > self.ttl
 
 
-def _escape_gql_string(value: str) -> str:
-    """Escape single quotes in a string for use in GQL literals."""
-    return value.replace("'", "\\'")
-
-
 def _val(row: dict, key: str, default=None):
     """Extract a plain Python value from a Geode row entry.
 
@@ -226,9 +221,9 @@ class GeodeConversationStorage:
             return len(cached_messages) > 0
 
         conn = await self._get_conn()
-        safe_id = _escape_gql_string(chat_id)
         page, _ = await conn.query(
-            f"MATCH (c:Conversation {{chatId: '{safe_id}'}}) RETURN c.chatId"
+            "MATCH (c:Conversation {chatId: $chatId}) RETURN c.chatId",
+            {"chatId": chat_id}
         )
         self._db_operations += 1
         return len(page.rows) > 0
@@ -240,9 +235,9 @@ class GeodeConversationStorage:
             return cached_messages[-limit:] if limit else cached_messages
 
         conn = await self._get_conn()
-        safe_id = _escape_gql_string(chat_id)
         page, _ = await conn.query(
-            f"MATCH (c:Conversation {{chatId: '{safe_id}'}}) RETURN c.messages"
+            "MATCH (c:Conversation {chatId: $chatId}) RETURN c.messages",
+            {"chatId": chat_id}
         )
         self._db_operations += 1
 
@@ -271,20 +266,25 @@ class GeodeConversationStorage:
     async def save_messages_immediate(self, chat_id: str, messages: List[BaseMessage]) -> None:
         """Save messages immediately without batching - for critical operations."""
         serialized_messages = [self._message_to_dict(msg) for msg in messages]
-        messages_json = _escape_gql_string(json.dumps(serialized_messages))
+        messages_json = json.dumps(serialized_messages)
         now = datetime.utcnow().isoformat()
 
         conn = await self._get_conn()
-        safe_id = _escape_gql_string(chat_id)
         await conn.execute(
-            f"MERGE (c:Conversation {{chatId: '{safe_id}'}}) "
-            f"ON CREATE SET c.messages = '{messages_json}', "
-            f"c.messageCount = {len(messages)}, "
-            f"c.updatedAt = '{now}', "
-            f"c.createdAt = '{now}' "
-            f"ON MATCH SET c.messages = '{messages_json}', "
-            f"c.messageCount = {len(messages)}, "
-            f"c.updatedAt = '{now}'"
+            "MERGE (c:Conversation {chatId: $chatId}) "
+            "ON CREATE SET c.messages = $messages, "
+            "c.messageCount = $count, "
+            "c.updatedAt = $now, "
+            "c.createdAt = $now "
+            "ON MATCH SET c.messages = $messages, "
+            "c.messageCount = $count, "
+            "c.updatedAt = $now",
+            {
+                "chatId": chat_id,
+                "messages": messages_json,
+                "count": len(messages),
+                "now": now,
+            }
         )
         self._db_operations += 1
 
@@ -307,19 +307,24 @@ class GeodeConversationStorage:
                 conn = await self._get_conn()
                 for chat_id, messages in saves_to_process.items():
                     serialized_messages = [self._message_to_dict(msg) for msg in messages]
-                    messages_json = _escape_gql_string(json.dumps(serialized_messages))
+                    messages_json = json.dumps(serialized_messages)
                     now = datetime.utcnow().isoformat()
-                    safe_id = _escape_gql_string(chat_id)
 
                     await conn.execute(
-                        f"MERGE (c:Conversation {{chatId: '{safe_id}'}}) "
-                        f"ON CREATE SET c.messages = '{messages_json}', "
-                        f"c.messageCount = {len(messages)}, "
-                        f"c.updatedAt = '{now}', "
-                        f"c.createdAt = '{now}' "
-                        f"ON MATCH SET c.messages = '{messages_json}', "
-                        f"c.messageCount = {len(messages)}, "
-                        f"c.updatedAt = '{now}'"
+                        "MERGE (c:Conversation {chatId: $chatId}) "
+                        "ON CREATE SET c.messages = $messages, "
+                        "c.messageCount = $count, "
+                        "c.updatedAt = $now, "
+                        "c.createdAt = $now "
+                        "ON MATCH SET c.messages = $messages, "
+                        "c.messageCount = $count, "
+                        "c.updatedAt = $now",
+                        {
+                            "chatId": chat_id,
+                            "messages": messages_json,
+                            "count": len(messages),
+                            "now": now,
+                        }
                     )
 
                 self._db_operations += len(saves_to_process)
@@ -343,12 +348,13 @@ class GeodeConversationStorage:
         """Delete a conversation by chat_id."""
         try:
             conn = await self._get_conn()
-            safe_id = _escape_gql_string(chat_id)
             await conn.execute(
-                f"MATCH (m:ChatMetadata {{chatId: '{safe_id}'}}) DETACH DELETE m"
+                "MATCH (m:ChatMetadata {chatId: $chatId}) DETACH DELETE m",
+                {"chatId": chat_id}
             )
             await conn.execute(
-                f"MATCH (c:Conversation {{chatId: '{safe_id}'}}) DETACH DELETE c"
+                "MATCH (c:Conversation {chatId: $chatId}) DETACH DELETE c",
+                {"chatId": chat_id}
             )
             self._db_operations += 2
 
@@ -387,18 +393,19 @@ class GeodeConversationStorage:
         now = datetime.utcnow()
         expires = (now + timedelta(hours=1)).isoformat()
         now_str = now.isoformat()
-        safe_id = _escape_gql_string(image_id)
-        safe_data = _escape_gql_string(image_base64)
 
         conn = await self._get_conn()
         await conn.execute(
-            f"MERGE (img:Image {{imageId: '{safe_id}'}}) "
-            f"ON CREATE SET img.imageData = '{safe_data}', "
-            f"img.createdAt = '{now_str}', "
-            f"img.expiresAt = '{expires}' "
-            f"ON MATCH SET img.imageData = '{safe_data}', "
-            f"img.createdAt = '{now_str}', "
-            f"img.expiresAt = '{expires}'"
+            "MERGE (img:Image {imageId: $imageId}) "
+            "SET img.imageData = $imageData, "
+            "img.createdAt = $now, "
+            "img.expiresAt = $expires",
+            {
+                "imageId": image_id,
+                "imageData": image_base64,
+                "now": now_str,
+                "expires": expires,
+            }
         )
         self._db_operations += 1
 
@@ -416,13 +423,13 @@ class GeodeConversationStorage:
             return cache_entry.data
 
         now = datetime.utcnow().isoformat()
-        safe_id = _escape_gql_string(image_id)
 
         conn = await self._get_conn()
         page, _ = await conn.query(
-            f"MATCH (img:Image {{imageId: '{safe_id}'}}) "
-            f"WHERE img.expiresAt > '{now}' "
-            f"RETURN img.imageData"
+            "MATCH (img:Image {imageId: $imageId}) "
+            "WHERE img.expiresAt > $now "
+            "RETURN img.imageData",
+            {"imageId": image_id, "now": now}
         )
         self._db_operations += 1
 
@@ -445,12 +452,11 @@ class GeodeConversationStorage:
             self._cache_hits += 1
             return cache_entry.data
 
-        safe_id = _escape_gql_string(chat_id)
-
         conn = await self._get_conn()
         page, _ = await conn.query(
-            f"MATCH (m:ChatMetadata {{chatId: '{safe_id}'}}) "
-            f"RETURN m.name, m.createdAt"
+            "MATCH (m:ChatMetadata {chatId: $chatId}) "
+            "RETURN m.name, m.createdAt",
+            {"chatId": chat_id}
         )
         self._db_operations += 1
 
@@ -475,17 +481,16 @@ class GeodeConversationStorage:
     async def set_chat_metadata(self, chat_id: str, name: str) -> None:
         """Set chat metadata."""
         now = datetime.utcnow().isoformat()
-        safe_id = _escape_gql_string(chat_id)
-        safe_name = _escape_gql_string(name)
 
         conn = await self._get_conn()
         await conn.execute(
-            f"MERGE (m:ChatMetadata {{chatId: '{safe_id}'}}) "
-            f"ON CREATE SET m.name = '{safe_name}', "
-            f"m.updatedAt = '{now}', "
-            f"m.createdAt = '{now}' "
-            f"ON MATCH SET m.name = '{safe_name}', "
-            f"m.updatedAt = '{now}'"
+            "MERGE (m:ChatMetadata {chatId: $chatId}) "
+            "ON CREATE SET m.name = $name, "
+            "m.updatedAt = $now, "
+            "m.createdAt = $now "
+            "ON MATCH SET m.name = $name, "
+            "m.updatedAt = $now",
+            {"chatId": chat_id, "name": name, "now": now}
         )
         self._db_operations += 1
 
@@ -502,8 +507,9 @@ class GeodeConversationStorage:
         conn = await self._get_conn()
         # Count expired images first
         page, _ = await conn.query(
-            f"MATCH (img:Image) WHERE img.expiresAt < '{now}' "
-            f"RETURN COUNT(img) AS cnt"
+            "MATCH (img:Image) WHERE img.expiresAt < $now "
+            "RETURN COUNT(img) AS cnt",
+            {"now": now}
         )
         deleted_count = 0
         if page.rows:
@@ -511,7 +517,8 @@ class GeodeConversationStorage:
 
         if deleted_count > 0:
             await conn.execute(
-                f"MATCH (img:Image) WHERE img.expiresAt < '{now}' DELETE img"
+                "MATCH (img:Image) WHERE img.expiresAt < $now DELETE img",
+                {"now": now}
             )
 
         self._db_operations += 2
