@@ -18,8 +18,29 @@
 /**
  * Unified Geode service replacing ArangoDB, Neo4j, Qdrant, and Pinecone.
  * Uses @geodedb/client for graph + vector operations in a single database.
+ *
+ * All values (names, ids, text, embeddings) are passed as query parameters
+ * ($param bindings) — never string-interpolated into GQL. Embeddings in
+ * particular must be bound as params: literal lists with a leading negative
+ * element still fail to parse (geode#478), and param binding sidesteps the
+ * issue entirely while removing the injection surface.
+ *
+ * Embedding storage uses `vectorf32(toString($vec))` with $vec bound to the
+ * JSON string of the number[] (see vecParam). This is deliberate: a plain
+ * list param stores a LIST-typed property that vector_cosine() accepts but
+ * knn() and the HNSW vector indexes ignore entirely (verified against the
+ * geode v0.8.5 source: both the index and scan knn paths only consider
+ * VectorF32/VectorI32-typed properties). `vectorf32($vec)` is rejected by
+ * the parser ("invalid builtin function call" — params are not literal
+ * arguments), but a nested call is allowed, so `vectorf32(toString($vec))`
+ * parses and evaluates the param server-side into a real VECTORF32 value.
+ * The data path stays fully parameterized: no injection, no #477/#478
+ * literal-parsing issues.
+ *
+ * QUERY vectors (the argument to knn()/vector_cosine()) are bound as plain
+ * number[] list params — those are accepted directly.
  */
-import { createClient, GeodeClient } from '@geodedb/client';
+import { createClient, GeodeClient, isDriverError } from '@geodedb/client';
 
 export interface DocumentSearchResult {
   id: string;
@@ -27,19 +48,19 @@ export interface DocumentSearchResult {
   metadata?: Record<string, any>;
 }
 
+/** Coerce a caller-supplied limit into a safe positive integer for LIMIT clauses. */
+function safeLimit(n: number, fallback: number): number {
+  const v = Math.floor(Number(n));
+  return Number.isFinite(v) && v > 0 ? v : fallback;
+}
+
 /**
- * Format a number array as a vectorf32 literal.
- * - Uses toFixed(10) to avoid scientific notation (geode#477)
- * - Prefixes negative first element with "0.0" to work around parser bug (geode#478)
+ * Serialize an embedding for storage via `vectorf32(toString($vec))`.
+ * JSON list-of-numbers form is exactly what vectorf32's string parser
+ * accepts (scientific notation included).
  */
-function vecLiteral(v: number[]): string {
-  const parts = v.map(n => n.toFixed(10));
-  // Workaround: vectorf32 parser fails when first element is negative (geode#478)
-  // Use "0.0-X" instead of "-X" so parser sees subtraction, not unary minus
-  if (v.length > 0 && v[0] < 0) {
-    parts[0] = `0.0${parts[0]}`; // e.g. "-0.0483" → "0.0-0.0483"
-  }
-  return `[${parts.join(',')}]`;
+function vecParam(v: number[]): string {
+  return JSON.stringify(v);
 }
 
 export class GeodeService {
@@ -47,6 +68,7 @@ export class GeodeService {
   private static instance: GeodeService;
   private initialized: boolean = false;
   private isInitializing = false;
+  private indexesEnsured = false;
 
   private constructor() {}
 
@@ -77,6 +99,8 @@ export class GeodeService {
       this.initialized = true;
       this.isInitializing = false;
       console.log('Geode initialized successfully');
+
+      await this.ensureIndexes();
     } catch (error) {
       this.isInitializing = false;
       console.error('Failed to initialize Geode:', error);
@@ -98,6 +122,44 @@ export class GeodeService {
   }
 
   /**
+   * Create the HNSW vector indexes used by knn() retrieval. Idempotent:
+   * "index already exists" errors are recognized and ignored; any other
+   * error is surfaced as a warning (retrieval still works via full scans).
+   */
+  private async ensureIndexes(): Promise<void> {
+    if (this.indexesEnsured || !this.client) {
+      return;
+    }
+
+    const ddl = [
+      `CREATE INDEX entity_emb_idx ON Entity(embedding) USING vector WITH (metric: 'cosine')`,
+      `CREATE INDEX chunk_emb_idx ON DocumentChunk(embedding) USING vector WITH (metric: 'cosine')`,
+    ];
+
+    for (const stmt of ddl) {
+      try {
+        await this.client.exec(stmt);
+      } catch (error) {
+        if (this.isIndexExistsError(error)) {
+          continue; // index already present — expected on restart
+        }
+        console.warn('[Geode] Failed to create vector index (continuing without):', error);
+      }
+    }
+
+    this.indexesEnsured = true;
+  }
+
+  /** True when the error indicates the index already exists. */
+  private isIndexExistsError(error: unknown): boolean {
+    if (isDriverError(error) && error.statusClass === '42P07') {
+      return true;
+    }
+    const msg = error instanceof Error ? error.message : String(error);
+    return /already exists|duplicate/i.test(msg);
+  }
+
+  /**
    * Close the Geode connection
    */
   public async close(): Promise<void> {
@@ -105,6 +167,7 @@ export class GeodeService {
       await this.client.close();
       this.client = null;
       this.initialized = false;
+      this.indexesEnsured = false;
       console.log('Geode connection closed');
     }
   }
@@ -131,19 +194,23 @@ export class GeodeService {
         const object = t.object.trim();
         if (!subject || !predicate || !object) continue;
 
-        const escaped = (s: string) => s.replace(/'/g, "\\'");
         try {
-          // MERGE nodes first, then MATCH+CREATE the relationship
-          // (Geode does not support MERGE for relationship creation)
+          // MERGE both nodes first, then MERGE the relationship in a
+          // SEPARATE statement. Chaining node MERGEs with a relationship
+          // MERGE in one statement silently creates no relationship in
+          // Geode — never combine them.
           await this.client!.exec(
-            `MERGE (s:Entity {name: '${escaped(subject)}'})`
+            `MERGE (s:Entity {name: $s})`,
+            { params: { s: subject } }
           );
           await this.client!.exec(
-            `MERGE (o:Entity {name: '${escaped(object)}'})`
+            `MERGE (o:Entity {name: $o})`,
+            { params: { o: object } }
           );
           await this.client!.exec(
-            `MATCH (s:Entity {name: '${escaped(subject)}'}), (o:Entity {name: '${escaped(object)}'})
-             CREATE (s)-[:RELATIONSHIP {type: '${escaped(predicate)}'}]->(o)`
+            `MATCH (s:Entity {name: $s}), (o:Entity {name: $o})
+             MERGE (s)-[:RELATIONSHIP {type: $p}]->(o)`,
+            { params: { s: subject, o: object, p: predicate } }
           );
         } catch (err) {
           console.warn('Error importing triple, skipping:', err);
@@ -167,8 +234,10 @@ export class GeodeService {
     await this.ensureInitialized();
 
     try {
+      // toString(id(..)): geode node ids exceed Number.MAX_SAFE_INTEGER, and
+      // raw id() projections fail to decode client-side — project as strings.
       const entityRows = await this.client!.queryAll(
-        `MATCH (e:Entity) RETURN e.name AS name, id(e) AS nodeId`
+        `MATCH (e:Entity) RETURN e.name AS name, toString(id(e)) AS nodeId`
       );
 
       const nodes = entityRows.map((row: any) => ({
@@ -179,7 +248,7 @@ export class GeodeService {
 
       const relRows = await this.client!.queryAll(
         `MATCH (s:Entity)-[r:RELATIONSHIP]->(o:Entity)
-         RETURN id(s) AS sourceId, id(o) AS targetId, r.type AS type, id(r) AS relId`
+         RETURN toString(id(s)) AS sourceId, toString(id(o)) AS targetId, r.type AS type, toString(id(r)) AS relId`
       );
 
       const relationships = relRows.map((row: any) => ({
@@ -222,11 +291,11 @@ export class GeodeService {
       const seen = new Set<string>();
 
       for (const keyword of filteredKeywords) {
-        const escaped = keyword.replace(/'/g, "\\'");
         const rows = await this.client!.queryAll(
           `MATCH (s:Entity)-[r:RELATIONSHIP]->(o:Entity)
-           WHERE s.name CONTAINS '${escaped}' OR o.name CONTAINS '${escaped}' OR r.type CONTAINS '${escaped}'
-           RETURN DISTINCT s.name AS subject, r.type AS predicate, o.name AS object`
+           WHERE s.name CONTAINS $kw OR o.name CONTAINS $kw OR r.type CONTAINS $kw
+           RETURN DISTINCT s.name AS subject, r.type AS predicate, o.name AS object`,
+          { params: { kw: keyword } }
         );
 
         for (const row of rows) {
@@ -274,7 +343,8 @@ export class GeodeService {
   // ─── Vector Operations (replaces Qdrant / Pinecone) ──────────────────
 
   /**
-   * Store entity embeddings as vectorf32 properties
+   * Store entity embeddings as VECTORF32 properties (param-bound; see the
+   * module header for why storage goes through vectorf32(toString($vec))).
    */
   public async storeEmbeddings(
     entityEmbeddings: Map<string, number[]>,
@@ -285,12 +355,10 @@ export class GeodeService {
     try {
       let stored = 0;
       for (const [entityName, embedding] of entityEmbeddings.entries()) {
-        const embStr = vecLiteral(embedding);
-        const escaped = entityName.replace(/'/g, "\\'");
         await this.client!.exec(
-          `MERGE (e:Entity {name: '${escaped}'})
-           ON CREATE SET e.embedding = vectorf32(${embStr})
-           ON MATCH SET e.embedding = vectorf32(${embStr})`
+          `MERGE (e:Entity {name: $name})
+           SET e.embedding = vectorf32(toString($vec))`,
+          { params: { name: entityName, vec: vecParam(embedding) } }
         );
         stored++;
       }
@@ -313,13 +381,10 @@ export class GeodeService {
     try {
       let stored = 0;
       for (const [key, embedding] of embeddings.entries()) {
-        const embStr = vecLiteral(embedding);
-        const text = (textContent.get(key) || '').replace(/'/g, "\\'");
-        const escaped = key.replace(/'/g, "\\'");
         await this.client!.exec(
-          `MERGE (e:Entity {name: '${escaped}'})
-           ON CREATE SET e.embedding = vectorf32(${embStr}), e.text = '${text}'
-           ON MATCH SET e.embedding = vectorf32(${embStr}), e.text = '${text}'`
+          `MERGE (e:Entity {name: $name})
+           SET e.embedding = vectorf32(toString($vec)), e.text = $text`,
+          { params: { name: key, vec: vecParam(embedding), text: textContent.get(key) || '' } }
         );
         stored++;
       }
@@ -330,23 +395,51 @@ export class GeodeService {
   }
 
   /**
+   * knn()-backed nearest-entity lookup. Uses the HNSW index when one covers
+   * the property, otherwise the server scans. vector_cosine returns cosine
+   * SIMILARITY (1 = identical, 0 = orthogonal, -1 = opposite; verified on
+   * v0.8.5), so rows are ordered descending. Scores can arrive as decimal
+   * strings — callers must Number() them.
+   */
+  private async knnEntityRows(
+    queryEmbedding: number[],
+    k: number
+  ): Promise<Array<Record<string, unknown>>> {
+    try {
+      return await this.client!.queryAll(
+        `MATCH (e:Entity)
+         WHERE id(e) IN knn('embedding', $vec, $k, 'cosine')
+         RETURN e.name AS name, vector_cosine(e.embedding, $vec) AS score, e.text AS text
+         ORDER BY score DESC`,
+        { params: { vec: queryEmbedding, k } }
+      );
+    } catch (error) {
+      // Fallback: full scan with a WITH projection (works since geode#476 fix).
+      console.warn('[Geode] knn() fast path unavailable, falling back to full scan:', error);
+      return await this.client!.queryAll(
+        `MATCH (e:Entity)
+         WHERE e.embedding IS NOT NULL
+         WITH e, vector_cosine(e.embedding, $vec) AS score
+         RETURN e.name AS name, score, e.text AS text
+         ORDER BY score DESC
+         LIMIT ${safeLimit(k, 10)}`,
+        { params: { vec: queryEmbedding } }
+      );
+    }
+  }
+
+  /**
    * Find entities similar to a query embedding using vector cosine similarity
    */
   public async findSimilarEntities(queryEmbedding: number[], topK: number = 10): Promise<string[]> {
     await this.ensureInitialized();
 
     try {
-      const embStr = vecLiteral(queryEmbedding);
-      // Use RETURN clause for vector_cosine (WITH clause causes TypeMismatch — geode#476)
-      const rows = await this.client!.queryAll(
-        `MATCH (e:Entity)
-         WHERE e.embedding IS NOT NULL
-         RETURN e.name AS name, vector_cosine(e.embedding, vectorf32(${embStr})) AS score
-         ORDER BY score DESC
-         LIMIT ${topK}`
-      );
-
-      return rows.filter((r: any) => (r.score as number) > 0.1).map((r: any) => r.name as string);
+      const rows = await this.knnEntityRows(queryEmbedding, safeLimit(topK, 10));
+      return rows
+        .map((r: any) => ({ name: r.name as string, score: Number(r.score) }))
+        .filter(r => r.score > 0.1)
+        .map(r => r.name);
     } catch (error) {
       console.log('Error finding similar entities:', error);
       return [];
@@ -363,21 +456,16 @@ export class GeodeService {
     await this.ensureInitialized();
 
     try {
-      const embStr = vecLiteral(embedding);
-      // Use RETURN clause for vector_cosine (WITH clause causes TypeMismatch — geode#476)
-      const rows = await this.client!.queryAll(
-        `MATCH (e:Entity)
-         WHERE e.embedding IS NOT NULL
-         RETURN e.name AS name, vector_cosine(e.embedding, vectorf32(${embStr})) AS score, e.text AS text
-         ORDER BY score DESC
-         LIMIT ${limit}`
-      );
+      const rows = await this.knnEntityRows(embedding, safeLimit(limit, 10));
 
-      const filtered = rows.filter((r: any) => (r.score as number) > 0.1);
-      const entities = filtered.map((r: any) => r.name as string);
+      const scored = rows
+        .map((r: any) => ({ name: r.name as string, score: Number(r.score), text: r.text }))
+        .filter(r => r.score > 0.1);
+
+      const entities = scored.map(r => r.name);
       const metadataMap = new Map<string, any>();
-      for (const r of filtered) {
-        metadataMap.set(r.name as string, {
+      for (const r of scored) {
+        metadataMap.set(r.name, {
           score: r.score,
           text: r.text,
           originalId: r.name,
@@ -404,17 +492,21 @@ export class GeodeService {
       console.log(`Storing ${documents.length} document chunks in Geode`);
 
       for (let i = 0; i < documents.length; i++) {
-        const text = documents[i].replace(/\\/g, '\\\\').replace(/'/g, "\\'");
-        const embStr = vecLiteral(embeddings[i]);
-        const source = (metadata?.[i]?.source || 'unknown').replace(/'/g, "\\'");
-
         await this.client!.exec(
           `CREATE (d:DocumentChunk {
-            text: '${text}',
-            embedding: vectorf32(${embStr}),
-            source: '${source}',
-            createdAt: '${new Date().toISOString()}'
-          })`
+            text: $text,
+            embedding: vectorf32(toString($vec)),
+            source: $source,
+            createdAt: $createdAt
+          })`,
+          {
+            params: {
+              text: documents[i],
+              vec: vecParam(embeddings[i]),
+              source: metadata?.[i]?.source || 'unknown',
+              createdAt: new Date().toISOString(),
+            },
+          }
         );
       }
 
@@ -433,26 +525,43 @@ export class GeodeService {
   ): Promise<DocumentSearchResult[]> {
     await this.ensureInitialized();
 
+    const k = safeLimit(topK, 10);
+    let rows: Array<Record<string, unknown>>;
     try {
-      const embStr = vecLiteral(queryEmbedding);
-      // Use RETURN clause for vector_cosine (WITH clause causes TypeMismatch — geode#476)
-      const rows = await this.client!.queryAll(
-        `MATCH (d:DocumentChunk)
-         WHERE d.embedding IS NOT NULL
-         RETURN d.text AS text, d.source AS source, vector_cosine(d.embedding, vectorf32(${embStr})) AS score, id(d) AS docId
-         ORDER BY score DESC
-         LIMIT ${topK}`
-      );
+      try {
+        rows = await this.client!.queryAll(
+          `MATCH (d:DocumentChunk)
+           WHERE id(d) IN knn('embedding', $vec, $k, 'cosine')
+           RETURN d.text AS text, d.source AS source, vector_cosine(d.embedding, $vec) AS score, toString(id(d)) AS docId
+           ORDER BY score DESC`,
+          { params: { vec: queryEmbedding, k } }
+        );
+      } catch (error) {
+        // Fallback: full scan with a WITH projection (works since geode#476 fix).
+        console.warn('[Geode] knn() fast path unavailable, falling back to full scan:', error);
+        rows = await this.client!.queryAll(
+          `MATCH (d:DocumentChunk)
+           WHERE d.embedding IS NOT NULL
+           WITH d, vector_cosine(d.embedding, $vec) AS score
+           RETURN d.text AS text, d.source AS source, score, toString(id(d)) AS docId
+           ORDER BY score DESC
+           LIMIT ${k}`,
+          { params: { vec: queryEmbedding } }
+        );
+      }
 
-      return rows.filter((r: any) => (r.score as number) > 0.1).map((r: any) => ({
-        id: String(r.docId),
-        score: r.score as number,
-        metadata: {
-          text: r.text,
-          source: r.source,
-          originalId: String(r.docId),
-        },
-      }));
+      return rows
+        .map((r: any) => ({ row: r, score: Number(r.score) }))
+        .filter(({ score }) => score > 0.1)
+        .map(({ row, score }) => ({
+          id: String(row.docId),
+          score,
+          metadata: {
+            text: row.text,
+            source: row.source,
+            originalId: String(row.docId),
+          },
+        }));
     } catch (error) {
       console.log('Error finding similar documents:', error);
       return [];
@@ -499,18 +608,29 @@ export class GeodeService {
     await this.ensureInitialized();
 
     try {
-      const escaped = query.replace(/'/g, "\\'");
       await this.client!.exec(
         `CREATE (l:QueryLog {
-          query: '${escaped}',
-          queryMode: '${queryMode}',
-          executionTimeMs: ${metrics.executionTimeMs},
-          relevanceScore: ${metrics.relevanceScore ?? 0},
-          precision: ${metrics.precision ?? 0},
-          recall: ${metrics.recall ?? 0},
-          resultCount: ${metrics.resultCount},
-          timestamp: '${new Date().toISOString()}'
-        })`
+          query: $query,
+          queryMode: $queryMode,
+          executionTimeMs: $executionTimeMs,
+          relevanceScore: $relevanceScore,
+          precision: $precision,
+          recall: $recall,
+          resultCount: $resultCount,
+          timestamp: $timestamp
+        })`,
+        {
+          params: {
+            query,
+            queryMode,
+            executionTimeMs: metrics.executionTimeMs,
+            relevanceScore: metrics.relevanceScore ?? 0,
+            precision: metrics.precision ?? 0,
+            recall: metrics.recall ?? 0,
+            resultCount: metrics.resultCount,
+            timestamp: new Date().toISOString(),
+          },
+        }
       );
     } catch (error) {
       console.error('Error logging query to Geode:', error);
@@ -532,7 +652,7 @@ export class GeodeService {
                 l.precision AS precision, l.recall AS recall,
                 l.resultCount AS resultCount, l.timestamp AS timestamp
          ORDER BY l.timestamp DESC
-         LIMIT ${limit}`
+         LIMIT ${safeLimit(limit, 100)}`
       );
       return rows;
     } catch (error) {
@@ -550,10 +670,10 @@ export class GeodeService {
     await this.ensureInitialized();
 
     try {
-      const escaped = documentName.trim().replace(/'/g, "\\'");
       const rows = await this.client!.queryAll(
-        `MATCH (d:ProcessedDocument {documentName: '${escaped}'})
-         RETURN d.documentName AS name LIMIT 1`
+        `MATCH (d:ProcessedDocument {documentName: $name})
+         RETURN d.documentName AS name LIMIT 1`,
+        { params: { name: documentName.trim() } }
       );
       return rows.length > 0;
     } catch (error) {
@@ -568,12 +688,16 @@ export class GeodeService {
     await this.ensureInitialized();
 
     try {
-      const escaped = documentName.trim().replace(/'/g, "\\'");
-      const now = new Date().toISOString();
       await this.client!.exec(
-        `MERGE (d:ProcessedDocument {documentName: '${escaped}'})
-         ON CREATE SET d.tripleCount = ${tripleCount}, d.processedAt = '${now}'
-         ON MATCH SET d.tripleCount = ${tripleCount}, d.processedAt = '${now}'`
+        `MERGE (d:ProcessedDocument {documentName: $name})
+         SET d.tripleCount = $tripleCount, d.processedAt = $processedAt`,
+        {
+          params: {
+            name: documentName.trim(),
+            tripleCount,
+            processedAt: new Date().toISOString(),
+          },
+        }
       );
       console.log(`Marked document "${documentName}" as processed with ${tripleCount} triples`);
     } catch (error) {
@@ -669,24 +793,31 @@ export class GeodeService {
 
     try {
       for (const point of points) {
-        const text = (point.payload?.text || '').replace(/'/g, "\\'");
-        const originalId = (point.payload?.originalId || point.id).replace(/'/g, "\\'");
-        const embStr = vecLiteral(point.vector);
+        const text = point.payload?.text || '';
+        const originalId = point.payload?.originalId || point.id;
 
         if (point.payload?.type === 'document') {
           await this.client!.exec(
             `CREATE (d:DocumentChunk {
-              text: '${text}',
-              embedding: vectorf32(${embStr}),
-              originalId: '${originalId}',
-              createdAt: '${new Date().toISOString()}'
-            })`
+              text: $text,
+              embedding: vectorf32(toString($vec)),
+              originalId: $originalId,
+              createdAt: $createdAt
+            })`,
+            {
+              params: {
+                text,
+                vec: vecParam(point.vector),
+                originalId,
+                createdAt: new Date().toISOString(),
+              },
+            }
           );
         } else {
           await this.client!.exec(
-            `MERGE (e:Entity {name: '${originalId}'})
-             ON CREATE SET e.embedding = vectorf32(${embStr}), e.text = '${text}'
-             ON MATCH SET e.embedding = vectorf32(${embStr}), e.text = '${text}'`
+            `MERGE (e:Entity {name: $name})
+             SET e.embedding = vectorf32(toString($vec)), e.text = $text`,
+            { params: { name: originalId, vec: vecParam(point.vector), text } }
           );
         }
       }
@@ -705,7 +836,7 @@ export class GeodeService {
 
     try {
       const rows = await this.client!.queryAll(
-        `MATCH (e:Entity) RETURN e.name AS name LIMIT ${limit}`
+        `MATCH (e:Entity) RETURN e.name AS name LIMIT ${safeLimit(limit, 1000)}`
       );
       return rows.map((r: any) => r.name as string);
     } catch (error) {
@@ -721,9 +852,9 @@ export class GeodeService {
 
     try {
       for (const name of entityNames) {
-        const escaped = name.replace(/'/g, "\\'");
         await this.client!.exec(
-          `MATCH (e:Entity {name: '${escaped}'}) DETACH DELETE e`
+          `MATCH (e:Entity {name: $name}) DETACH DELETE e`,
+          { params: { name } }
         );
       }
       return true;
