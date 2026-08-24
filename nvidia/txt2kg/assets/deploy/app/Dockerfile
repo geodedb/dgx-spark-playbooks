@@ -1,6 +1,6 @@
 # Optimized multi-stage Dockerfile for faster builds
 # Stage 1: Dependencies
-FROM node:26-slim AS deps
+FROM node:22-slim AS deps
 WORKDIR /app
 
 # Install pnpm
@@ -20,7 +20,7 @@ RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
     fi
 
 # Stage 2: Builder
-FROM node:26-slim AS builder
+FROM node:22-slim AS builder
 WORKDIR /app
 
 # Install pnpm
@@ -42,7 +42,7 @@ RUN --mount=type=cache,target=/app/.next/cache \
     pnpm build
 
 # Stage 3: Production runtime
-FROM node:26-slim AS runner
+FROM node:22-slim AS runner
 WORKDIR /app
 
 ENV NODE_ENV production

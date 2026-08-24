@@ -14,15 +14,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
-import { StructuredOutputParser } from "langchain/output_parsers";
+import { RecursiveCharacterTextSplitter } from "@langchain/textsplitters";
+import { StructuredOutputParser } from "@langchain/core/output_parsers";
 import { PromptTemplate } from "@langchain/core/prompts";
 import { z } from "zod";
 import { Triple } from "@/types/graph";
 import axios from "axios";
 
 import { ChatOpenAI } from "@langchain/openai";
-import { Document } from "langchain/document";
+import { Document } from "@langchain/core/documents";
 import { LLMGraphTransformer } from "@langchain/community/experimental/graph_transformers/llm";
 import { BaseLanguageModel } from "@langchain/core/language_models/base";
 import { SystemMessage, HumanMessage } from "@langchain/core/messages";
