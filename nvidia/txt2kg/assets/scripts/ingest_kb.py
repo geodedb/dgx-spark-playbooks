@@ -497,15 +497,25 @@ async def preflight_vector_write(client: Client) -> None:
             f"SET c.{EMB_PROP} = vectorf32(toString($vec))",
             {"docId": "__preflight__", "seq": -1, "vec": _vec_param(probe)},
         )
-        try:
-            await conn.execute(
-                f"CREATE INDEX {CHUNK_INDEX} ON DocumentChunk({EMB_PROP}) "
-                "USING vector WITH (metric: 'cosine')"
-            )
-        except QueryError as e:
-            msg = str(e).lower()
-            if "already exists" not in msg and "duplicate" not in msg and "42p07" not in msg:
-                raise
+        if os.getenv("INGEST_SKIP_INDEX") == "1":
+            # Index-free bulk load mode: HNSW insert maintenance is the v0.8.5
+            # write bottleneck (multi-minute rwlock stalls, ~15-20 chunk
+            # MERGEs/min). With the index dropped, bulk MERGE throughput
+            # recovers; run CREATE INDEX once after the load (backfill):
+            #   CREATE INDEX chunk_emb_idx ON DocumentChunk(emb)
+            #     USING vector WITH (metric: 'cosine')
+            log(f"preflight: INGEST_SKIP_INDEX=1 -> not ensuring {CHUNK_INDEX} "
+                "(index-free bulk load; CREATE INDEX must be run post-load)")
+        else:
+            try:
+                await conn.execute(
+                    f"CREATE INDEX {CHUNK_INDEX} ON DocumentChunk({EMB_PROP}) "
+                    "USING vector WITH (metric: 'cosine')"
+                )
+            except QueryError as e:
+                msg = str(e).lower()
+                if "already exists" not in msg and "duplicate" not in msg and "42p07" not in msg:
+                    raise
         await conn.execute(
             "MATCH (c:DocumentChunk {docId: $docId}) DETACH DELETE c",
             {"docId": "__preflight__"},
