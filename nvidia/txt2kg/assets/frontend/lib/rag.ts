@@ -68,32 +68,59 @@ export class RAGService {
     try {
       console.log('Initializing RAG service...');
 
-      // Check for NVIDIA API key
-      const nvidiaApiKey = process.env.NVIDIA_API_KEY;
-      if (!nvidiaApiKey) {
-        const error = new Error('NVIDIA_API_KEY is required for RAG service. Please set the NVIDIA_API_KEY environment variable.');
-        console.error('RAG Initialization Error:', error.message);
-        throw error;
-      }
+      // Prefer a local vLLM deployment when configured, falling back to
+      // NVIDIA's cloud API. Mirrors the pattern in lib/llm-service.ts and
+      // lib/langchain-service.ts's getVllmModel().
+      const vllmBaseUrl = process.env.VLLM_BASE_URL;
 
-      // Initialize NVIDIA LLM using ChatOpenAI with NVIDIA's base URL
-      this.llm = new ChatOpenAI({
-        modelName: "nvidia/llama-3.3-nemotron-super-49b-v1.5",
-        temperature: 0.2,
-        maxTokens: 1024,
-        openAIApiKey: nvidiaApiKey,
-        configuration: {
-          baseURL: "https://integrate.api.nvidia.com/v1",
-          timeout: 120000,
-        },
-        modelKwargs: {
-          top_p: 0.95,
-          frequency_penalty: 0,
-          presence_penalty: 0
+      if (vllmBaseUrl) {
+        // Remote vLLM endpoints may require Bearer auth (VLLM_API_KEY);
+        // local vLLM ignores the placeholder key.
+        this.llm = new ChatOpenAI({
+          modelName: process.env.VLLM_MODEL || 'meta-llama/Llama-3.2-3B-Instruct',
+          temperature: 0.2,
+          maxTokens: 1024,
+          apiKey: process.env.VLLM_API_KEY || 'vllm',
+          configuration: {
+            baseURL: vllmBaseUrl,
+            timeout: 120000,
+          },
+          modelKwargs: {
+            top_p: 0.95,
+            frequency_penalty: 0,
+            presence_penalty: 0
+          }
+        });
+
+        console.log(`vLLM LLM initialized successfully (baseURL=${vllmBaseUrl})`);
+      } else {
+        // Check for NVIDIA API key
+        const nvidiaApiKey = process.env.NVIDIA_API_KEY;
+        if (!nvidiaApiKey) {
+          const error = new Error('Either VLLM_BASE_URL or NVIDIA_API_KEY is required for RAG service. Please set one of these environment variables.');
+          console.error('RAG Initialization Error:', error.message);
+          throw error;
         }
-      });
 
-      console.log('NVIDIA LLM initialized successfully');
+        // Initialize NVIDIA LLM using ChatOpenAI with NVIDIA's base URL
+        this.llm = new ChatOpenAI({
+          modelName: "nvidia/llama-3.3-nemotron-super-49b-v1.5",
+          temperature: 0.2,
+          maxTokens: 1024,
+          apiKey: nvidiaApiKey,
+          configuration: {
+            baseURL: "https://integrate.api.nvidia.com/v1",
+            timeout: 120000,
+          },
+          modelKwargs: {
+            top_p: 0.95,
+            frequency_penalty: 0,
+            presence_penalty: 0
+          }
+        });
+
+        console.log('NVIDIA LLM initialized successfully');
+      }
 
       // Initialize Geode and embeddings
       await this.geodeService.initialize();

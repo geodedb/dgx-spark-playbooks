@@ -182,3 +182,120 @@ Notes discovered during bring-up:
 5. The UI's `ensureIndexes()` also (re)creates `entity_emb_idx` on
    `Entity(embedding)`; entity embeddings are still deliberately absent from
    the KG, so entity KNN legitimately returns 0 seeds.
+
+## Encoder swap to 0.6B (2026-08-25)
+
+The full run above was embed-bound at ~68 chunks/min (Qwen/Qwen3-Embedding-4B
+saturating celebrimbor's RTX 4060 Ti) → ~10-day ETA. Swapped the encoder to
+**Qwen/Qwen3-Embedding-0.6B** (native 1024-dim — under geode's ~1792-dim
+vectorf32 cap, so no truncation at all) and relaunched from scratch.
+
+What changed:
+
+1. **Infra** (`infra/ansible-playbooks`, uncommitted per policy):
+   `celebrimbor.yml` vllm_embedding block → `model_repo:
+   Qwen/Qwen3-Embedding-0.6B`, `dimension: 1024` (tensor_parallel 1,
+   CUDA_VISIBLE_DEVICES "0", gpu_mem 0.85, max_model_len 8192 unchanged).
+   Applied via `make apply … LIMIT=celebrimbor`; container verified serving
+   the 0.6B and returning 1024-dim vectors. (The play afterwards failed on an
+   unrelated pre-existing docling `docling_api_key` assert — embedding role
+   had already converged.)
+2. **Wipe for vector-space consistency**: the ~4.8k chunks stored by the 4B
+   run were deleted (`MATCH (c:DocumentChunk) DETACH DELETE c`, same for
+   `ProcessedDocument`; both verified 0). Entity/RELATIONSHIP untouched
+   (2199/1892 preserved). `chunk_emb_idx` existed and was dropped — the bulk
+   load runs index-free (`INGEST_SKIP_INDEX=1`); recreate post-load.
+3. **Driver** (`f4da1ca`): `EMBED_DIM` and the embeddings model id now read
+   env overrides (`EMBED_DIM`, `EMBEDDINGS_MODEL_ID`; defaults unchanged
+   1536 / 4B), and `shrink_embedding()` is an explicit no-op for vectors
+   already at or under `EMBED_DIM`.
+4. **UI** (`dc3b323`): `EMB_DIM` in `lib/geode.ts` reads
+   `process.env.EMBEDDINGS_DIM` (default 1536); `shrinkEmbedding()` no-ops on
+   <= EMB_DIM vectors. Rebuilt (`pnpm build`) and restarted on :3001 with the
+   prior env plus `EMBEDDINGS_MODEL_ID=Qwen/Qwen3-Embedding-0.6B` and
+   `EMBEDDINGS_DIM=1024`. Root page 200; `/api/vector-db/stats` answers
+   (source: geode, httpHealthy: true).
+5. **Relaunch**: `EMBED_DIM=1024 EMBEDDINGS_MODEL_ID=Qwen/Qwen3-Embedding-0.6B
+   INGEST_SKIP_INDEX=1 … ingest_kb.py --dir …/kb-md --skip-triples --resume
+   --chunk-size 6000 --chunk-overlap 300` (detached, single process, logging
+   to full_run.out / ingest_kb.log). Stored vectors verified 1024-dim by
+   querying one back (4096-byte f32 payload).
+
+Rate and ETA:
+
+| | 4B (before) | 0.6B (after) |
+|---|---|---|
+| Sustained rate | ~68 chunks/min | **~222 chunks/min** (wall, 17-min window incl. two transient geode stalls; ~300 chunks/min between stalls) |
+| ETA for ~980k chunks | ~10 days | **~3.1 days** |
+
+The ~3.3x (not 5x) wall-clock gain is because the bottleneck now shifts
+partly to geode writes: two `Timeout reading message length` stalls occurred
+in the first 17 min, each ridden out by the driver's retry/reconnect
+(attempt 1/6 both times). Embeds run at ~25.7k prompt tok/s with GPU 0
+pegged, so further gains would come from the DB write path, not the encoder.
+
+## rag.ts vLLM rewire
+
+`nvidia/txt2kg/assets/frontend/lib/rag.ts`'s `RAGService.initialize()`
+hardcoded `https://integrate.api.nvidia.com/v1` and required
+`NVIDIA_API_KEY`, so `/api/rag-query` 500'd on any deployment (like this
+one) that only configures local vLLM. Rewired to match the existing
+`VLLM_BASE_URL`/`VLLM_MODEL`/`VLLM_API_KEY` pattern already used in
+`lib/llm-service.ts` and `lib/langchain-service.ts`'s `getVllmModel()`:
+when `VLLM_BASE_URL` is set, `ChatOpenAI` is built against that `baseURL`
+with `model: VLLM_MODEL` (default `meta-llama/Llama-3.2-3B-Instruct`) and
+`apiKey: VLLM_API_KEY || 'vllm'`; otherwise it falls back to the original
+NVIDIA-cloud path, now requiring `NVIDIA_API_KEY` only in that branch.
+
+While wiring this up, discovered and fixed a second, pre-existing bug
+uncovered by actually exercising this code path: the installed
+`@langchain/openai@1.5.10` (this branch upgraded dependencies) renamed the
+`ChatOpenAI` constructor's API-key field from `openAIApiKey` to `apiKey` —
+the old field name is silently ignored (no compile error, since the build
+runs with type-checking skipped), so both the new vLLM branch and the
+pre-existing NVIDIA branch would have thrown "Missing credentials" at
+generation time. Fixed both call sites to use `apiKey`.
+
+**Build**: `pnpm build` (node 24.19.0, pnpm 11.23.0 via corepack) — passed,
+no errors.
+
+**Live verification**: the UI's `next-server` on :3001 was running the
+previous build. Captured its env from `/proc/<pid>/environ` (GEODE_*,
+VLLM_*, EMBEDDINGS_*, NODE_*, PATH — kept only in shell memory, never
+written to disk), killed it, and relaunched detached
+(`env -i "${ENV_ARGS[@]}" setsid nohup corepack pnpm start --port 3001 >>
+ui.out 2>&1 &`) from the frontend dir. `VLLM_API_KEY` was already present
+in the captured env (also independently re-confirmed via
+`ssh curumo.shire-altair.ts.net docker inspect vllm_node`, output piped
+straight through `grep`/`cut`, never persisted to a file).
+
+`POST /api/rag-query {"query":"What is this knowledge base about?",
+"topK":5}` → first attempt timed out client-side at 90s (server log showed
+it was still in-flight — the bulk ingest running concurrently against the
+same vLLM node adds queueing latency, and the model is a Qwen3 reasoner
+that spends part of its 1024-token budget on a hidden reasoning chain
+before the answer). Retried with a longer client timeout (280s) and got:
+
+```
+HTTP 200
+{"answer":"\n\nThis knowledge base is about the ICANN KSK rollover,
+including its mailing list, website, goals, and overview.",
+"documentCount":5,"usedFallback":false,"success":true}
+```
+
+`documentCount: 5` and `usedFallback: false` confirm the answer is grounded
+in retrieved Geode chunks (ICANN KSK-rollover corpus), not a general-
+knowledge fallback, and no 500/credential error.
+
+**Concerns**:
+- Generation latency for this reasoning model against the local vLLM node
+  can exceed typical HTTP client timeouts (~90s+) under concurrent load
+  from the bulk ingest; worth considering a shorter `maxTokens` or a
+  non-reasoning model for the RAG-answer path, or raising client-side
+  timeouts in the UI.
+- The NVIDIA-cloud fallback branch was not live-tested (no `NVIDIA_API_KEY`
+  in this environment) — only the vLLM branch and the `apiKey` field fix
+  were verified end-to-end. The field-name fix is a straightforward,
+  low-risk rename with no behavior change other than making the key
+  actually reach the OpenAI SDK, but it was not exercised against the
+  NVIDIA endpoint.
