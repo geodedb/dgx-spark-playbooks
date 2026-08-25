@@ -117,7 +117,9 @@ _geode_transport.QuicTransport._read_message = _read_message_patched
 # ---------------------------------------------------------------------------
 
 DEFAULT_EMBEDDINGS_URL = "https://celebrimbor.shire-altair.ts.net:8001/v1/embeddings"
-DEFAULT_EMBEDDINGS_MODEL = "Qwen/Qwen3-Embedding-4B"
+# Encoder model id; override with env EMBEDDINGS_MODEL_ID on encoder swaps
+# (e.g. Qwen/Qwen3-Embedding-0.6B for throughput-bound full-corpus runs).
+DEFAULT_EMBEDDINGS_MODEL = os.getenv("EMBEDDINGS_MODEL_ID", "Qwen/Qwen3-Embedding-4B")
 DEFAULT_LLM_URL = "http://curumo.shire-altair.ts.net:8000/v1/chat/completions"
 DEFAULT_LLM_MODEL = "Qwen/Qwen3.8-27B"
 
@@ -134,7 +136,10 @@ DEFAULT_LLM_MODEL = "Qwen/Qwen3.8-27B"
 # and the pre-fix run pinned DocumentChunk.embedding at 2560 before the size
 # check rejected the value. v0.8.5 has no DROP TABLE / ALTER TABLE DDL to
 # reset it (verified live), so the driver uses a fresh column instead.
-EMBED_DIM = 1536
+# Stored vector width. Override with env EMBED_DIM when the encoder's native
+# dimension differs (e.g. EMBED_DIM=1024 for Qwen3-Embedding-0.6B, which needs
+# no truncation at all — it is already under the ~1792-dim cap).
+EMBED_DIM = int(os.getenv("EMBED_DIM", "1536"))
 EMB_PROP = "emb"
 CHUNK_INDEX = "chunk_emb_idx"
 
@@ -381,7 +386,13 @@ def shrink_embedding(vec: list) -> list:
     Applied identically to document and query embeddings so cosine
     similarities remain comparable. Zero-norm slices are returned as zeros
     rather than dividing by zero.
+
+    No-op when the vector already fits: an encoder whose native dimension is
+    <= EMBED_DIM (e.g. 1024-dim Qwen3-Embedding-0.6B) emits unit-norm vectors
+    that need neither truncation nor renormalization.
     """
+    if len(vec) <= EMBED_DIM:
+        return list(vec)
     v = vec[:EMBED_DIM]
     norm = math.sqrt(sum(x * x for x in v))
     if norm <= 0.0:
