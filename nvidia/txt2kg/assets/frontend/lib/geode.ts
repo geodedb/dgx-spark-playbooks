@@ -76,11 +76,17 @@ function vecParam(v: number[]): string {
  * Mirrors shrink_embedding() in assets/scripts/ingest_kb.py.
  */
 const CHUNK_EMB_PROP = 'emb';
-const EMB_DIM = 1536;
+/** Stored chunk-vector width. Env-overridable (EMBEDDINGS_DIM) so encoder
+ * swaps (e.g. 1024-dim Qwen3-Embedding-0.6B) need no code change; must match
+ * the EMBED_DIM the ingestion driver stored with. Default stays 1536. */
+const EMB_DIM = Number.parseInt(process.env.EMBEDDINGS_DIM ?? '1536', 10);
 
 /** Truncate to EMB_DIM dims and L2-renormalize (ENG-3912). Applied
- * identically to stored and query vectors so cosine scores stay comparable. */
+ * identically to stored and query vectors so cosine scores stay comparable.
+ * No-op when the vector already has <= EMB_DIM dims (native-dim encoders
+ * emit unit-norm vectors that need neither truncation nor renormalizing). */
 function shrinkEmbedding(v: number[]): number[] {
+  if (v.length <= EMB_DIM) return v;
   const t = v.slice(0, EMB_DIM);
   const norm = Math.sqrt(t.reduce((s, x) => s + x * x, 0));
   if (norm <= 0) return t.map(() => 0);
