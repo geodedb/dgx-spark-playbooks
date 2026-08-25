@@ -47,6 +47,8 @@ services:
       - UV_THREADPOOL_SIZE=128
       - HTTP_TIMEOUT=1800000
       - REQUEST_TIMEOUT=1800000
+      # required by @geodedb/client for insecure_tls_skip_verify under NODE_ENV=production; dev deployment only
+      - GEODE_ALLOW_INSECURE_PRODUCTION=true
     volumes:
       - geode_data:/geode-data:ro
     networks:

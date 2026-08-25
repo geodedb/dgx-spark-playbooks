@@ -15,8 +15,10 @@ services:
       - OLLAMA_MODEL=disabled
       - EMBEDDINGS_API_URL=${EMBEDDINGS_API_URL:-https://celebrimbor.shire-altair.ts.net:8001}
       - EMBEDDINGS_API_FORMAT=openai
-      - EMBEDDINGS_MODEL_ID=${EMBEDDINGS_MODEL_ID:-Qwen/Qwen3-Embedding-4B}
-      - GEODE_ALLOW_INSECURE_TLS=1
+      - EMBEDDINGS_MODEL_ID=${EMBEDDINGS_MODEL_ID:-Qwen/Qwen3-Embedding-0.6B}
+      - EMBEDDINGS_DIM=${EMBEDDINGS_DIM:-1024}
+      # required by @geodedb/client for insecure_tls_skip_verify under NODE_ENV=production; dev deployment only
+      - GEODE_ALLOW_INSECURE_PRODUCTION=true
     extra_hosts: []
     # Local ollama/sentence-transformers are profile-disabled below, so drop
     # the base file's dependency on ollama.

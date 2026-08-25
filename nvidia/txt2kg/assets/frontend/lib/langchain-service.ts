@@ -91,7 +91,7 @@ export class LangChainService {
         modelName: modelId,
         temperature: options?.temperature || 0.6,
         maxTokens: options?.maxTokens || 8192,
-        openAIApiKey: apiKey,
+        apiKey: apiKey,
         configuration: {
           baseURL: "https://integrate.api.nvidia.com/v1",
           timeout: 120000, // 120 second timeout for larger model
@@ -173,7 +173,7 @@ export class LangChainService {
       modelName: modelId,
       temperature: options?.temperature || 0.7,
       maxTokens: options?.maxTokens || 8192,
-      openAIApiKey: apiKey,
+      apiKey: apiKey,
       configuration: {
         baseURL: "https://integrate.api.nvidia.com/v1",
         timeout: 60000, // 60 second timeout
@@ -227,7 +227,7 @@ export class LangChainService {
         modelName: modelId,
         temperature: options?.temperature || 0.7,
         maxTokens: options?.maxTokens || 8192,
-        openAIApiKey: 'ollama', // Ollama doesn't require a real API key
+        apiKey: 'ollama', // Ollama doesn't require a real API key
         configuration: {
           baseURL: baseURL,
           timeout: 1800000, // 30 minutes timeout for large model inference
@@ -288,7 +288,7 @@ export class LangChainService {
         maxTokens: options?.maxTokens || 4096,
         // Remote vLLM endpoints may require Bearer auth (VLLM_API_KEY);
         // local vLLM ignores the placeholder key.
-        openAIApiKey: process.env.VLLM_API_KEY || 'vllm',
+        apiKey: process.env.VLLM_API_KEY || 'vllm',
         configuration: {
           baseURL: baseURL,
           timeout: 900000, // 15 minute timeout for vLLM inference (reasoning models generate long <think> chains)

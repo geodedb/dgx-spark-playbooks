@@ -543,13 +543,23 @@ async def fetch_marker_statuses(client: Client) -> dict:
     """
     statuses = {}
     async with client.connection() as conn:
-        page, _ = await conn.query(
+        page, pager = await conn.query(
             "MATCH (p:ProcessedDocument) RETURN p.docId AS docId, p.status AS status"
         )
+        # geode_client's default page_size is 1000: a single `page` only
+        # covers the first 1000 ProcessedDocument markers. Drain the pager
+        # (an async generator of subsequent Pages, empty/no-op once the
+        # first page was already final) so --resume sees every marker
+        # regardless of corpus size.
         for row in page.rows:
             doc_id = _val(row, "docId")
             if doc_id:
                 statuses[doc_id] = _val(row, "status", "")
+        async for more in pager():
+            for row in more.rows:
+                doc_id = _val(row, "docId")
+                if doc_id:
+                    statuses[doc_id] = _val(row, "status", "")
     return statuses
 
 

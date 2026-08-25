@@ -299,3 +299,142 @@ knowledge fallback, and no 500/credential error.
   low-risk rename with no behavior change other than making the key
   actually reach the OpenAI SDK, but it was not exercised against the
   NVIDIA endpoint.
+
+## Final-review fixes
+
+Fixed four final-review findings (C1, C2, I1, M1, M3) on
+`feat/geode-085-upgrade` without touching the running bulk-ingest process
+or the UI server (ports 3141/3001 were left alone; no process was
+stopped, restarted, or launched).
+
+### C1 — `openAIApiKey` → `apiKey` rename (Critical)
+
+`nvidia/txt2kg/assets/frontend/lib/langchain-service.ts` still passed
+`openAIApiKey:` to all four `ChatOpenAI` constructors (NVIDIA cloud x2,
+Ollama, vLLM — lines ~94, ~176, ~230, ~291). `@langchain/openai` 1.5.10
+renamed that field to `apiKey` and silently ignores the old name, so every
+extraction path was running with no credential reaching the SDK. Renamed
+all four occurrences to `apiKey:`, matching the fix already applied to
+`lib/rag.ts` in commit `de3b03c`.
+
+Verification: `grep -rn "openAIApiKey" nvidia/txt2kg/assets/frontend/lib
+nvidia/txt2kg/assets/frontend/app` returns nothing; `pnpm build` (via `mise
+x node@22.23.1 -- pnpm build`) compiles successfully with all 49 routes
+generated, no type/build errors.
+
+### C2 — `GEODE_ALLOW_INSECURE_PRODUCTION` for the vendored client (Critical)
+
+The vendored `@geodedb/client` v1.1.0 throws `"insecureSkipVerify is not
+allowed in production"` under `NODE_ENV=production` unless
+`GEODE_ALLOW_INSECURE_PRODUCTION === "true"` is set, which would break the
+`app` service (it runs `insecure_tls_skip_verify=true` in `GEODE_URL` for
+the dev self-signed cert) as soon as it runs in a production-mode
+container.
+
+- `docker-compose.yml`: added `GEODE_ALLOW_INSECURE_PRODUCTION=true` to the
+  `app` service's `environment`, with a one-line comment explaining why.
+- `docker-compose.vllm.yml`: same addition to its `app` service.
+- `docker-compose.remote-cluster.yml`: replaced the `app` service's
+  incorrect `GEODE_ALLOW_INSECURE_TLS=1` (that var only matters for the
+  `geode` CLI healthcheck, not the Node client) with
+  `GEODE_ALLOW_INSECURE_PRODUCTION=true`.
+- The `geode` service's own `GEODE_ALLOW_INSECURE_TLS=1` entries (used by
+  the server-side CLI healthcheck in `docker-compose.yml` and
+  `docker-compose.vllm.yml`) were left untouched, as required.
+
+Verification (`docker compose config` merge check, three combinations):
+
+```
+docker compose -f docker-compose.yml config                                            → OK
+docker compose -f docker-compose.vllm.yml config                                        → OK
+docker compose -f docker-compose.yml -f docker-compose.override.yml \
+  -f docker-compose.remote-cluster.yml config                                           → OK
+```
+
+Merged `app` env confirmed in each:
+- combo 1 & 2: `GEODE_ALLOW_INSECURE_PRODUCTION: "true"` present.
+- combo 3 (remote-cluster overlay): `app` env has
+  `GEODE_ALLOW_INSECURE_PRODUCTION: "true"` and **no** `GEODE_ALLOW_INSECURE_TLS`
+  key; the `geode` service still has `GEODE_ALLOW_INSECURE_TLS: "1"`
+  unchanged.
+
+### I1 — `fetch_marker_statuses()` pager drain (Important)
+
+`nvidia/txt2kg/assets/scripts/ingest_kb.py`'s `fetch_marker_statuses()`
+called `conn.query(...)` and only read the first `Page`, ignoring the
+returned pager function. `geode_client`'s default `page_size` is 1000, so
+any corpus with more than 1000 `ProcessedDocument` markers would silently
+lose markers past the first page, making `--resume` forget files.
+
+Fixed by draining the pager: after consuming `page.rows`, the function now
+does `async for more in pager(): ...` and folds every subsequent page's
+rows into the same `statuses` dict. (Inspected
+`nvidia/multi-agent-chatbot/assets/backend/.venv/lib/python3.13/site-packages/geode_client/client.py`
+to confirm the API: `conn.query()` returns `(Page, Callable[[],
+AsyncIterator[Page]])`; the pager is a no-op empty async generator when
+the first page was already `final`, and otherwise yields subsequent pages
+until one arrives with `final=True`.)
+
+Verification against the LIVE server (read-only, no writes/mutations):
+
+```
+$ GEODE_ALLOW_INSECURE_TLS=1 geode query "MATCH (p:ProcessedDocument) RETURN count(p) AS c" \
+    --server 127.0.0.1:3141 --insecure-tls-skip-verify -U geode -P geodesic
+{"rows":[{"c":50}], ...}
+
+$ uv run --project nvidia/multi-agent-chatbot/assets/backend python verify_i1.py
+MARKER_COUNT=50
+```
+
+where `verify_i1.py` imported the fixed `fetch_marker_statuses()` from
+`ingest_kb.py`, connected to `127.0.0.1:3141` with `geode`/`geodesic` and
+`skip_verify=True`, and printed `len(statuses)`. `50 == 50` — the fixed
+function's count matches the true `count(p)` from the geode CLI. (The live
+corpus is under the 1000-row default page size, so this run did not itself
+exercise a second page, but it confirms the fix is correct and
+non-regressive; the pager-draining logic itself was verified by code
+inspection of `geode_client`'s pull/stream pager implementations.)
+
+### M1 — stale `knnRows` doc comment (Minor)
+
+`nvidia/txt2kg/assets/frontend/lib/geode.ts`'s `knnRows` doc comment
+claimed `entity_emb_idx` and `chunk_emb_idx` both indexed a property named
+`embedding`, causing cross-label candidate crowding between `Entity` and
+`DocumentChunk` in `knn()`. That's no longer true: `chunk_emb_idx` indexes
+`DocumentChunk.${CHUNK_EMB_PROP}` where `CHUNK_EMB_PROP = 'emb'` (ENG-3912
+split the property names specifically to fix this crowding). Updated the
+comment to explain the property names are now separate so cross-label
+crowding does not occur, and reworded the over-fetch rationale as a
+general defensive guard (any candidate-set narrowing between the `knn()`
+pass and the label/WHERE filter) rather than the now-obsolete crowding
+explanation. The over-fetch behavior itself (`KNN_BOOST_FACTOR` /
+`KNN_BOOST_CAP`) was left unchanged.
+
+### M3 — `docker-compose.remote-cluster.yml` embeddings model default (Minor)
+
+Changed the `app` service's default `EMBEDDINGS_MODEL_ID` from
+`Qwen/Qwen3-Embedding-4B` to `Qwen/Qwen3-Embedding-0.6B` to match the
+deployed encoder, and added `EMBEDDINGS_DIM=${EMBEDDINGS_DIM:-1024}`
+alongside it. Verified in the combo-3 `docker compose config` merge above:
+`EMBEDDINGS_MODEL_ID: Qwen/Qwen3-Embedding-0.6B` and `EMBEDDINGS_DIM:
+"1024"` both present on the merged `app` service.
+
+### Files changed
+
+- `nvidia/txt2kg/assets/frontend/lib/langchain-service.ts`
+- `nvidia/txt2kg/assets/frontend/lib/geode.ts`
+- `nvidia/txt2kg/assets/scripts/ingest_kb.py`
+- `nvidia/txt2kg/assets/deploy/compose/docker-compose.yml`
+- `nvidia/txt2kg/assets/deploy/compose/docker-compose.vllm.yml`
+- `nvidia/txt2kg/assets/deploy/compose/docker-compose.remote-cluster.yml`
+
+### Verification summary
+
+- `pnpm build` (frontend): PASS — compiled successfully, all 49 routes
+  generated, no errors.
+- `docker compose config` merge check, 3 combinations (base, vllm, base +
+  override + remote-cluster): PASS on all three.
+- I1 live read-only check: `fetch_marker_statuses()` count (50) == geode
+  CLI `count(p)` (50).
+- No running process (bulk ingest, UI server) was stopped, restarted, or
+  launched; ports 3141/3001 were not touched.

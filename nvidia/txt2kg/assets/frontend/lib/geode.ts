@@ -441,16 +441,16 @@ export class GeodeService {
    * Shared knn()-with-fallback query executor for both Entity and
    * DocumentChunk vector lookups.
    *
-   * IMPORTANT — cross-label crowding: `entity_emb_idx` (on Entity.embedding)
-   * and `chunk_emb_idx` (on DocumentChunk.embedding) both index the property
-   * NAME `embedding`, and `knn('embedding', $vec, $k, 'cosine')` selects its
-   * candidate set by property name across ALL labels *before* the label
-   * filter in MATCH is applied. With only `k` candidates requested, Entity
-   * and DocumentChunk nodes crowd each other's candidate list, so a
-   * label-filtered query can come back with fewer than k rows even when k
-   * matching nodes exist. Renaming the property per label was considered
-   * and rejected — it would break existing data and the ingestion schema.
-   * Instead every knn() call site over-fetches: it asks knn() for
+   * IMPORTANT — over-fetch guard: `entity_emb_idx` indexes Entity.embedding
+   * and `chunk_emb_idx` indexes DocumentChunk.${CHUNK_EMB_PROP} (`emb`) —
+   * separate property names, so a `knn()` call scoped to one label's index
+   * no longer crowds against the other label's candidates (ENG-3912 split
+   * the property names precisely to fix this). We still over-fetch as a
+   * general guard against any candidate-set narrowing between the knn()
+   * pass and the label/WHERE filter (e.g. filtered-out or since-deleted
+   * nodes still occupying index slots), since under-fetching there could
+   * silently return fewer than k rows even when k matching nodes exist.
+   * Every knn() call site over-fetches: it asks knn() for
    * `kBoost = k * KNN_BOOST_FACTOR` (capped at KNN_BOOST_CAP) candidates,
    * then trims back to `k` with LIMIT after the label filter has narrowed
    * the candidate set down to matching nodes.
