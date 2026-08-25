@@ -20,7 +20,8 @@
 Ingests a directory of .md files into a geode graph database:
 
   for each file:
-    chunk (recursive splitter, ~2000 chars / 200 overlap)
+    chunk (recursive splitter, --chunk-size/--chunk-overlap,
+    default 2000 chars / 200 overlap)
     -> embed chunks via an OpenAI-compatible /v1/embeddings endpoint
        (batched, 32 texts/request)
     -> MERGE DocumentChunk {docId, seq, text, source, emb} nodes
@@ -137,10 +138,15 @@ EMBED_DIM = 1536
 EMB_PROP = "emb"
 CHUNK_INDEX = "chunk_emb_idx"
 
-CHUNK_SIZE = 2000
-CHUNK_OVERLAP = 200
+CHUNK_SIZE = 2000  # default; override with --chunk-size
+CHUNK_OVERLAP = 200  # default; override with --chunk-overlap
 EMBED_BATCH_SIZE = 32
-EMBED_TRUNCATE_CHARS = 6000  # safety margin under the encoder's 8192-token ctx
+# Floor for embed-input truncation. The effective limit is
+# max(EMBED_TRUNCATE_CHARS, chunk_size + chunk_overlap) so a larger
+# --chunk-size can never be silently cut mid-chunk (chunks may carry up to
+# `overlap` extra prefix chars). 6300 chars ~= 1600 tokens, far under the
+# encoder's 8192-token ctx.
+EMBED_TRUNCATE_CHARS = 6000
 ENTITY_NAME_MAX = 512
 LLM_MAX_TOKENS = 2000
 LLM_TEMPERATURE = 0.1
@@ -160,6 +166,7 @@ TRIPLE_SYSTEM_PROMPT = (
 
 LOG_PATH = Path.cwd() / "ingest_kb.log"
 FAILURES_PATH = Path.cwd() / "ingest_failures.jsonl"
+LOCK_PATH = Path(__file__).resolve().parent / "ingest_kb.pid"
 
 # ---------------------------------------------------------------------------
 # Logging helpers
@@ -172,6 +179,45 @@ def log(msg: str) -> None:
     try:
         with LOG_PATH.open("a", encoding="utf-8") as f:
             f.write(line + "\n")
+    except OSError:
+        pass
+
+
+def _pid_is_live_ingest(pid: int) -> bool:
+    """True iff `pid` is a live process whose cmdline mentions ingest_kb.py."""
+    try:
+        cmdline = Path(f"/proc/{pid}/cmdline").read_bytes()
+    except OSError:
+        return False  # no such process (or no /proc entry) -> stale
+    return b"ingest_kb.py" in cmdline
+
+
+def acquire_lock() -> None:
+    """PID lockfile guard (ENG-3914): overlapping ingest processes create
+    MERGE duplicates via late-committing stalled writes, so refuse to start
+    while another ingest_kb.py is alive. A stale lockfile (dead PID, or PID
+    reused by an unrelated process) is safe to replace."""
+    if LOCK_PATH.exists():
+        try:
+            old_pid = int(LOCK_PATH.read_text().strip())
+        except (OSError, ValueError):
+            old_pid = -1
+        if old_pid > 0 and _pid_is_live_ingest(old_pid):
+            print(
+                f"error: another ingest_kb.py (pid {old_pid}) is already running "
+                f"per lockfile {LOCK_PATH}; overlapping ingest processes create "
+                "MERGE duplicates (ENG-3914). Refusing to start.",
+                file=sys.stderr,
+            )
+            sys.exit(3)
+        log(f"WARN replacing stale lockfile {LOCK_PATH} (pid {old_pid} not a live ingest)")
+    LOCK_PATH.write_text(str(os.getpid()))
+
+
+def release_lock() -> None:
+    try:
+        if LOCK_PATH.exists() and LOCK_PATH.read_text().strip() == str(os.getpid()):
+            LOCK_PATH.unlink()
     except OSError:
         pass
 
@@ -302,6 +348,12 @@ def parse_triples(content: str) -> list:
 
 
 def _post_with_retry(url: str, payload: dict, headers: dict, verify: bool) -> dict:
+    """POST with retry+backoff for transient failures only.
+
+    Retryable: HTTP 429, 5xx, connection/timeout errors. Non-retryable
+    client errors (400/401/403/404, any other 4xx) fail fast — retrying a
+    bad request or bad credentials just burns the retry budget.
+    """
     last_err = None
     for attempt in range(MAX_RETRIES):
         try:
@@ -310,8 +362,12 @@ def _post_with_retry(url: str, payload: dict, headers: dict, verify: bool) -> di
             )
             if resp.status_code == 429 or resp.status_code >= 500:
                 last_err = f"HTTP {resp.status_code}: {resp.text[:200]}"
+            elif resp.status_code >= 400:
+                raise RuntimeError(
+                    f"POST {url} failed with non-retryable "
+                    f"HTTP {resp.status_code}: {resp.text[:200]}"
+                )
             else:
-                resp.raise_for_status()
                 return resp.json()
         except requests.RequestException as e:
             last_err = str(e)
@@ -334,12 +390,13 @@ def shrink_embedding(vec: list) -> list:
 
 
 class Embedder:
-    def __init__(self, url: str, model: str):
+    def __init__(self, url: str, model: str, truncate_chars: int = EMBED_TRUNCATE_CHARS):
         self.url = url
         self.model = model
+        self.truncate_chars = max(truncate_chars, EMBED_TRUNCATE_CHARS)
 
     def embed_batch(self, texts: list) -> list:
-        truncated = [t[:EMBED_TRUNCATE_CHARS] for t in texts]
+        truncated = [t[: self.truncate_chars] for t in texts]
         data = _post_with_retry(
             self.url,
             {"model": self.model, "input": truncated},
@@ -455,18 +512,24 @@ async def preflight_vector_write(client: Client) -> None:
         )
 
 
-async def fetch_complete_doc_ids(client: Client) -> set:
-    done = set()
+async def fetch_marker_statuses(client: Client) -> dict:
+    """Return {docId: status} for every ProcessedDocument marker.
+
+    Mode-aware resume semantics (see task-9 report, "--skip-triples marker
+    semantics"): an embeddings-only run writes status='embedded'; a
+    triples-enabled run writes status='complete'. The resume filter in
+    amain() interprets these per mode.
+    """
+    statuses = {}
     async with client.connection() as conn:
         page, _ = await conn.query(
-            "MATCH (p:ProcessedDocument) WHERE p.status = $st RETURN p.docId AS docId",
-            {"st": "complete"},
+            "MATCH (p:ProcessedDocument) RETURN p.docId AS docId, p.status AS status"
         )
         for row in page.rows:
             doc_id = _val(row, "docId")
             if doc_id:
-                done.add(doc_id)
-    return done
+                statuses[doc_id] = _val(row, "status", "")
+    return statuses
 
 
 async def _execute_batch_resilient(client: Client, statements: list) -> None:
@@ -591,11 +654,15 @@ class Stats:
 
 
 class Ingestor:
-    def __init__(self, args, client: Client, embedder: Embedder, extractor):
+    def __init__(self, args, client: Client, embedder: Embedder, extractor,
+                 embedded_done: set = None):
         self.args = args
         self.client = client
         self.embedder = embedder
         self.extractor = extractor
+        # docIds whose chunks+embeddings are already stored (status='embedded');
+        # a triples-enabled resume jumps straight to extraction for these.
+        self.embedded_done = embedded_done or set()
         self.embed_sem = asyncio.Semaphore(args.embed_concurrency)
         self.llm_sem = asyncio.Semaphore(args.concurrency)
         self.file_sem = asyncio.Semaphore(args.file_concurrency)
@@ -662,27 +729,37 @@ class Ingestor:
                 record_failure(rel_path, "read", str(e))
                 return
 
-            chunks = chunk_text(text)
+            chunks = chunk_text(text, self.args.chunk_size, self.args.chunk_overlap)
             del text
             if not chunks:
                 record_failure(rel_path, "chunk", "no non-empty chunks produced")
                 self.stats.files_failed += 1
                 return
 
-            try:
-                embeddings = await self._embed_all(chunks)
-            except Exception as e:
-                self.stats.files_failed += 1
-                record_failure(rel_path, "embed", str(e))
-                return
+            if rel_path in self.embedded_done:
+                # status='embedded' marker: chunks+vectors already stored by a
+                # prior embeddings-only run — jump straight to extraction.
+                log(f"RESUME file={rel_path} chunks already embedded; extracting triples only")
+            else:
+                try:
+                    embeddings = await self._embed_all(chunks)
+                except Exception as e:
+                    self.stats.files_failed += 1
+                    record_failure(rel_path, "embed", str(e))
+                    return
 
-            try:
-                await self._db_call(store_chunks, self.client, rel_path, chunks, embeddings)
-            except Exception as e:
-                self.stats.files_failed += 1
-                record_failure(rel_path, "store_chunks", str(e))
-                return
-            del embeddings
+                try:
+                    await self._db_call(store_chunks, self.client, rel_path, chunks, embeddings)
+                except Exception as e:
+                    self.stats.files_failed += 1
+                    record_failure(rel_path, "store_chunks", str(e))
+                    return
+                del embeddings
+                # Chunk storage is durable from this point: count it now so
+                # the DONE summary doesn't undercount when a later stage
+                # (extraction/marker) fails.
+                self.stats.chunks += len(chunks)
+                log(f"STORED file={rel_path} chunks={len(chunks)} (marker pending)")
 
             triple_count = 0
             edge_count = 0
@@ -701,9 +778,13 @@ class Ingestor:
                         await self._mark_safe(rel_path, len(chunks), 0, "failed")
                         return
 
+            # Mode-aware marker (task-9 report): a triples-enabled run marks
+            # 'complete'; an embeddings-only run marks 'embedded' so a later
+            # triples pass can resume extraction without re-embedding.
+            status = "complete" if not self.args.skip_triples else "embedded"
             try:
                 await self._db_call(
-                    store_marker, self.client, rel_path, len(chunks), triple_count, "complete"
+                    store_marker, self.client, rel_path, len(chunks), triple_count, status
                 )
             except Exception as e:
                 self.stats.files_failed += 1
@@ -711,7 +792,6 @@ class Ingestor:
                 return
 
             self.stats.files_done += 1
-            self.stats.chunks += len(chunks)
             self.stats.edges += edge_count
             log(
                 f"OK file={rel_path} chunks={len(chunks)} triples={triple_count} "
@@ -820,14 +900,30 @@ def parse_args(argv=None):
         help="Files processed in flight simultaneously (default 4)",
     )
     p.add_argument(
+        "--chunk-size",
+        type=int,
+        default=CHUNK_SIZE,
+        help=f"Chunk size in characters (default {CHUNK_SIZE})",
+    )
+    p.add_argument(
+        "--chunk-overlap",
+        type=int,
+        default=CHUNK_OVERLAP,
+        help=f"Chunk overlap in characters (default {CHUNK_OVERLAP})",
+    )
+    p.add_argument(
         "--skip-triples",
         action="store_true",
-        help="Skip triple extraction (embeddings + chunks only)",
+        help="Skip triple extraction (embeddings + chunks only); marker status='embedded'",
     )
     p.add_argument(
         "--resume",
         action="store_true",
-        help="Skip files whose ProcessedDocument.status='complete' marker exists",
+        help=(
+            "Mode-aware resume from ProcessedDocument markers: a triples-enabled "
+            "run skips status='complete' files and jumps straight to extraction "
+            "for status='embedded' ones; a --skip-triples run skips both"
+        ),
     )
     return p.parse_args(argv)
 
@@ -874,7 +970,9 @@ async def amain(args) -> int:
         )
 
     embedder = Embedder(
-        os.getenv("EMBEDDINGS_API_URL", DEFAULT_EMBEDDINGS_URL), DEFAULT_EMBEDDINGS_MODEL
+        os.getenv("EMBEDDINGS_API_URL", DEFAULT_EMBEDDINGS_URL),
+        DEFAULT_EMBEDDINGS_MODEL,
+        truncate_chars=args.chunk_size + args.chunk_overlap,
     )
 
     client = Client(
@@ -900,8 +998,18 @@ async def amain(args) -> int:
     total_found = len(files)
 
     skipped_resume = 0
+    embedded_done = set()
     if args.resume:
-        done = await fetch_complete_doc_ids(client)
+        statuses = await fetch_marker_statuses(client)
+        if args.skip_triples:
+            # embeddings-only: both 'complete' and 'embedded' already have
+            # their chunks+vectors stored — nothing left to do for either.
+            done = {d for d, st in statuses.items() if st in ("complete", "embedded")}
+        else:
+            # triples-enabled: only 'complete' is fully done; 'embedded' files
+            # stay selected but skip re-embedding/re-storing chunks.
+            done = {d for d, st in statuses.items() if st == "complete"}
+            embedded_done = {d for d, st in statuses.items() if st == "embedded"}
         before = len(files)
         files = [p for p in files if str(p.relative_to(root)) not in done]
         skipped_resume = before - len(files)
@@ -911,12 +1019,13 @@ async def amain(args) -> int:
 
     log(
         f"START dir={root} server={args.server} found={total_found} "
-        f"resume_skipped={skipped_resume} selected={len(files)} "
+        f"resume_skipped={skipped_resume} embedded_resume={len(embedded_done)} "
+        f"selected={len(files)} chunk(size={args.chunk_size} overlap={args.chunk_overlap}) "
         f"concurrency(llm={args.concurrency} embed={args.embed_concurrency} "
         f"files={args.file_concurrency}) skip_triples={args.skip_triples}"
     )
 
-    ing = Ingestor(args, client, embedder, extractor)
+    ing = Ingestor(args, client, embedder, extractor, embedded_done)
     t0 = time.monotonic()
     results = await asyncio.gather(
         *(ing.process_file(p, str(p.relative_to(root))) for p in files),
@@ -950,11 +1059,18 @@ async def amain(args) -> int:
 
 def main():
     args = parse_args()
+    lock_held = False
+    if not args.search:  # --search is read-only; no write-overlap hazard
+        acquire_lock()
+        lock_held = True
     try:
         sys.exit(asyncio.run(amain(args)))
     except KeyboardInterrupt:
         log("INTERRUPTED by user")
         sys.exit(130)
+    finally:
+        if lock_held:
+            release_lock()
 
 
 if __name__ == "__main__":
