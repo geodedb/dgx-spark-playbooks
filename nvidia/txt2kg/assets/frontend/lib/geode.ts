@@ -64,6 +64,30 @@ function vecParam(v: number[]): string {
 }
 
 /**
+ * ENG-3912 (dimension poisoning): geode v0.8.5 pins a vector property's
+ * dimension per (table, column) on the FIRST write attempt — even a failed
+ * one — and provides no DDL to reset it. `DocumentChunk.embedding` was
+ * poisoned at 2560 dims by a pre-fix write, so the knowledge graph stores
+ * chunk vectors in the fresh property `emb` instead, truncated to the first
+ * 1536 dims and L2-renormalized (Qwen3-Embedding is Matryoshka-trained, so
+ * prefix truncation is the sanctioned degradation; 1536 f32 also fits under
+ * the v0.8.5 ~8KB property-value cap). Every DocumentChunk read AND write
+ * must use `emb` + shrinkEmbedding(); Entity keeps `embedding`.
+ * Mirrors shrink_embedding() in assets/scripts/ingest_kb.py.
+ */
+const CHUNK_EMB_PROP = 'emb';
+const EMB_DIM = 1536;
+
+/** Truncate to EMB_DIM dims and L2-renormalize (ENG-3912). Applied
+ * identically to stored and query vectors so cosine scores stay comparable. */
+function shrinkEmbedding(v: number[]): number[] {
+  const t = v.slice(0, EMB_DIM);
+  const norm = Math.sqrt(t.reduce((s, x) => s + x * x, 0));
+  if (norm <= 0) return t.map(() => 0);
+  return t.map(x => x / norm);
+}
+
+/**
  * knn() candidate over-fetch settings — see the `knnRows` doc comment for
  * why the boost exists. A multiplier this small is cheap even for large
  * graphs; the cap keeps a huge `k` from forcing an unbounded index scan.
@@ -146,7 +170,7 @@ export class GeodeService {
 
     const ddl = [
       `CREATE INDEX entity_emb_idx ON Entity(embedding) USING vector WITH (metric: 'cosine')`,
-      `CREATE INDEX chunk_emb_idx ON DocumentChunk(embedding) USING vector WITH (metric: 'cosine')`,
+      `CREATE INDEX chunk_emb_idx ON DocumentChunk(${CHUNK_EMB_PROP}) USING vector WITH (metric: 'cosine')`,
     ];
 
     for (const stmt of ddl) {
@@ -445,27 +469,33 @@ export class GeodeService {
   ): Promise<Array<Record<string, unknown>>> {
     const limit = safeLimit(k, 10);
     const kBoost = knnBoost(limit);
+    // ENG-3912: DocumentChunk vectors live in `emb` at EMB_DIM dims; the
+    // query vector must be shrunk through the identical path or
+    // vector_cosine/knn sees a dimension mismatch. Entity keeps `embedding`
+    // (its own pinned dimension) with unshrunk query vectors.
+    const prop = label === 'DocumentChunk' ? CHUNK_EMB_PROP : 'embedding';
+    const qvec = label === 'DocumentChunk' ? shrinkEmbedding(queryEmbedding) : queryEmbedding;
     try {
       return await this.client!.queryAll(
         `MATCH (${varName}:${label})
-         WHERE id(${varName}) IN knn('embedding', $vec, $kBoost, 'cosine')
-         WITH ${varName}, vector_cosine(${varName}.embedding, $vec) AS score
+         WHERE id(${varName}) IN knn('${prop}', $vec, $kBoost, 'cosine')
+         WITH ${varName}, vector_cosine(${varName}.${prop}, $vec) AS score
          RETURN ${returnProjection}
          ORDER BY score DESC
          LIMIT ${limit}`,
-        { params: { vec: queryEmbedding, kBoost } }
+        { params: { vec: qvec, kBoost } }
       );
     } catch (error) {
       // Fallback: full-scan WITH projection.
       console.warn(`[Geode] knn() fast path unavailable for ${label}, falling back to full scan:`, error);
       return await this.client!.queryAll(
         `MATCH (${varName}:${label})
-         WHERE ${varName}.embedding IS NOT NULL
-         WITH ${varName}, vector_cosine(${varName}.embedding, $vec) AS score
+         WHERE ${varName}.${prop} IS NOT NULL
+         WITH ${varName}, vector_cosine(${varName}.${prop}, $vec) AS score
          RETURN ${returnProjection}
          ORDER BY score DESC
          LIMIT ${limit}`,
-        { params: { vec: queryEmbedding } }
+        { params: { vec: qvec } }
       );
     }
   }
@@ -551,14 +581,14 @@ export class GeodeService {
         await this.client!.exec(
           `CREATE (d:DocumentChunk {
             text: $text,
-            embedding: vectorf32(toString($vec)),
+            ${CHUNK_EMB_PROP}: vectorf32(toString($vec)),
             source: $source,
             createdAt: $createdAt
           })`,
           {
             params: {
               text: documents[i],
-              vec: vecParam(embeddings[i]),
+              vec: vecParam(shrinkEmbedding(embeddings[i])), // ENG-3912
               source: metadata?.[i]?.source || 'unknown',
               createdAt: new Date().toISOString(),
             },
@@ -841,14 +871,14 @@ export class GeodeService {
           await this.client!.exec(
             `CREATE (d:DocumentChunk {
               text: $text,
-              embedding: vectorf32(toString($vec)),
+              ${CHUNK_EMB_PROP}: vectorf32(toString($vec)),
               originalId: $originalId,
               createdAt: $createdAt
             })`,
             {
               params: {
                 text,
-                vec: vecParam(point.vector),
+                vec: vecParam(shrinkEmbedding(point.vector)), // ENG-3912
                 originalId,
                 createdAt: new Date().toISOString(),
               },
