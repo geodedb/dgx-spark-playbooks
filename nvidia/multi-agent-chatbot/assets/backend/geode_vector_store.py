@@ -405,32 +405,37 @@ class GeodeVectorStore:
         """Run a knn similarity query (with full-scan fallback) and return documents.
 
         vector_cosine returns SIMILARITY (self = 1), so higher is better.
-        Scores can arrive as decimal strings — projected via toString() and
-        coerced with float(); final ranking is done client-side on the floats.
+
+        Requires geode-client >= v0.5.0 (pinned in pyproject.toml): raw float
+        score projections decode natively (DECIMAL) and GQL ORDER BY on them
+        works, so ranking is done server-side. (Older clients decoded float
+        projections as NULL through ORDER BY and needed a toString(score) +
+        client-side re-rank workaround.)
         """
         params = {"vec": _vec_param(query_embedding), "k": int(k)}
 
         source_filter = ""
         if sources:
-            placeholders = []
-            for i, source in enumerate(sources):
-                params[f"src{i}"] = source
-                placeholders.append(f"$src{i}")
-            source_filter = f" AND d.source IN [{', '.join(placeholders)}]"
+            # Native list params work with geode-client >= v0.5.0; no need for
+            # the old numbered-placeholder ($src0, $src1, ...) workaround.
+            params["sources"] = list(sources)
+            source_filter = " AND d.source IN $sources"
 
         knn_query = (
             "MATCH (d:RagDocument) "
             "WHERE id(d) IN knn('embedding', vectorf32(toString($vec)), $k, 'cosine') "
             "WITH d, vector_cosine(d.embedding, vectorf32(toString($vec))) AS score "
             f"WHERE score > 0.1{source_filter} "
-            "RETURN d.text AS text, d.source AS source, toString(score) AS score"
+            "RETURN d.text AS text, d.source AS source, score "
+            "ORDER BY score DESC"
         )
         scan_query = (
             "MATCH (d:RagDocument) "
             "WHERE d.embedding IS NOT NULL "
             "WITH d, vector_cosine(d.embedding, vectorf32(toString($vec))) AS score "
             f"WHERE score > 0.1{source_filter} "
-            "RETURN d.text AS text, d.source AS source, toString(score) AS score "
+            "RETURN d.text AS text, d.source AS source, score "
+            "ORDER BY score DESC "
             "LIMIT $k"
         )
 
@@ -455,6 +460,9 @@ class GeodeVectorStore:
             for row in page.rows:
                 text = _val(row, "text", "")
                 source = _val(row, "source", "unknown")
+                # Raw float scores decode natively with geode-client >= v0.5.0
+                # (DECIMAL values surface via as_string in _val); keep a
+                # defensive float() coercion for whatever representation arrives.
                 score_raw = _val(row, "score", "0.0")
                 try:
                     score = float(score_raw) if score_raw else 0.0
@@ -464,12 +472,8 @@ class GeodeVectorStore:
                     page_content=text,
                     metadata={"source": source, "score": score}
                 ))
-            # Client-side sort is the ranking authority, not just a safety net:
-            # GQL-side ORDER BY score was dropped because float projections
-            # (toString(score)) decode as NULL through ORDER BY, which would
-            # silently scramble ranking. Re-sort here on the parsed floats and
-            # slice to k to enforce the intended similarity ordering.
-            docs.sort(key=lambda d: d.metadata["score"], reverse=True)
+            # Rows arrive ranked by the GQL ORDER BY score DESC above
+            # (works with geode-client >= v0.5.0); just cap to k defensively.
             return docs[:k]
 
     def delete_collection(self, collection_name: str) -> bool:

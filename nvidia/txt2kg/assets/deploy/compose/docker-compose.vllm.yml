@@ -68,7 +68,7 @@ services:
     container_name: geode
     # v0.8.5: `geode serve` no longer supports --listen-grpc (gRPC serving
     # removed — JIRA ENG-3907); QUIC on 3141 is the only listener.
-    command: ["--data-dir", "/data", "--listen", "0.0.0.0:3141"]
+    command: ["serve", "--data-dir", "/data", "--listen", "0.0.0.0:3141"]
     ports:
       - '127.0.0.1:3141:3141/udp'
     environment:

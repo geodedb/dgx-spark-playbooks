@@ -15,7 +15,7 @@
 // limitations under the License.
 //
 import { ChatOpenAI } from "@langchain/openai";
-import { SystemMessage } from "@langchain/core/messages";
+import { HumanMessage, SystemMessage } from "@langchain/core/messages";
 
 /**
  * Service for interacting with LLMs through LangChain integrations
@@ -297,10 +297,12 @@ export class LangChainService {
       
       console.log(`Created ChatOpenAI instance for vLLM model: ${modelId}`);
       
-      // Test the model with a simple request before caching
+      // Test the model with a simple request before caching.
+      // Must be a user message: some chat templates (e.g. Qwen on vLLM) reject
+      // system-only conversations with 400 "No user query found in messages".
       console.log("Testing vLLM model with a simple message...");
       try {
-        const testResult = await model.invoke([new SystemMessage("Hello")]);
+        const testResult = await model.invoke([new HumanMessage("Hello")]);
         console.log("vLLM model test successful, response:", testResult.content.toString().substring(0, 50) + "...");
         
         // Cache the model
