@@ -42,7 +42,9 @@ services:
 
   geode:
     # Use pre-built image instead of building from source
-    image: geode:latest
+    # Policy: test against geode:dev (latest fixes); use pinned releases only for production
+    image: registry.gitlab.com/devnw/codepros/geode/geode:dev
+    pull_policy: always
     build: !reset null
     # Replace broken health check (geode query hangs on aarch64 - #424)
     # Check that the QUIC (UDP) port 3141 is bound instead (gRPC serving

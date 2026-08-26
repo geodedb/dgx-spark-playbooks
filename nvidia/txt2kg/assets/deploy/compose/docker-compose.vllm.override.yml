@@ -19,7 +19,9 @@ services:
       start_period: 30s
 
   geode:
-    image: geode:latest
+    # Policy: test against geode:dev (latest fixes); use pinned releases only for production
+    image: registry.gitlab.com/devnw/codepros/geode/geode:dev
+    pull_policy: always
     build: !reset null
     # Check that the QUIC (UDP) port 3141 is bound (gRPC serving removed in
     # geode v0.8.5 — JIRA ENG-3907)
