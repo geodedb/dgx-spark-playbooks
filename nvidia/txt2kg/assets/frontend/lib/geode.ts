@@ -101,6 +101,12 @@ function shrinkEmbedding(v: number[]): number[] {
 const KNN_BOOST_FACTOR = 8;
 const KNN_BOOST_CAP = 512;
 
+// @geodedb/client v1.2.0 regression: queries WITHOUT an explicit LIMIT fail with
+// "Invalid execute response" once the result spans multiple pages (>1000 rows);
+// an explicit LIMIT drains multi-page results fine. Bound every full-scan query.
+// Tracked upstream (JIRA ENG — nodejs client); remove when fixed.
+const MAX_SCAN_ROWS = 100000;
+
 /** Requested candidate count for knn(), boosted to survive cross-label crowding (see knnRows). */
 function knnBoost(k: number): number {
   return Math.min(k * KNN_BOOST_FACTOR, KNN_BOOST_CAP);
@@ -108,6 +114,59 @@ function knnBoost(k: number): number {
 
 export class GeodeService {
   private client: GeodeClient | null = null;
+
+  // @geodedb/client v1.2.0 cannot multiplex concurrent queries on one
+  // connection: parallel requests fail with "Invalid execute response" and can
+  // even deliver one query's rows to another (silent wrong data). Serialize
+  // every statement through a promise-chain mutex until the client supports
+  // concurrent use (tracked upstream with ENG-3916).
+  private opChain: Promise<unknown> = Promise.resolve();
+
+  private serialize<T>(op: () => Promise<T>): Promise<T> {
+    const next = this.opChain.then(op, op);
+    this.opChain = next.catch(() => undefined);
+    return next;
+  }
+
+  // The geode server intermittently drops connections under bulk-write load
+  // (ENG-3914) and the client does not resurrect a destroyed connection
+  // (ENG-3918): without this, one dropped connection permanently bricks the
+  // singleton. Tear down and reconnect once, then retry the statement.
+  private isConnectionDeadError(error: unknown): boolean {
+    const msg = error instanceof Error ? `${error.message} ${String((error as any).cause ?? '')}` : String(error);
+    return /transport|peer closed|destroyed|not running|connection.*(closed|stopped)|invalid execute response/i.test(msg);
+  }
+
+  private async resetConnection(): Promise<void> {
+    const dead = this.client;
+    this.client = null;
+    this.initialized = false;
+    this.initPromise = null;
+    this.indexesEnsured = false;
+    try { await (dead as any)?.close?.(); } catch { /* already dead */ }
+  }
+
+  private async runWithReconnect<T>(op: () => Promise<T>): Promise<T> {
+    try {
+      return await op();
+    } catch (error) {
+      if (!this.isConnectionDeadError(error)) {
+        throw error;
+      }
+      console.warn('Geode connection lost; reconnecting and retrying once:', error instanceof Error ? error.message : error);
+      await this.resetConnection();
+      await this.initialize(); // doInitialize uses raw client calls only — safe inside the chain
+      return await op();
+    }
+  }
+
+  private queryAllSerial(query: string, options?: Parameters<GeodeClient['queryAll']>[1]) {
+    return this.serialize(() => this.runWithReconnect(() => this.client!.queryAll(query, options)));
+  }
+
+  private execSerial(query: string, options?: Parameters<GeodeClient['exec']>[1]) {
+    return this.serialize(() => this.runWithReconnect(() => this.client!.exec(query, options)));
+  }
   private static instance: GeodeService;
   private initialized: boolean = false;
   private isInitializing = false;
@@ -125,11 +184,25 @@ export class GeodeService {
   /**
    * Initialize the Geode connection
    */
-  public async initialize(url?: string): Promise<void> {
-    if (this.initialized || this.isInitializing) {
-      return;
-    }
+  // Concurrent cold-start requests must all wait for the SAME in-flight
+  // initialization: the old early-return on isInitializing let a second
+  // caller proceed with a null client ("connection not initialized").
+  private initPromise: Promise<void> | null = null;
 
+  public initialize(url?: string): Promise<void> {
+    if (this.initialized) {
+      return Promise.resolve();
+    }
+    if (!this.initPromise) {
+      this.initPromise = this.doInitialize(url).catch((error) => {
+        this.initPromise = null;
+        throw error;
+      });
+    }
+    return this.initPromise;
+  }
+
+  private async doInitialize(url?: string): Promise<void> {
     this.isInitializing = true;
 
     try {
@@ -242,15 +315,15 @@ export class GeodeService {
           // SEPARATE statement. Chaining node MERGEs with a relationship
           // MERGE in one statement silently creates no relationship in
           // Geode — never combine them.
-          await this.client!.exec(
+          await this.execSerial(
             `MERGE (s:Entity {name: $s})`,
             { params: { s: subject } }
           );
-          await this.client!.exec(
+          await this.execSerial(
             `MERGE (o:Entity {name: $o})`,
             { params: { o: object } }
           );
-          await this.client!.exec(
+          await this.execSerial(
             `MATCH (s:Entity {name: $s}), (o:Entity {name: $o})
              MERGE (s)-[:RELATIONSHIP {type: $p}]->(o)`,
             { params: { s: subject, o: object, p: predicate } }
@@ -279,8 +352,8 @@ export class GeodeService {
     try {
       // toString(id(..)): geode node ids exceed Number.MAX_SAFE_INTEGER, and
       // raw id() projections fail to decode client-side — project as strings.
-      const entityRows = await this.client!.queryAll(
-        `MATCH (e:Entity) RETURN e.name AS name, toString(id(e)) AS nodeId`
+      const entityRows = await this.queryAllSerial(
+        `MATCH (e:Entity) RETURN e.name AS name, toString(id(e)) AS nodeId LIMIT ${MAX_SCAN_ROWS}`
       );
 
       const nodes = entityRows.map((row: any) => ({
@@ -289,9 +362,9 @@ export class GeodeService {
         name: row.name,
       }));
 
-      const relRows = await this.client!.queryAll(
+      const relRows = await this.queryAllSerial(
         `MATCH (s:Entity)-[r:RELATIONSHIP]->(o:Entity)
-         RETURN toString(id(s)) AS sourceId, toString(id(o)) AS targetId, r.type AS type, toString(id(r)) AS relId`
+         RETURN toString(id(s)) AS sourceId, toString(id(o)) AS targetId, r.type AS type, toString(id(r)) AS relId LIMIT ${MAX_SCAN_ROWS}`
       );
 
       const relationships = relRows.map((row: any) => ({
@@ -334,10 +407,10 @@ export class GeodeService {
       const seen = new Set<string>();
 
       for (const keyword of filteredKeywords) {
-        const rows = await this.client!.queryAll(
+        const rows = await this.queryAllSerial(
           `MATCH (s:Entity)-[r:RELATIONSHIP]->(o:Entity)
            WHERE s.name CONTAINS $kw OR o.name CONTAINS $kw OR r.type CONTAINS $kw
-           RETURN DISTINCT s.name AS subject, r.type AS predicate, o.name AS object`,
+           RETURN DISTINCT s.name AS subject, r.type AS predicate, o.name AS object LIMIT ${MAX_SCAN_ROWS}`,
           { params: { kw: keyword } }
         );
 
@@ -375,7 +448,7 @@ export class GeodeService {
     await this.ensureInitialized();
 
     try {
-      await this.client!.exec('MATCH (n) DETACH DELETE n');
+      await this.execSerial('MATCH (n) DETACH DELETE n');
       console.log('Geode database cleared successfully');
     } catch (error) {
       console.error('Error clearing Geode database:', error);
@@ -398,7 +471,7 @@ export class GeodeService {
     try {
       let stored = 0;
       for (const [entityName, embedding] of entityEmbeddings.entries()) {
-        await this.client!.exec(
+        await this.execSerial(
           `MERGE (e:Entity {name: $name})
            SET e.embedding = vectorf32(toString($vec))`,
           { params: { name: entityName, vec: vecParam(embedding) } }
@@ -424,7 +497,7 @@ export class GeodeService {
     try {
       let stored = 0;
       for (const [key, embedding] of embeddings.entries()) {
-        await this.client!.exec(
+        await this.execSerial(
           `MERGE (e:Entity {name: $name})
            SET e.embedding = vectorf32(toString($vec)), e.text = $text`,
           { params: { name: key, vec: vecParam(embedding), text: textContent.get(key) || '' } }
@@ -482,7 +555,7 @@ export class GeodeService {
     const prop = label === 'DocumentChunk' ? CHUNK_EMB_PROP : 'embedding';
     const qvec = label === 'DocumentChunk' ? shrinkEmbedding(queryEmbedding) : queryEmbedding;
     try {
-      return await this.client!.queryAll(
+      return await this.queryAllSerial(
         `MATCH (${varName}:${label})
          WHERE id(${varName}) IN knn('${prop}', $vec, $kBoost, 'cosine')
          WITH ${varName}, vector_cosine(${varName}.${prop}, $vec) AS score
@@ -494,7 +567,7 @@ export class GeodeService {
     } catch (error) {
       // Fallback: full-scan WITH projection.
       console.warn(`[Geode] knn() fast path unavailable for ${label}, falling back to full scan:`, error);
-      return await this.client!.queryAll(
+      return await this.queryAllSerial(
         `MATCH (${varName}:${label})
          WHERE ${varName}.${prop} IS NOT NULL
          WITH ${varName}, vector_cosine(${varName}.${prop}, $vec) AS score
@@ -584,7 +657,7 @@ export class GeodeService {
       console.log(`Storing ${documents.length} document chunks in Geode`);
 
       for (let i = 0; i < documents.length; i++) {
-        await this.client!.exec(
+        await this.execSerial(
           `CREATE (d:DocumentChunk {
             text: $text,
             ${CHUNK_EMB_PROP}: vectorf32(toString($vec)),
@@ -652,10 +725,10 @@ export class GeodeService {
     await this.ensureInitialized();
 
     try {
-      await this.client!.exec(
+      await this.execSerial(
         `MATCH (e:Entity) WHERE e.embedding IS NOT NULL REMOVE e.embedding`
       );
-      await this.client!.exec(
+      await this.execSerial(
         `MATCH (d:DocumentChunk) DETACH DELETE d`
       );
       console.log('Deleted all vector data from Geode');
@@ -685,7 +758,7 @@ export class GeodeService {
     await this.ensureInitialized();
 
     try {
-      await this.client!.exec(
+      await this.execSerial(
         `CREATE (l:QueryLog {
           query: $query,
           queryMode: $queryMode,
@@ -721,7 +794,7 @@ export class GeodeService {
     await this.ensureInitialized();
 
     try {
-      const rows = await this.client!.queryAll(
+      const rows = await this.queryAllSerial(
         `MATCH (l:QueryLog)
          RETURN l.query AS query, l.queryMode AS queryMode,
                 l.executionTimeMs AS executionTimeMs,
@@ -747,7 +820,7 @@ export class GeodeService {
     await this.ensureInitialized();
 
     try {
-      const rows = await this.client!.queryAll(
+      const rows = await this.queryAllSerial(
         `MATCH (d:ProcessedDocument {documentName: $name})
          RETURN d.documentName AS name LIMIT 1`,
         { params: { name: documentName.trim() } }
@@ -765,7 +838,7 @@ export class GeodeService {
     await this.ensureInitialized();
 
     try {
-      await this.client!.exec(
+      await this.execSerial(
         `MERGE (d:ProcessedDocument {documentName: $name})
          SET d.tripleCount = $tripleCount, d.processedAt = $processedAt`,
         {
@@ -789,8 +862,8 @@ export class GeodeService {
     await this.ensureInitialized();
 
     try {
-      const rows = await this.client!.queryAll(
-        `MATCH (d:ProcessedDocument) RETURN d.documentName AS name`
+      const rows = await this.queryAllSerial(
+        `MATCH (d:ProcessedDocument) RETURN d.documentName AS name LIMIT ${MAX_SCAN_ROWS}`
       );
       return rows.map((r: any) => r.name as string);
     } catch (error) {
@@ -874,7 +947,7 @@ export class GeodeService {
         const originalId = point.payload?.originalId || point.id;
 
         if (point.payload?.type === 'document') {
-          await this.client!.exec(
+          await this.execSerial(
             `CREATE (d:DocumentChunk {
               text: $text,
               ${CHUNK_EMB_PROP}: vectorf32(toString($vec)),
@@ -891,7 +964,7 @@ export class GeodeService {
             }
           );
         } else {
-          await this.client!.exec(
+          await this.execSerial(
             `MERGE (e:Entity {name: $name})
              SET e.embedding = vectorf32(toString($vec)), e.text = $text`,
             { params: { name: originalId, vec: vecParam(point.vector), text } }
@@ -912,7 +985,7 @@ export class GeodeService {
     await this.ensureInitialized();
 
     try {
-      const rows = await this.client!.queryAll(
+      const rows = await this.queryAllSerial(
         `MATCH (e:Entity) RETURN e.name AS name LIMIT ${safeLimit(limit, 1000)}`
       );
       return rows.map((r: any) => r.name as string);
@@ -929,7 +1002,7 @@ export class GeodeService {
 
     try {
       for (const name of entityNames) {
-        await this.client!.exec(
+        await this.execSerial(
           `MATCH (e:Entity {name: $name}) DETACH DELETE e`,
           { params: { name } }
         );
