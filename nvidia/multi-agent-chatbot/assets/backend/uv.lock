@@ -297,7 +297,7 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "fastapi", specifier = ">=0.116.1" },
-    { name = "geode-client", git = "https://gitlab.com/devnw/codepros/geode/geode-client-python.git?rev=v0.4.1" },
+    { name = "geode-client", git = "https://gitlab.com/devnw/codepros/geode/geode-client-python.git?rev=v0.5.0" },
     { name = "langchain", specifier = ">=0.3.27" },
     { name = "langchain-mcp-adapters", specifier = ">=0.1.0" },
     { name = "langchain-nvidia-ai-endpoints", specifier = ">=0.3.13" },
@@ -1101,8 +1101,8 @@ wheels = [
 
 [[package]]
 name = "geode-client"
-version = "0.4.1"
-source = { git = "https://gitlab.com/devnw/codepros/geode/geode-client-python.git?rev=v0.4.1#362655c520e99b01ce0e486b117a893ac73f0998" }
+version = "0.5.0"
+source = { git = "https://gitlab.com/devnw/codepros/geode/geode-client-python.git?rev=v0.5.0#ecb11628fe7df834a56895363ffc26dbf556cbbd" }
 dependencies = [
     { name = "aioquic" },
     { name = "cryptography" },

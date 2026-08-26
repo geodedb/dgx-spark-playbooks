@@ -7,7 +7,7 @@ requires-python = ">=3.10"
 dependencies = [
     "fastapi>=0.116.1",
     "langchain>=0.3.27",
-    "geode-client @ git+https://gitlab.com/devnw/codepros/geode/geode-client-python.git@v0.4.1",
+    "geode-client @ git+https://gitlab.com/devnw/codepros/geode/geode-client-python.git@v0.5.0",
     "langchain-mcp-adapters>=0.1.0",
     "langchain-nvidia-ai-endpoints>=0.3.13",
     "langchain-openai>=0.3.28",
