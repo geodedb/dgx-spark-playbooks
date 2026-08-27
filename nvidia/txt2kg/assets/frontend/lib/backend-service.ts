@@ -17,6 +17,7 @@
 import axios from 'axios';
 import { GraphDBService } from './graph-db-service';
 import { GeodeService } from './geode';
+import { EmbeddingsService } from './embeddings';
 import type { Triple } from '@/types/graph';
 
 /**
@@ -78,20 +79,13 @@ export class BackendService {
       }
     }
 
-    // Check if sentence-transformer service is available
-    try {
-      const response = await axios.get(`${this.sentenceTransformerUrl}/health`);
-      console.log(`Connected to SentenceTransformer service: ${response.data.model}`);
-      this.initialized = true;
-    } catch (error) {
-      console.error(`Failed to connect to sentence-transformer service: ${error}`);
-      if (process.env.NODE_ENV === 'development') {
-        console.log('Development mode: Continuing despite sentence transformer error');
-        this.initialized = true;
-      } else {
-        throw new Error('Sentence transformer service is not available');
-      }
-    }
+    // Embeddings go through EmbeddingsService, which supports both the legacy
+    // sentence-transformers service and OpenAI-format remote encoders
+    // (EMBEDDINGS_API_URL / EMBEDDINGS_API_FORMAT / EMBEDDINGS_MODEL_ID).
+    // It logs-and-continues if the encoder is unreachable; per-call errors
+    // surface from encode() instead of blocking initialization.
+    await EmbeddingsService.getInstance().initialize();
+    this.initialized = true;
   }
 
   /**
@@ -105,17 +99,7 @@ export class BackendService {
    * Generate embeddings using the sentence-transformer service
    */
   private async generateEmbeddings(texts: string[]): Promise<number[][]> {
-    try {
-      const response = await axios.post(`${this.sentenceTransformerUrl}/embed`, {
-        texts,
-        batch_size: 32
-      });
-
-      return response.data.embeddings;
-    } catch (error) {
-      console.error(`Error generating embeddings: ${error}`);
-      throw new Error('Failed to generate embeddings');
-    }
+    return EmbeddingsService.getInstance().encode(texts);
   }
 
   /**
