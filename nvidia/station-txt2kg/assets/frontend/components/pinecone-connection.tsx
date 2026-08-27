@@ -7,30 +7,30 @@ import { InfoIcon } from 'lucide-react'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { VectorDBStats } from '@/types/graph'
 
-interface PineconeConnectionProps {
+interface GeodeVectorConnectionProps {
   className?: string
 }
 
-export function PineconeConnection({ className }: PineconeConnectionProps) {
+export function GeodeVectorConnection({ className }: GeodeVectorConnectionProps) {
   const [connectionStatus, setConnectionStatus] = useState<"connected" | "disconnected" | "checking">("disconnected")
   const [error, setError] = useState<string | null>(null)
   const [stats, setStats] = useState<VectorDBStats>({ nodes: 0, relationships: 0, source: 'none' })
 
-  // Fetch vector DB stats
+  // Fetch vector DB stats from Geode
   const fetchStats = async () => {
     try {
-      const response = await fetch('/api/pinecone-diag/stats');
+      const response = await fetch('/api/vector-db/stats');
       const data = await response.json();
-      
+
       if (response.ok) {
         setStats({
           nodes: typeof data.totalVectorCount === 'number' ? data.totalVectorCount : 0,
-          relationships: 0, // Vector DB doesn't store relationships
+          relationships: 0, // Vector embeddings don't store relationships directly
           source: data.source || 'unknown',
           httpHealthy: data.httpHealthy
         });
-        
-        // If we have a healthy HTTP connection, we're connected
+
+        // If we have a healthy connection, we're connected
         if (data.httpHealthy) {
           setConnectionStatus("connected");
           setError(null);
@@ -38,17 +38,17 @@ export function PineconeConnection({ className }: PineconeConnectionProps) {
           setConnectionStatus("disconnected");
           setError(data.error || 'Connection failed');
         }
-        
-        console.log('Vector DB stats:', data);
+
+        console.log('Geode vector stats:', data);
       } else {
-        console.error('Failed to fetch vector DB stats:', data);
+        console.error('Failed to fetch vector stats:', data);
         setConnectionStatus("disconnected");
-        setError(data.error || 'Failed to connect to vector database');
+        setError(data.error || 'Failed to connect to Geode vector store');
       }
     } catch (error) {
-      console.error('Error fetching vector DB stats:', error);
+      console.error('Error fetching vector stats:', error);
       setConnectionStatus("disconnected");
-      setError(error instanceof Error ? error.message : 'Error connecting to vector database');
+      setError(error instanceof Error ? error.message : 'Error connecting to Geode vector store');
     }
   };
 
@@ -56,13 +56,13 @@ export function PineconeConnection({ className }: PineconeConnectionProps) {
   const checkConnection = async () => {
     setConnectionStatus("checking")
     setError(null)
-    
+
     try {
-      await fetchStats(); // Fetch stats directly - our status is based on having embeddings
+      await fetchStats();
     } catch (error) {
-      console.error('Error connecting to Vector DB:', error)
+      console.error('Error connecting to Geode vector store:', error)
       setConnectionStatus("disconnected")
-      setError(error instanceof Error ? error.message : 'Unknown error connecting to Vector DB')
+      setError(error instanceof Error ? error.message : 'Unknown error connecting to Geode vector store')
     }
   }
 
@@ -87,12 +87,12 @@ export function PineconeConnection({ className }: PineconeConnectionProps) {
               <InfoIcon className="h-5 w-5 text-muted-foreground" />
             </TooltipTrigger>
             <TooltipContent>
-              <p>Local Pinecone stores vector embeddings in memory for semantic search</p>
+              <p>Geode stores vector embeddings for semantic search alongside graph data</p>
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
       </div>
-      
+
       <div className="flex items-center space-x-2">
         <span className="text-sm">Status:</span>
         {connectionStatus === "connected" ? (
@@ -103,45 +103,42 @@ export function PineconeConnection({ className }: PineconeConnectionProps) {
           <Badge variant="outline" className="bg-red-50 text-red-700 hover:bg-red-50 border-red-200">Disconnected</Badge>
         )}
       </div>
-      
+
       {error && (
         <div className="text-sm text-red-600 bg-red-50 p-2 rounded w-full overflow-auto max-h-20">
           <p className="whitespace-normal break-words">Error: {error}</p>
           {error.includes('404') && (
             <p className="mt-1 text-xs">
-              The Pinecone server is running but the index doesn't exist yet. 
-              <button 
+              The Geode server is running but the collection doesn't exist yet.
+              <button
                 onClick={async () => {
                   setConnectionStatus("checking");
                   setError(null);
                   try {
-                    const response = await fetch('/api/pinecone-diag/create-index', { method: 'POST' });
+                    const response = await fetch('/api/vector-db/create-collection', { method: 'POST' });
                     if (response.ok) {
-                      // Wait a bit for the index to be created
+                      // Wait a bit for the collection to be created
                       await new Promise(resolve => setTimeout(resolve, 2000));
                       checkConnection();
                     } else {
                       const data = await response.json();
-                      setError(data.error || 'Failed to create index');
+                      setError(data.error || 'Failed to create collection');
                       setConnectionStatus("disconnected");
                     }
                   } catch (err) {
-                    setError(err instanceof Error ? err.message : 'Error creating index');
+                    setError(err instanceof Error ? err.message : 'Error creating collection');
                     setConnectionStatus("disconnected");
                   }
                 }}
                 className="ml-1 text-blue-600 hover:text-blue-800 underline"
               >
-                Click here to create the index
+                Click here to create the collection
               </button>
-              <br />
-              <span className="text-xs text-gray-600">Or using Docker Compose: </span>
-              <code className="mx-1 px-1 bg-gray-100 rounded">docker-compose restart pinecone</code>
             </p>
           )}
         </div>
       )}
-      
+
       <div className="text-sm space-y-1 w-full">
         <div className="flex justify-between">
           <span className="text-muted-foreground">Vectors:</span>
@@ -149,24 +146,24 @@ export function PineconeConnection({ className }: PineconeConnectionProps) {
         </div>
         <div className="flex justify-between">
           <span className="text-muted-foreground">Source:</span>
-          <span>{stats.source} local</span>
+          <span>{stats.source}</span>
         </div>
       </div>
-      
+
       <div className="flex space-x-2">
-        <Button 
-          variant="outline" 
-          size="sm" 
+        <Button
+          variant="outline"
+          size="sm"
           onClick={checkConnection}
           disabled={connectionStatus === "checking"}
         >
           {connectionStatus === "checking" ? "Checking..." : "Check Connection"}
         </Button>
-        
+
         {connectionStatus === "connected" && (
-          <Button 
-            variant="outline" 
-            size="sm" 
+          <Button
+            variant="outline"
+            size="sm"
             onClick={disconnect}
           >
             Disconnect
@@ -175,4 +172,4 @@ export function PineconeConnection({ className }: PineconeConnectionProps) {
       </div>
     </div>
   )
-} 
+}

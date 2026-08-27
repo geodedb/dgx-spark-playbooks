@@ -17,8 +17,8 @@ This directory contains the Next.js frontend application for the txt2kg project.
 - **hooks/**: Custom React hooks
 - **lib/**: Utility functions and shared logic
   - LLM service (Ollama, vLLM, NVIDIA API integration)
-  - Graph database services (ArangoDB, Neo4j)
-  - Qdrant vector database integration
+  - Geode graph database service
+  - Geode vector database integration
   - RAG service for knowledge graph querying
 - **public/**: Static assets
 - **types/**: TypeScript type definitions for graph data structures
@@ -72,11 +72,10 @@ The production app will run on http://localhost:3001
 
 Required environment variables are configured in docker-compose files:
 
-- `ARANGODB_URL`: ArangoDB connection URL
+- `GEODE_URL`: Geode database connection URL (default: `quic://localhost:3141`)
 - `OLLAMA_BASE_URL`: Ollama API endpoint
 - `VLLM_BASE_URL`: vLLM API endpoint (optional)
 - `NVIDIA_API_KEY`: NVIDIA API key (optional)
-- `QDRANT_URL`: Qdrant vector database URL (optional)
 - `SENTENCE_TRANSFORMER_URL`: Embeddings service URL (optional)
 
 ## Features
@@ -86,4 +85,4 @@ Required environment variables are configured in docker-compose files:
 - **RAG Queries**: Query knowledge graphs with retrieval-augmented generation
 - **Multiple LLM Providers**: Support for Ollama, vLLM, and NVIDIA API
 - **GPU-Accelerated Rendering**: Optional PyGraphistry integration for large graphs
-- **Vector Search**: Qdrant integration for semantic search 
+- **Vector Search**: Geode vector integration for semantic search

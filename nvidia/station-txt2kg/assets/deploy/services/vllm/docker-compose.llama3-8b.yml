@@ -1,9 +1,13 @@
 services:
   vllm-llama3-8b:
-    image: nvcr.io/nvidia/vllm:25.09-py3
+    image: nvcr.io/nvidia/vllm:26.07-py3
     container_name: vllm-llama3-8b
     ports:
-      - "8001:8001"
+      - "127.0.0.1:8001:8001"
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
     environment:
       # Model configuration - Llama3 8B
       - MODEL_NAME=meta-llama/Llama-3.1-8B-Instruct
@@ -90,6 +94,10 @@ services:
       - vllm-network
     profiles:
       - benchmark  # Only start when explicitly requested
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
 
 networks:
   vllm-network:

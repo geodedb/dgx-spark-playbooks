@@ -30,8 +30,8 @@ export default function DocumentsList() {
       try {
         setLoading(true);
         
-        // Fetch triples from Neo4j
-        const response = await fetch('/api/neo4j/triples', {
+        // Fetch triples from graph database
+        const response = await fetch('/api/graph-db/triples', {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json'
@@ -77,7 +77,7 @@ export default function DocumentsList() {
       {loading && (
         <div className="text-center py-8">
           <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full mx-auto"></div>
-          <p className="mt-2">Loading data from Neo4j...</p>
+          <p className="mt-2">Loading data from Geode...</p>
         </div>
       )}
       

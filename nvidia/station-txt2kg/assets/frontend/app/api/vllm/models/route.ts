@@ -10,9 +10,16 @@ import { NextResponse } from 'next/server';
  */
 export async function GET() {
   const vllmUrl = process.env.VLLM_BASE_URL || 'http://vllm:8001/v1';
-  
+
+  // Remote vLLM endpoints may require Bearer auth (VLLM_API_KEY).
+  const headers: Record<string, string> = {};
+  if (process.env.VLLM_API_KEY) {
+    headers['Authorization'] = `Bearer ${process.env.VLLM_API_KEY}`;
+  }
+
   try {
     const response = await fetch(`${vllmUrl}/models`, {
+      headers,
       signal: AbortSignal.timeout(5000),
     });
     

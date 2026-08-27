@@ -127,7 +127,9 @@ export class LLMService {
     });
 
     this.vllmClient = new OpenAI({
-      apiKey: 'vllm', // vLLM doesn't require a real API key
+      // Remote vLLM endpoints may require Bearer auth (VLLM_API_KEY);
+      // local vLLM ignores the placeholder key.
+      apiKey: process.env.VLLM_API_KEY || 'vllm',
       baseURL: vllmUrl,
       httpAgent: vllmHttpAgent
     });

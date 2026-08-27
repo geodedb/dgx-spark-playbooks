@@ -1,0 +1,1016 @@
+//
+// SPDX-FileCopyrightText: Copyright (c) 2025-2026 CodePros. All rights reserved.
+// SPDX-License-Identifier: Apache-2.0
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+
+/**
+ * Unified Geode service replacing ArangoDB, Neo4j, Qdrant, and Pinecone.
+ * Uses @geodedb/client for graph + vector operations in a single database.
+ *
+ * All values (names, ids, text, embeddings) are passed as query parameters
+ * ($param bindings) — never string-interpolated into GQL. Embeddings in
+ * particular must be bound as params: literal lists with a leading negative
+ * element still fail to parse (geode#478), and param binding sidesteps the
+ * issue entirely while removing the injection surface.
+ *
+ * Embedding storage uses `vectorf32(toString($vec))` with $vec bound to the
+ * JSON string of the number[] (see vecParam). This is deliberate: a plain
+ * list param stores a LIST-typed property that vector_cosine() accepts but
+ * knn() and the HNSW vector indexes ignore entirely (verified against the
+ * geode v0.8.5 source: both the index and scan knn paths only consider
+ * VectorF32/VectorI32-typed properties). `vectorf32($vec)` is rejected by
+ * the parser ("invalid builtin function call" — params are not literal
+ * arguments), but a nested call is allowed, so `vectorf32(toString($vec))`
+ * parses and evaluates the param server-side into a real VECTORF32 value.
+ * The data path stays fully parameterized: no injection, no #477/#478
+ * literal-parsing issues.
+ *
+ * QUERY vectors (the argument to knn()/vector_cosine()) are bound as plain
+ * number[] list params — those are accepted directly.
+ */
+import { createClient, GeodeClient, isDriverError } from '@geodedb/client';
+
+export interface DocumentSearchResult {
+  id: string;
+  score: number;
+  metadata?: Record<string, any>;
+}
+
+/** Coerce a caller-supplied limit into a safe positive integer for LIMIT clauses. */
+function safeLimit(n: number, fallback: number): number {
+  const v = Math.floor(Number(n));
+  return Number.isFinite(v) && v > 0 ? v : fallback;
+}
+
+/**
+ * Serialize an embedding for storage via `vectorf32(toString($vec))`.
+ * JSON list-of-numbers form is exactly what vectorf32's string parser
+ * accepts (scientific notation included).
+ */
+function vecParam(v: number[]): string {
+  return JSON.stringify(v);
+}
+
+/**
+ * ENG-3912 (dimension poisoning): geode v0.8.5 pins a vector property's
+ * dimension per (table, column) on the FIRST write attempt — even a failed
+ * one — and provides no DDL to reset it. `DocumentChunk.embedding` was
+ * poisoned at 2560 dims by a pre-fix write, so the knowledge graph stores
+ * chunk vectors in the fresh property `emb` instead, truncated to the first
+ * 1536 dims and L2-renormalized (Qwen3-Embedding is Matryoshka-trained, so
+ * prefix truncation is the sanctioned degradation; 1536 f32 also fits under
+ * the v0.8.5 ~8KB property-value cap). Every DocumentChunk read AND write
+ * must use `emb` + shrinkEmbedding(); Entity keeps `embedding`.
+ * Mirrors shrink_embedding() in assets/scripts/ingest_kb.py.
+ */
+const CHUNK_EMB_PROP = 'emb';
+/** Stored chunk-vector width. Env-overridable (EMBEDDINGS_DIM) so encoder
+ * swaps (e.g. 1024-dim Qwen3-Embedding-0.6B) need no code change; must match
+ * the EMBED_DIM the ingestion driver stored with. Default stays 1536. */
+const EMB_DIM = Number.parseInt(process.env.EMBEDDINGS_DIM ?? '1536', 10);
+
+/** Truncate to EMB_DIM dims and L2-renormalize (ENG-3912). Applied
+ * identically to stored and query vectors so cosine scores stay comparable.
+ * No-op when the vector already has <= EMB_DIM dims (native-dim encoders
+ * emit unit-norm vectors that need neither truncation nor renormalizing). */
+function shrinkEmbedding(v: number[]): number[] {
+  if (v.length <= EMB_DIM) return v;
+  const t = v.slice(0, EMB_DIM);
+  const norm = Math.sqrt(t.reduce((s, x) => s + x * x, 0));
+  if (norm <= 0) return t.map(() => 0);
+  return t.map(x => x / norm);
+}
+
+/**
+ * knn() candidate over-fetch settings — see the `knnRows` doc comment for
+ * why the boost exists. A multiplier this small is cheap even for large
+ * graphs; the cap keeps a huge `k` from forcing an unbounded index scan.
+ */
+const KNN_BOOST_FACTOR = 8;
+const KNN_BOOST_CAP = 512;
+
+// @geodedb/client v1.2.0 regression: queries WITHOUT an explicit LIMIT fail with
+// "Invalid execute response" once the result spans multiple pages (>1000 rows);
+// an explicit LIMIT drains multi-page results fine. Bound every full-scan query.
+// Tracked upstream (JIRA ENG — nodejs client); remove when fixed.
+const MAX_SCAN_ROWS = 100000;
+
+/** Requested candidate count for knn(), boosted to survive cross-label crowding (see knnRows). */
+function knnBoost(k: number): number {
+  return Math.min(k * KNN_BOOST_FACTOR, KNN_BOOST_CAP);
+}
+
+export class GeodeService {
+  private client: GeodeClient | null = null;
+
+  // @geodedb/client v1.2.0 cannot multiplex concurrent queries on one
+  // connection: parallel requests fail with "Invalid execute response" and can
+  // even deliver one query's rows to another (silent wrong data). Serialize
+  // every statement through a promise-chain mutex until the client supports
+  // concurrent use (tracked upstream with ENG-3916).
+  private opChain: Promise<unknown> = Promise.resolve();
+
+  private serialize<T>(op: () => Promise<T>): Promise<T> {
+    const next = this.opChain.then(op, op);
+    this.opChain = next.catch(() => undefined);
+    return next;
+  }
+
+  // The geode server intermittently drops connections under bulk-write load
+  // (ENG-3914) and the client does not resurrect a destroyed connection
+  // (ENG-3918): without this, one dropped connection permanently bricks the
+  // singleton. Tear down and reconnect once, then retry the statement.
+  private isConnectionDeadError(error: unknown): boolean {
+    const msg = error instanceof Error ? `${error.message} ${String((error as any).cause ?? '')}` : String(error);
+    return /transport|peer closed|destroyed|not running|connection.*(closed|stopped)|invalid execute response/i.test(msg);
+  }
+
+  private async resetConnection(): Promise<void> {
+    const dead = this.client;
+    this.client = null;
+    this.initialized = false;
+    this.initPromise = null;
+    this.indexesEnsured = false;
+    try { await (dead as any)?.close?.(); } catch { /* already dead */ }
+  }
+
+  private async runWithReconnect<T>(op: () => Promise<T>): Promise<T> {
+    try {
+      return await op();
+    } catch (error) {
+      if (!this.isConnectionDeadError(error)) {
+        throw error;
+      }
+      console.warn('Geode connection lost; reconnecting and retrying once:', error instanceof Error ? error.message : error);
+      await this.resetConnection();
+      await this.initialize(); // doInitialize uses raw client calls only — safe inside the chain
+      return await op();
+    }
+  }
+
+  private queryAllSerial(query: string, options?: Parameters<GeodeClient['queryAll']>[1]) {
+    return this.serialize(() => this.runWithReconnect(() => this.client!.queryAll(query, options)));
+  }
+
+  private execSerial(query: string, options?: Parameters<GeodeClient['exec']>[1]) {
+    return this.serialize(() => this.runWithReconnect(() => this.client!.exec(query, options)));
+  }
+  private static instance: GeodeService;
+  private initialized: boolean = false;
+  private isInitializing = false;
+  private indexesEnsured = false;
+
+  private constructor() {}
+
+  public static getInstance(): GeodeService {
+    if (!GeodeService.instance) {
+      GeodeService.instance = new GeodeService();
+    }
+    return GeodeService.instance;
+  }
+
+  /**
+   * Initialize the Geode connection
+   */
+  // Concurrent cold-start requests must all wait for the SAME in-flight
+  // initialization: the old early-return on isInitializing let a second
+  // caller proceed with a null client ("connection not initialized").
+  private initPromise: Promise<void> | null = null;
+
+  public initialize(url?: string): Promise<void> {
+    if (this.initialized) {
+      return Promise.resolve();
+    }
+    if (!this.initPromise) {
+      this.initPromise = this.doInitialize(url).catch((error) => {
+        this.initPromise = null;
+        throw error;
+      });
+    }
+    return this.initPromise;
+  }
+
+  private async doInitialize(url?: string): Promise<void> {
+    this.isInitializing = true;
+
+    try {
+      const connectionUrl = url || process.env.GEODE_URL || 'quic://localhost:3141?insecure_tls_skip_verify=true';
+      console.log(`Connecting to Geode at ${connectionUrl}`);
+
+      this.client = await createClient(connectionUrl);
+      await this.client.ping();
+
+      this.initialized = true;
+      this.isInitializing = false;
+      console.log('Geode initialized successfully');
+
+      await this.ensureIndexes();
+    } catch (error) {
+      this.isInitializing = false;
+      console.error('Failed to initialize Geode:', error);
+      throw error;
+    }
+  }
+
+  public isInitialized(): boolean {
+    return this.initialized;
+  }
+
+  private async ensureInitialized(): Promise<void> {
+    if (!this.initialized) {
+      await this.initialize();
+    }
+    if (!this.client) {
+      throw new Error('Geode connection not initialized. Call initialize() first.');
+    }
+  }
+
+  /**
+   * Create the HNSW vector indexes used by knn() retrieval. Idempotent:
+   * "index already exists" errors are recognized and ignored; any other
+   * error is surfaced as a warning (retrieval still works via full scans).
+   */
+  private async ensureIndexes(): Promise<void> {
+    if (this.indexesEnsured || !this.client) {
+      return;
+    }
+
+    const ddl = [
+      `CREATE INDEX entity_emb_idx ON Entity(embedding) USING vector WITH (metric: 'cosine')`,
+      `CREATE INDEX chunk_emb_idx ON DocumentChunk(${CHUNK_EMB_PROP}) USING vector WITH (metric: 'cosine')`,
+    ];
+
+    for (const stmt of ddl) {
+      try {
+        await this.client.exec(stmt);
+      } catch (error) {
+        if (this.isIndexExistsError(error)) {
+          continue; // index already present — expected on restart
+        }
+        console.warn('[Geode] Failed to create vector index (continuing without):', error);
+      }
+    }
+
+    this.indexesEnsured = true;
+  }
+
+  /** True when the error indicates the index already exists. */
+  private isIndexExistsError(error: unknown): boolean {
+    if (isDriverError(error) && error.statusClass === '42P07') {
+      return true;
+    }
+    const msg = error instanceof Error ? error.message : String(error);
+    return /already exists|duplicate/i.test(msg);
+  }
+
+  /**
+   * Close the Geode connection
+   */
+  public async close(): Promise<void> {
+    if (this.client) {
+      await this.client.close();
+      this.client = null;
+      this.initialized = false;
+      this.indexesEnsured = false;
+      console.log('Geode connection closed');
+    }
+  }
+
+  // ─── Graph Operations (replaces ArangoDB / Neo4j) ────────────────────
+
+  /**
+   * Import subject-predicate-object triples into the graph
+   */
+  public async importTriples(
+    triples: { subject: string; predicate: string; object: string }[]
+  ): Promise<void> {
+    await this.ensureInitialized();
+
+    const batchSize = 500;
+    let imported = 0;
+
+    for (let i = 0; i < triples.length; i += batchSize) {
+      const batch = triples.slice(i, i + batchSize);
+
+      for (const t of batch) {
+        const subject = t.subject.trim();
+        const predicate = t.predicate.trim();
+        const object = t.object.trim();
+        if (!subject || !predicate || !object) continue;
+
+        try {
+          // MERGE both nodes first, then MERGE the relationship in a
+          // SEPARATE statement. Chaining node MERGEs with a relationship
+          // MERGE in one statement silently creates no relationship in
+          // Geode — never combine them.
+          await this.execSerial(
+            `MERGE (s:Entity {name: $s})`,
+            { params: { s: subject } }
+          );
+          await this.execSerial(
+            `MERGE (o:Entity {name: $o})`,
+            { params: { o: object } }
+          );
+          await this.execSerial(
+            `MATCH (s:Entity {name: $s}), (o:Entity {name: $o})
+             MERGE (s)-[:RELATIONSHIP {type: $p}]->(o)`,
+            { params: { s: subject, o: object, p: predicate } }
+          );
+        } catch (err) {
+          console.warn('Error importing triple, skipping:', err);
+        }
+      }
+
+      imported += batch.length;
+      console.log(`[Geode] Imported ${imported}/${triples.length} triples`);
+    }
+
+    console.log(`Successfully imported ${triples.length} triples into Geode`);
+  }
+
+  /**
+   * Get graph data (nodes + relationships) for visualization
+   */
+  public async getGraphData(): Promise<{
+    nodes: Array<{ id: string; labels: string[]; name: string; [key: string]: any }>;
+    relationships: Array<{ id: string; source: string; target: string; type: string; [key: string]: any }>;
+  }> {
+    await this.ensureInitialized();
+
+    try {
+      // toString(id(..)): geode node ids exceed Number.MAX_SAFE_INTEGER, and
+      // raw id() projections fail to decode client-side — project as strings.
+      const entityRows = await this.queryAllSerial(
+        `MATCH (e:Entity) RETURN e.name AS name, toString(id(e)) AS nodeId LIMIT ${MAX_SCAN_ROWS}`
+      );
+
+      const nodes = entityRows.map((row: any) => ({
+        id: String(row.nodeId),
+        labels: ['Entity'],
+        name: row.name,
+      }));
+
+      const relRows = await this.queryAllSerial(
+        `MATCH (s:Entity)-[r:RELATIONSHIP]->(o:Entity)
+         RETURN toString(id(s)) AS sourceId, toString(id(o)) AS targetId, r.type AS type, toString(id(r)) AS relId LIMIT ${MAX_SCAN_ROWS}`
+      );
+
+      const relationships = relRows.map((row: any) => ({
+        id: String(row.relId),
+        source: String(row.sourceId),
+        target: String(row.targetId),
+        type: row.type,
+      }));
+
+      return { nodes, relationships };
+    } catch (error) {
+      console.error('Error getting graph data from Geode:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Graph traversal with keyword matching
+   */
+  public async graphTraversal(
+    keywords: string[],
+    maxDepth: number = 2,
+    maxResults: number = 100
+  ): Promise<Array<{
+    subject: string;
+    predicate: string;
+    object: string;
+    confidence: number;
+    depth?: number;
+  }>> {
+    await this.ensureInitialized();
+
+    const filteredKeywords = keywords.filter(kw => kw.length > 2).map(kw => kw.toLowerCase());
+    if (filteredKeywords.length === 0) return [];
+
+    console.log(`[Geode] graphTraversal with keywords: ${filteredKeywords.join(', ')}`);
+
+    try {
+      const allResults: Array<{ subject: string; predicate: string; object: string; confidence: number; depth: number }> = [];
+      const seen = new Set<string>();
+
+      for (const keyword of filteredKeywords) {
+        const rows = await this.queryAllSerial(
+          `MATCH (s:Entity)-[r:RELATIONSHIP]->(o:Entity)
+           WHERE s.name CONTAINS $kw OR o.name CONTAINS $kw OR r.type CONTAINS $kw
+           RETURN DISTINCT s.name AS subject, r.type AS predicate, o.name AS object LIMIT ${MAX_SCAN_ROWS}`,
+          { params: { kw: keyword } }
+        );
+
+        for (const row of rows) {
+          const key = `${row.subject}|${row.predicate}|${row.object}`;
+          if (!seen.has(key)) {
+            seen.add(key);
+            allResults.push({
+              subject: row.subject as string,
+              predicate: row.predicate as string,
+              object: row.object as string,
+              confidence: 1.0 / (1.0 + allResults.length * 0.01),
+              depth: 0,
+            });
+          }
+        }
+      }
+
+      const sorted = allResults
+        .sort((a, b) => b.confidence - a.confidence)
+        .slice(0, maxResults);
+
+      console.log(`[Geode] Found ${sorted.length} triples for keywords: ${keywords.join(', ')}`);
+      return sorted;
+    } catch (error) {
+      console.error('Error performing graph traversal in Geode:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Clear all data from the database
+   */
+  public async clearDatabase(): Promise<void> {
+    await this.ensureInitialized();
+
+    try {
+      await this.execSerial('MATCH (n) DETACH DELETE n');
+      console.log('Geode database cleared successfully');
+    } catch (error) {
+      console.error('Error clearing Geode database:', error);
+      throw error;
+    }
+  }
+
+  // ─── Vector Operations (replaces Qdrant / Pinecone) ──────────────────
+
+  /**
+   * Store entity embeddings as VECTORF32 properties (param-bound; see the
+   * module header for why storage goes through vectorf32(toString($vec))).
+   */
+  public async storeEmbeddings(
+    entityEmbeddings: Map<string, number[]>,
+    textContentMap?: Map<string, string>
+  ): Promise<void> {
+    await this.ensureInitialized();
+
+    try {
+      let stored = 0;
+      for (const [entityName, embedding] of entityEmbeddings.entries()) {
+        await this.execSerial(
+          `MERGE (e:Entity {name: $name})
+           SET e.embedding = vectorf32(toString($vec))`,
+          { params: { name: entityName, vec: vecParam(embedding) } }
+        );
+        stored++;
+      }
+      console.log(`Stored ${stored} entity embeddings in Geode`);
+    } catch (error) {
+      console.log('Error storing embeddings in Geode:', error);
+    }
+  }
+
+  /**
+   * Store embeddings with metadata
+   */
+  public async storeEmbeddingsWithMetadata(
+    embeddings: Map<string, number[]>,
+    textContent: Map<string, string>,
+    metadata: Map<string, any>
+  ): Promise<void> {
+    await this.ensureInitialized();
+
+    try {
+      let stored = 0;
+      for (const [key, embedding] of embeddings.entries()) {
+        await this.execSerial(
+          `MERGE (e:Entity {name: $name})
+           SET e.embedding = vectorf32(toString($vec)), e.text = $text`,
+          { params: { name: key, vec: vecParam(embedding), text: textContent.get(key) || '' } }
+        );
+        stored++;
+      }
+      console.log(`Stored ${stored} embeddings with metadata in Geode`);
+    } catch (error) {
+      console.log('Error storing embeddings with metadata in Geode:', error);
+    }
+  }
+
+  /**
+   * Shared knn()-with-fallback query executor for both Entity and
+   * DocumentChunk vector lookups.
+   *
+   * IMPORTANT — over-fetch guard: `entity_emb_idx` indexes Entity.embedding
+   * and `chunk_emb_idx` indexes DocumentChunk.${CHUNK_EMB_PROP} (`emb`) —
+   * separate property names, so a `knn()` call scoped to one label's index
+   * no longer crowds against the other label's candidates (ENG-3912 split
+   * the property names precisely to fix this). We still over-fetch as a
+   * general guard against any candidate-set narrowing between the knn()
+   * pass and the label/WHERE filter (e.g. filtered-out or since-deleted
+   * nodes still occupying index slots), since under-fetching there could
+   * silently return fewer than k rows even when k matching nodes exist.
+   * Every knn() call site over-fetches: it asks knn() for
+   * `kBoost = k * KNN_BOOST_FACTOR` (capped at KNN_BOOST_CAP) candidates,
+   * then trims back to `k` with LIMIT after the label filter has narrowed
+   * the candidate set down to matching nodes.
+   *
+   * `label` is the node label to match, `varName` the MATCH variable, and
+   * `returnProjection` the RETURN clause — it must reference a `score`
+   * column bound via a preceding `WITH ${varName}, vector_cosine(...) AS
+   * score` (both the fast and fallback paths bind it that way so one
+   * projection string works for both, preserving identical semantics).
+   * Uses the HNSW index when one covers the property, otherwise the server
+   * falls back to a full scan. vector_cosine returns cosine SIMILARITY
+   * (1 = identical, 0 = orthogonal, -1 = opposite; verified on v0.8.5), so
+   * rows are ordered descending. Scores can arrive as decimal strings —
+   * callers must Number() them.
+   */
+  private async knnRows(
+    label: 'Entity' | 'DocumentChunk',
+    varName: string,
+    returnProjection: string,
+    queryEmbedding: number[],
+    k: number
+  ): Promise<Array<Record<string, unknown>>> {
+    const limit = safeLimit(k, 10);
+    const kBoost = knnBoost(limit);
+    // ENG-3912: DocumentChunk vectors live in `emb` at EMB_DIM dims; the
+    // query vector must be shrunk through the identical path or
+    // vector_cosine/knn sees a dimension mismatch. Entity keeps `embedding`
+    // (its own pinned dimension) with unshrunk query vectors.
+    const prop = label === 'DocumentChunk' ? CHUNK_EMB_PROP : 'embedding';
+    const qvec = label === 'DocumentChunk' ? shrinkEmbedding(queryEmbedding) : queryEmbedding;
+    try {
+      return await this.queryAllSerial(
+        `MATCH (${varName}:${label})
+         WHERE id(${varName}) IN knn('${prop}', $vec, $kBoost, 'cosine')
+         WITH ${varName}, vector_cosine(${varName}.${prop}, $vec) AS score
+         RETURN ${returnProjection}
+         ORDER BY score DESC
+         LIMIT ${limit}`,
+        { params: { vec: qvec, kBoost } }
+      );
+    } catch (error) {
+      // Fallback: full-scan WITH projection.
+      console.warn(`[Geode] knn() fast path unavailable for ${label}, falling back to full scan:`, error);
+      return await this.queryAllSerial(
+        `MATCH (${varName}:${label})
+         WHERE ${varName}.${prop} IS NOT NULL
+         WITH ${varName}, vector_cosine(${varName}.${prop}, $vec) AS score
+         RETURN ${returnProjection}
+         ORDER BY score DESC
+         LIMIT ${limit}`,
+        { params: { vec: qvec } }
+      );
+    }
+  }
+
+  /** knn()-backed nearest-entity lookup; see knnRows for the over-fetch rationale. */
+  private async knnEntityRows(
+    queryEmbedding: number[],
+    k: number
+  ): Promise<Array<Record<string, unknown>>> {
+    return this.knnRows(
+      'Entity',
+      'e',
+      'e.name AS name, score, e.text AS text',
+      queryEmbedding,
+      k
+    );
+  }
+
+  /**
+   * Find entities similar to a query embedding using vector cosine similarity
+   */
+  public async findSimilarEntities(queryEmbedding: number[], topK: number = 10): Promise<string[]> {
+    await this.ensureInitialized();
+
+    try {
+      const rows = await this.knnEntityRows(queryEmbedding, safeLimit(topK, 10));
+      return rows
+        .map((r: any) => ({ name: r.name as string, score: Number(r.score) }))
+        .filter(r => r.score > 0.1)
+        .map(r => r.name);
+    } catch (error) {
+      console.log('Error finding similar entities:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Find similar entities with metadata
+   */
+  public async findSimilarEntitiesWithMetadata(
+    embedding: number[],
+    limit: number = 10
+  ): Promise<{ entities: string[]; metadata: Map<string, any> }> {
+    await this.ensureInitialized();
+
+    try {
+      const rows = await this.knnEntityRows(embedding, safeLimit(limit, 10));
+
+      const scored = rows
+        .map((r: any) => ({ name: r.name as string, score: Number(r.score), text: r.text }))
+        .filter(r => r.score > 0.1);
+
+      const entities = scored.map(r => r.name);
+      const metadataMap = new Map<string, any>();
+      for (const r of scored) {
+        metadataMap.set(r.name, {
+          score: r.score,
+          text: r.text,
+          originalId: r.name,
+        });
+      }
+      return { entities, metadata: metadataMap };
+    } catch (error) {
+      console.log('Error finding similar entities with metadata:', error);
+      return { entities: [], metadata: new Map() };
+    }
+  }
+
+  /**
+   * Store document chunks for Pure RAG
+   */
+  public async storeDocumentChunks(
+    documents: string[],
+    embeddings: number[][],
+    metadata?: Record<string, any>[]
+  ): Promise<void> {
+    await this.ensureInitialized();
+
+    try {
+      console.log(`Storing ${documents.length} document chunks in Geode`);
+
+      for (let i = 0; i < documents.length; i++) {
+        await this.execSerial(
+          `CREATE (d:DocumentChunk {
+            text: $text,
+            ${CHUNK_EMB_PROP}: vectorf32(toString($vec)),
+            source: $source,
+            createdAt: $createdAt
+          })`,
+          {
+            params: {
+              text: documents[i],
+              vec: vecParam(shrinkEmbedding(embeddings[i])), // ENG-3912
+              source: metadata?.[i]?.source || 'unknown',
+              createdAt: new Date().toISOString(),
+            },
+          }
+        );
+      }
+
+      console.log(`Stored ${documents.length} document chunks in Geode`);
+    } catch (error) {
+      console.log('Error storing document chunks:', error);
+    }
+  }
+
+  /**
+   * Find similar documents using vector cosine similarity
+   */
+  public async findSimilarDocuments(
+    queryEmbedding: number[],
+    topK: number = 10
+  ): Promise<DocumentSearchResult[]> {
+    await this.ensureInitialized();
+
+    const k = safeLimit(topK, 10);
+    try {
+      const rows = await this.knnRows(
+        'DocumentChunk',
+        'd',
+        'd.text AS text, d.source AS source, score, toString(id(d)) AS docId',
+        queryEmbedding,
+        k
+      );
+
+      return rows
+        .map((r: any) => ({ row: r, score: Number(r.score) }))
+        .filter(({ score }) => score > 0.1)
+        .map(({ row, score }) => ({
+          id: String(row.docId),
+          score,
+          metadata: {
+            text: row.text,
+            source: row.source,
+            originalId: String(row.docId),
+          },
+        }));
+    } catch (error) {
+      console.log('Error finding similar documents:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Delete all entities from the vector store (clear embeddings)
+   */
+  public async deleteAllEntities(): Promise<boolean> {
+    await this.ensureInitialized();
+
+    try {
+      await this.execSerial(
+        `MATCH (e:Entity) WHERE e.embedding IS NOT NULL REMOVE e.embedding`
+      );
+      await this.execSerial(
+        `MATCH (d:DocumentChunk) DETACH DELETE d`
+      );
+      console.log('Deleted all vector data from Geode');
+      return true;
+    } catch (error) {
+      console.log('Error deleting vector data:', error);
+      return false;
+    }
+  }
+
+  // ─── Logging & Tracking ──────────────────────────────────────────────
+
+  /**
+   * Log query information and metrics
+   */
+  public async logQuery(
+    query: string,
+    queryMode: 'traditional' | 'vector-search' | 'pure-rag',
+    metrics: {
+      executionTimeMs: number;
+      relevanceScore?: number;
+      precision?: number;
+      recall?: number;
+      resultCount: number;
+    }
+  ): Promise<void> {
+    await this.ensureInitialized();
+
+    try {
+      await this.execSerial(
+        `CREATE (l:QueryLog {
+          query: $query,
+          queryMode: $queryMode,
+          executionTimeMs: $executionTimeMs,
+          relevanceScore: $relevanceScore,
+          precision: $precision,
+          recall: $recall,
+          resultCount: $resultCount,
+          timestamp: $timestamp
+        })`,
+        {
+          params: {
+            query,
+            queryMode,
+            executionTimeMs: metrics.executionTimeMs,
+            relevanceScore: metrics.relevanceScore ?? 0,
+            precision: metrics.precision ?? 0,
+            recall: metrics.recall ?? 0,
+            resultCount: metrics.resultCount,
+            timestamp: new Date().toISOString(),
+          },
+        }
+      );
+    } catch (error) {
+      console.error('Error logging query to Geode:', error);
+    }
+  }
+
+  /**
+   * Get query logs
+   */
+  public async getQueryLogs(limit: number = 100): Promise<any[]> {
+    await this.ensureInitialized();
+
+    try {
+      const rows = await this.queryAllSerial(
+        `MATCH (l:QueryLog)
+         RETURN l.query AS query, l.queryMode AS queryMode,
+                l.executionTimeMs AS executionTimeMs,
+                l.relevanceScore AS relevanceScore,
+                l.precision AS precision, l.recall AS recall,
+                l.resultCount AS resultCount, l.timestamp AS timestamp
+         ORDER BY l.timestamp DESC
+         LIMIT ${safeLimit(limit, 100)}`
+      );
+      return rows;
+    } catch (error) {
+      console.error('Error getting query logs from Geode:', error);
+      return [];
+    }
+  }
+
+  // ─── Document Tracking ───────────────────────────────────────────────
+
+  /**
+   * Check if a document has been processed
+   */
+  public async isDocumentProcessed(documentName: string): Promise<boolean> {
+    await this.ensureInitialized();
+
+    try {
+      const rows = await this.queryAllSerial(
+        `MATCH (d:ProcessedDocument {documentName: $name})
+         RETURN d.documentName AS name LIMIT 1`,
+        { params: { name: documentName.trim() } }
+      );
+      return rows.length > 0;
+    } catch (error) {
+      return false;
+    }
+  }
+
+  /**
+   * Mark a document as processed
+   */
+  public async markDocumentAsProcessed(documentName: string, tripleCount: number): Promise<void> {
+    await this.ensureInitialized();
+
+    try {
+      await this.execSerial(
+        `MERGE (d:ProcessedDocument {documentName: $name})
+         SET d.tripleCount = $tripleCount, d.processedAt = $processedAt`,
+        {
+          params: {
+            name: documentName.trim(),
+            tripleCount,
+            processedAt: new Date().toISOString(),
+          },
+        }
+      );
+      console.log(`Marked document "${documentName}" as processed with ${tripleCount} triples`);
+    } catch (error) {
+      console.error('Error marking document as processed:', error);
+    }
+  }
+
+  /**
+   * Get all processed documents
+   */
+  public async getProcessedDocuments(): Promise<string[]> {
+    await this.ensureInitialized();
+
+    try {
+      const rows = await this.queryAllSerial(
+        `MATCH (d:ProcessedDocument) RETURN d.documentName AS name LIMIT ${MAX_SCAN_ROWS}`
+      );
+      return rows.map((r: any) => r.name as string);
+    } catch (error) {
+      return [];
+    }
+  }
+
+  // ─── Stats ───────────────────────────────────────────────────────────
+
+  /**
+   * Get database statistics
+   */
+  public async getStats(): Promise<any> {
+    await this.ensureInitialized();
+
+    try {
+      const entityCount = await this.client!.queryFirst(
+        `MATCH (e:Entity) RETURN count(e) AS count`
+      );
+      const embeddingCount = await this.client!.queryFirst(
+        `MATCH (e:Entity) WHERE e.embedding IS NOT NULL RETURN count(e) AS count`
+      );
+      const docChunkCount = await this.client!.queryFirst(
+        `MATCH (d:DocumentChunk) RETURN count(d) AS count`
+      );
+      const relCount = await this.client!.queryFirst(
+        `MATCH ()-[r:RELATIONSHIP]->() RETURN count(r) AS count`
+      );
+
+      return {
+        totalVectorCount: Number((embeddingCount as any)?.count || 0) + Number((docChunkCount as any)?.count || 0),
+        entityCount: Number((entityCount as any)?.count || 0),
+        embeddingCount: Number((embeddingCount as any)?.count || 0),
+        documentChunkCount: Number((docChunkCount as any)?.count || 0),
+        relationshipCount: Number((relCount as any)?.count || 0),
+        source: 'geode',
+        httpHealthy: true,
+      };
+    } catch (error) {
+      return {
+        totalVectorCount: 0,
+        source: 'error',
+        httpHealthy: false,
+        error: error instanceof Error ? error.message : String(error),
+      };
+    }
+  }
+
+  /**
+   * Get driver info
+   */
+  public getDriverInfo(): Record<string, any> {
+    if (!this.client) {
+      return { status: 'not connected' };
+    }
+    return {
+      status: 'connected',
+      type: 'geode',
+    };
+  }
+
+  // ─── Collection Management (Qdrant compat) ──────────────────────────
+
+  /**
+   * Create collection — no-op for Geode
+   */
+  public async createCollection(): Promise<void> {
+    await this.ensureInitialized();
+    console.log('Geode: create collection is a no-op — graph nodes are created dynamically');
+  }
+
+  /**
+   * Upsert vectors (Qdrant compat)
+   */
+  public async upsertVectors(points: Array<{ id: string; vector: number[]; payload?: Record<string, any> }>): Promise<boolean> {
+    await this.ensureInitialized();
+
+    try {
+      for (const point of points) {
+        const text = point.payload?.text || '';
+        const originalId = point.payload?.originalId || point.id;
+
+        if (point.payload?.type === 'document') {
+          await this.execSerial(
+            `CREATE (d:DocumentChunk {
+              text: $text,
+              ${CHUNK_EMB_PROP}: vectorf32(toString($vec)),
+              originalId: $originalId,
+              createdAt: $createdAt
+            })`,
+            {
+              params: {
+                text,
+                vec: vecParam(shrinkEmbedding(point.vector)), // ENG-3912
+                originalId,
+                createdAt: new Date().toISOString(),
+              },
+            }
+          );
+        } else {
+          await this.execSerial(
+            `MERGE (e:Entity {name: $name})
+             SET e.embedding = vectorf32(toString($vec)), e.text = $text`,
+            { params: { name: originalId, vec: vecParam(point.vector), text } }
+          );
+        }
+      }
+      return true;
+    } catch (error) {
+      console.log('Error upserting vectors:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Get all entities
+   */
+  public async getAllEntities(limit: number = 1000): Promise<string[]> {
+    await this.ensureInitialized();
+
+    try {
+      const rows = await this.queryAllSerial(
+        `MATCH (e:Entity) RETURN e.name AS name LIMIT ${safeLimit(limit, 1000)}`
+      );
+      return rows.map((r: any) => r.name as string);
+    } catch (error) {
+      return [];
+    }
+  }
+
+  /**
+   * Delete specific entities
+   */
+  public async deleteEntities(entityNames: string[]): Promise<boolean> {
+    await this.ensureInitialized();
+
+    try {
+      for (const name of entityNames) {
+        await this.execSerial(
+          `MATCH (e:Entity {name: $name}) DETACH DELETE e`,
+          { params: { name } }
+        );
+      }
+      return true;
+    } catch (error) {
+      console.log('Error deleting entities:', error);
+      return false;
+    }
+  }
+}

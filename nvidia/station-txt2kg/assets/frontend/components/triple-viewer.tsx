@@ -327,7 +327,7 @@ export function TripleViewer() {
     setEntityToDelete(null)
   };
 
-  // Function to store triples in the Neo4j database
+  // Function to store triples in the Geode database
   const storeInGraphDb = async () => {
     if (!selectedDoc || !selectedDoc.triples || selectedDoc.triples.length === 0) {
       alert("No triples to store in the database");

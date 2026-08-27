@@ -19,7 +19,7 @@ import RAGService from '@/lib/rag';
 
 /**
  * API endpoint for RAG-based question answering
- * Uses Qdrant for document retrieval and LangChain for generation
+ * Uses Geode for document retrieval and LangChain for generation
  * POST /api/rag-query
  */
 export async function POST(req: NextRequest) {

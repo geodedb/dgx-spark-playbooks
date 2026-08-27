@@ -134,7 +134,7 @@ export async function POST(req: NextRequest) {
     
     if (isCSVFile) {
       console.log('CSV file detected, skipping text processor');
-      // NOTE: Neo4j storage is no longer done automatically
+      // NOTE: Geode storage is no longer done automatically
       // This is now handled manually through the "Store in Graph DB" button in the UI
     } else if (isJSONFile) {
       console.log('JSON file detected, processed as unstructured text document - embeddings can be generated manually via the UI');

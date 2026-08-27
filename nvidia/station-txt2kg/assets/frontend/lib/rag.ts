@@ -15,57 +15,34 @@
 // limitations under the License.
 //
 /**
- * Retrieval Augmented Generation (RAG) implementation using Qdrant and LangChain
- * This module provides a RetrievalQA chain using Qdrant as the vector store
- * Uses NVIDIA API for LLM inference
- * 
+ * Retrieval Augmented Generation (RAG) implementation using Geode and LangChain.
+ * Uses GeodeService for vector similarity search and document storage.
+ * Uses NVIDIA API for LLM inference.
+ *
  * Architecture:
- * - Uses 'document-embeddings' collection for Pure RAG (stores full text chunks)
- * - Separate from 'entity-embeddings' collection used for knowledge graph entities
- * - Documents are retrieved via semantic similarity and fed to LLM for answer generation
+ * - Uses Geode DocumentChunk nodes for Pure RAG (stores full text chunks with embeddings)
+ * - Separate from Entity nodes used for knowledge graph entities
+ * - Documents are retrieved via vector cosine similarity and fed to LLM for answer generation
  */
 
 import { ChatOpenAI } from "@langchain/openai";
-import { Document } from "@langchain/core/documents";
 import { RunnableSequence } from "@langchain/core/runnables";
 import { StringOutputParser } from "@langchain/core/output_parsers";
 import { PromptTemplate } from "@langchain/core/prompts";
-import { QdrantVectorStore } from "@langchain/community/vectorstores/qdrant";
-import { Embeddings } from "@langchain/core/embeddings";
 import { EmbeddingsService } from './embeddings';
-
-// Custom embeddings adapter to use our EmbeddingsService with LangChain
-class CustomEmbeddings extends Embeddings {
-  private embeddingsService: EmbeddingsService;
-
-  constructor() {
-    super({});
-    this.embeddingsService = EmbeddingsService.getInstance();
-  }
-
-  async embedDocuments(documents: string[]): Promise<number[][]> {
-    await this.embeddingsService.initialize();
-    return await this.embeddingsService.encode(documents);
-  }
-
-  async embedQuery(query: string): Promise<number[]> {
-    await this.embeddingsService.initialize();
-    const embeddings = await this.embeddingsService.encode([query]);
-    return embeddings[0];
-  }
-}
+import { GeodeService } from './geode';
 
 export class RAGService {
   private static instance: RAGService;
-  private vectorStore: QdrantVectorStore | null = null;
-  private embeddingsService: CustomEmbeddings;
+  private geodeService: GeodeService;
+  private embeddingsService: EmbeddingsService;
   private llm: ChatOpenAI | null = null;
   private initialized: boolean = false;
   private isInitializing: boolean = false;
-  private collectionName: string = 'document-embeddings';
 
   private constructor() {
-    this.embeddingsService = new CustomEmbeddings();
+    this.geodeService = GeodeService.getInstance();
+    this.embeddingsService = EmbeddingsService.getInstance();
   }
 
   /**
@@ -91,51 +68,68 @@ export class RAGService {
     try {
       console.log('Initializing RAG service...');
 
-      // Check for NVIDIA API key
-      const nvidiaApiKey = process.env.NVIDIA_API_KEY;
-      if (!nvidiaApiKey) {
-        const error = new Error('NVIDIA_API_KEY is required for RAG service. Please set the NVIDIA_API_KEY environment variable.');
-        console.error('❌ RAG Initialization Error:', error.message);
-        throw error;
+      // Prefer a local vLLM deployment when configured, falling back to
+      // NVIDIA's cloud API. Mirrors the pattern in lib/llm-service.ts and
+      // lib/langchain-service.ts's getVllmModel().
+      const vllmBaseUrl = process.env.VLLM_BASE_URL;
+
+      if (vllmBaseUrl) {
+        // Remote vLLM endpoints may require Bearer auth (VLLM_API_KEY);
+        // local vLLM ignores the placeholder key.
+        this.llm = new ChatOpenAI({
+          modelName: process.env.VLLM_MODEL || 'meta-llama/Llama-3.2-3B-Instruct',
+          temperature: 0.2,
+          maxTokens: 1024,
+          apiKey: process.env.VLLM_API_KEY || 'vllm',
+          configuration: {
+            baseURL: vllmBaseUrl,
+            timeout: 120000,
+          },
+          modelKwargs: {
+            top_p: 0.95,
+            frequency_penalty: 0,
+            presence_penalty: 0
+          }
+        });
+
+        console.log(`vLLM LLM initialized successfully (baseURL=${vllmBaseUrl})`);
+      } else {
+        // Check for NVIDIA API key
+        const nvidiaApiKey = process.env.NVIDIA_API_KEY;
+        if (!nvidiaApiKey) {
+          const error = new Error('Either VLLM_BASE_URL or NVIDIA_API_KEY is required for RAG service. Please set one of these environment variables.');
+          console.error('RAG Initialization Error:', error.message);
+          throw error;
+        }
+
+        // Initialize NVIDIA LLM using ChatOpenAI with NVIDIA's base URL
+        this.llm = new ChatOpenAI({
+          modelName: "nvidia/llama-3.3-nemotron-super-49b-v1.5",
+          temperature: 0.2,
+          maxTokens: 1024,
+          apiKey: nvidiaApiKey,
+          configuration: {
+            baseURL: "https://integrate.api.nvidia.com/v1",
+            timeout: 120000,
+          },
+          modelKwargs: {
+            top_p: 0.95,
+            frequency_penalty: 0,
+            presence_penalty: 0
+          }
+        });
+
+        console.log('NVIDIA LLM initialized successfully');
       }
 
-      // Initialize NVIDIA LLM using ChatOpenAI with NVIDIA's base URL
-      this.llm = new ChatOpenAI({
-        modelName: "nvidia/llama-3.3-nemotron-super-49b-v1.5",
-        temperature: 0.2,
-        maxTokens: 1024,
-        openAIApiKey: nvidiaApiKey,
-        configuration: {
-          baseURL: "https://integrate.api.nvidia.com/v1",
-          timeout: 120000, // 120 second timeout
-        },
-        modelKwargs: {
-          top_p: 0.95,
-          frequency_penalty: 0,
-          presence_penalty: 0
-        }
-      });
-
-      console.log('✅ NVIDIA LLM initialized successfully');
-
-      // Initialize Qdrant vector store
-      const qdrantUrl = process.env.QDRANT_URL || 'http://localhost:6333';
-
-      this.vectorStore = await QdrantVectorStore.fromExistingCollection(
-        this.embeddingsService,
-        {
-          url: qdrantUrl,
-          collectionName: this.collectionName,
-          contentPayloadKey: 'text', // Map payload.text to pageContent
-        }
-      );
-
-      console.log('✅ Qdrant vector store connected successfully');
+      // Initialize Geode and embeddings
+      await this.geodeService.initialize();
+      await this.embeddingsService.initialize();
 
       this.initialized = true;
-      console.log('✅ RAG service initialized successfully');
+      console.log('RAG service initialized successfully');
     } catch (error) {
-      console.error('❌ Error initializing RAG service:', error);
+      console.error('Error initializing RAG service:', error);
       this.isInitializing = false;
       throw error;
     } finally {
@@ -144,7 +138,7 @@ export class RAGService {
   }
 
   /**
-   * Store documents in Qdrant for retrieval
+   * Store documents in Geode for retrieval
    * @param documents Array of text documents to store
    * @param metadata Optional metadata for the documents
    */
@@ -161,28 +155,18 @@ export class RAGService {
       return;
     }
 
-    if (!this.vectorStore) {
-      throw new Error('Vector store not initialized');
-    }
+    console.log(`Storing ${documents.length} documents in Geode`);
 
-    console.log(`Storing ${documents.length} documents in Qdrant`);
+    // Generate embeddings via EmbeddingsService
+    const embeddings = await this.embeddingsService.encode(documents);
 
-    // Create Document objects with metadata
-    const docs = documents.map((text, i) => new Document({
-      pageContent: text,
-      metadata: {
-        timestamp: new Date().toISOString(),
-        ...(metadata && metadata[i] ? metadata[i] : {})
-      }
-    }));
-
-    // Store in Qdrant using LangChain
-    await this.vectorStore.addDocuments(docs);
-    console.log(`✅ Successfully stored ${docs.length} document embeddings`);
+    // Store document chunks in Geode
+    await this.geodeService.storeDocumentChunks(documents, embeddings, metadata);
+    console.log(`Successfully stored ${documents.length} document embeddings in Geode`);
   }
 
   /**
-   * Perform question answering with document retrieval using proper RAG implementation
+   * Perform question answering with document retrieval using RAG
    * @param query User query
    * @param topK Number of most similar documents to retrieve
    * @returns Object containing the answer and document count
@@ -196,19 +180,18 @@ export class RAGService {
       throw new Error('LLM not initialized');
     }
 
-    if (!this.vectorStore) {
-      throw new Error('Vector store not initialized');
-    }
+    console.log(`Performing RAG query with topK=${topK}`);
 
-    console.log(`🔍 Performing RAG query with topK=${topK}`);
+    // Generate embedding for the query
+    const queryEmbeddings = await this.embeddingsService.encode([query]);
+    const queryEmbedding = queryEmbeddings[0];
 
-    // Use LangChain's similarity search to retrieve relevant documents
-    const similarDocs = await this.vectorStore.similaritySearch(query, topK);
+    // Find similar documents using Geode vector search
+    const similarDocs = await this.geodeService.findSimilarDocuments(queryEmbedding, topK);
 
     if (!similarDocs || similarDocs.length === 0) {
-      console.log('⚠️ No relevant documents found, falling back to LLM general knowledge');
+      console.log('No relevant documents found, falling back to LLM general knowledge');
 
-      // Define prompt template for standalone LLM response
       const fallbackPromptTemplate = PromptTemplate.fromTemplate(`
 You are a helpful assistant answering questions based on your general knowledge.
 Since no specific information was found in the knowledge base, please provide the best answer you can.
@@ -218,7 +201,6 @@ Question: {query}
 Answer:
 `);
 
-      // Create fallback chain
       const fallbackChain = RunnableSequence.from([
         {
           query: () => query,
@@ -228,7 +210,6 @@ Answer:
         new StringOutputParser(),
       ]);
 
-      // Execute fallback chain
       const answer = await fallbackChain.invoke({});
       return {
         answer: `[Note: No specific information was found in the knowledge base. This answer is based on general knowledge.]\n\n${answer}`,
@@ -236,39 +217,18 @@ Answer:
       };
     }
 
-    console.log(`✅ Found ${similarDocs.length} relevant document chunks`);
-
-    // Log first document structure for debugging
-    if (similarDocs.length > 0) {
-      console.log('📄 First document chunk structure:', {
-        hasPageContent: !!similarDocs[0].pageContent,
-        pageContentLength: similarDocs[0].pageContent?.length || 0,
-        hasMetadata: !!similarDocs[0].metadata,
-        metadataKeys: similarDocs[0].metadata ? Object.keys(similarDocs[0].metadata) : []
-      });
-    }
+    console.log(`Found ${similarDocs.length} relevant document chunks`);
 
     // Extract text from retrieved documents
-    // Support both pageContent (LangChain standard) and metadata.text (legacy format)
     const context = similarDocs
-      .map((doc) => {
-        // Try pageContent first (LangChain standard)
-        if (doc.pageContent && doc.pageContent.trim().length > 0) {
-          return doc.pageContent;
-        }
-        // Fall back to metadata.text (legacy Qdrant storage format)
-        if (doc.metadata?.text && doc.metadata.text.trim().length > 0) {
-          return doc.metadata.text;
-        }
-        return '';
-      })
+      .map((doc) => doc.metadata?.text || '')
       .filter((text) => text.length > 0)
       .join('\n\n');
 
-    console.log(`📝 Extracted context length: ${context.length} characters`);
+    console.log(`Extracted context length: ${context.length} characters`);
 
     if (!context || context.trim().length === 0) {
-      console.log('⚠️ Retrieved documents have no content, falling back to LLM');
+      console.log('Retrieved documents have no content, falling back to LLM');
       const fallbackPromptTemplate = PromptTemplate.fromTemplate(`
 You are a helpful assistant answering questions based on your general knowledge.
 
@@ -317,20 +277,19 @@ Answer:
       new StringOutputParser(),
     ]);
 
-    console.log('🤖 Generating answer with NVIDIA LLM...');
+    console.log('Generating answer with NVIDIA LLM...');
 
-    // Execute chain
     try {
       const answer = await retrievalChain.invoke({});
-      console.log('✅ RAG query completed successfully');
-      console.log(`📝 Answer length: ${answer.length} characters`);
-      console.log(`📄 Retrieved ${similarDocs.length} document chunks`);
+      console.log('RAG query completed successfully');
+      console.log(`Answer length: ${answer.length} characters`);
+      console.log(`Retrieved ${similarDocs.length} document chunks`);
       return {
         answer,
         documentCount: similarDocs.length
       };
     } catch (error) {
-      console.error('❌ Error generating answer with NVIDIA LLM:', error);
+      console.error('Error generating answer with NVIDIA LLM:', error);
       throw error;
     }
   }
@@ -349,19 +308,19 @@ Answer:
       await this.initialize();
     }
 
-    if (!this.vectorStore) {
-      throw new Error('Vector store not initialized');
-    }
+    // Generate embedding for the query
+    const queryEmbeddings = await this.embeddingsService.encode([query]);
+    const queryEmbedding = queryEmbeddings[0];
 
-    // Use LangChain's similarity search with scores
-    const results = await this.vectorStore.similaritySearchWithScore(query, topK);
+    // Find similar documents using Geode vector search
+    const results = await this.geodeService.findSimilarDocuments(queryEmbedding, topK);
 
-    return results.map(([doc, score]) => ({
-      text: doc.pageContent,
-      score: score,
+    return results.map((doc) => ({
+      text: doc.metadata?.text || '',
+      score: doc.score,
       metadata: doc.metadata
     }));
   }
 }
 
-export default RAGService.getInstance(); 
+export default RAGService.getInstance();

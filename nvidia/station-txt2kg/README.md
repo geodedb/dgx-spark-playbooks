@@ -20,7 +20,7 @@ The GB300 Ultra's massive GPU memory enables running the Llama 3.1 405B model, p
 
 This txt2kg playbook transforms unstructured text documents into structured knowledge graphs using:
 - **Knowledge Triple Extraction**: Using Ollama with GPU acceleration for local LLM inference to extract subject-predicate-object relationships
-- **Graph Database Storage**: ArangoDB for storing and querying knowledge triples with relationship traversal
+- **Graph + Vector Database**: Geode for storing knowledge triples, vector embeddings, and document chunks
 - **GPU-Accelerated Visualization**: Three.js WebGPU rendering for interactive 2D/3D graph exploration
 
 > **Future Enhancements**: Vector embeddings and GraphRAG capabilities are planned enhancements.
@@ -30,7 +30,7 @@ This txt2kg playbook transforms unstructured text documents into structured know
 You will have a fully functional system capable of processing documents, generating and editing knowledge graphs, and providing querying, accessible through an interactive web interface.
 The setup includes:
 - **Local LLM Inference**: Ollama for GPU-accelerated LLM inference with no API keys required
-- **Graph Database**: ArangoDB for storing and querying triples with relationship traversal
+- **Graph + Vector Database**: Geode with unified graph and vector capabilities
 - **Interactive Visualization**: GPU-accelerated graph rendering with Three.js WebGPU
 - **Modern Web Interface**: Next.js frontend with document management and query interface
 - **Fully Containerized**: Reproducible deployment with Docker Compose and GPU support
@@ -89,13 +89,13 @@ The default backend is **vLLM** (supported on DGX Station). The script starts se
 
 ```bash
 ./start.sh
-## Optional: ./start.sh --ollama   # Use ArangoDB + Ollama instead of vLLM
+## Optional: ./start.sh --ollama   # Use Geode + Ollama instead of vLLM
 ## Optional: ./start.sh --no-wait # Skip waiting for vLLM readiness
 ```
 
 The script will:
 - Check for GPU availability
-- Start Docker Compose services (Neo4j + vLLM by default)
+- Start Docker Compose services (Geode + vLLM by default)
 - Wait for vLLM to be ready and show elapsed time
 - Print the Web UI URL when ready
 
@@ -118,9 +118,8 @@ http://localhost:3001
 ```
 
 You can also access:
-- **Neo4j Browser** (vLLM default): http://localhost:7474
+- **Geode**: quic://localhost:3141
 - **vLLM API**: http://localhost:8001
-- **ArangoDB** (Ollama only): http://localhost:8529
 - **Ollama API** (Ollama only): http://localhost:11434
 
 ## Step 5. Upload documents and build knowledge graphs
@@ -133,7 +132,7 @@ The web UI defaults to **local** (vLLM or Ollama). If the backend is still loadi
 
 #### 5.2. Knowledge Graph Generation
 - The system extracts subject-predicate-object triples using the selected LLM (vLLM or Ollama)
-- Triples are stored in Neo4j (vLLM) or ArangoDB (Ollama) for relationship querying
+- Triples are stored in Geode for relationship querying and vector search
 
 #### 5.3. Interactive Visualization
 - View your knowledge graph in 2D or 3D with GPU-accelerated rendering
@@ -141,7 +140,7 @@ The web UI defaults to **local** (vLLM or Ollama). If the backend is still loadi
 
 #### 5.4. Graph-based Queries
 - Ask questions about your documents using the query interface
-- Graph traversal enhances context with entity relationships from ArangoDB
+- Graph traversal enhances context with entity relationships from Geode
 - LLM generates responses using the enriched graph context
 
 > **Future Enhancement**: GraphRAG capabilities with vector-based KNN search for entity retrieval are planned.
@@ -165,7 +164,7 @@ Stop all services (use the same flags as when you started):
 
 ## Step 7. Next steps
 
-- Default is vLLM on DGX Station; use `./start.sh --ollama` for ArangoDB + Ollama.
+- Default is vLLM on DGX Station; use `./start.sh --ollama` for Geode + Ollama.
 - The UI shows a readiness banner and “vLLM (Local) – Initializing…” until the backend is ready.
 - Experiment with different models for extraction quality and speed tradeoffs.
 - Customize triple extraction prompts for domain-specific knowledge.
@@ -180,10 +179,10 @@ Stop all services (use the same flags as when you started):
 | Ollama performance issues | Suboptimal settings for GB300 | Set environment variables:<br>`OLLAMA_FLASH_ATTENTION=1` (enables flash attention for better performance)<br>`OLLAMA_KEEP_ALIVE=30m` (keeps model loaded for 30 minutes)<br>`OLLAMA_MAX_LOADED_MODELS=1` (avoids VRAM contention)<br>`OLLAMA_KV_CACHE_TYPE=q8_0` (reduces KV cache VRAM with minimal performance impact) |
 | VRAM exhausted or memory pressure (e.g. when switching between Ollama models) | GPU memory fragmentation | Clear GPU memory: `nvidia-smi --gpu-reset` or restart Docker containers |
 | Slow triple extraction | Large model or large context window | Reduce document chunk size or use faster models |
-| ArangoDB connection refused | Service not fully started | Wait 30s after start.sh, verify with `docker ps` |
+| Geode connection refused | Service not fully started | Wait 30s after start.sh, verify with `docker ps` |
 | Container fails to start with GPU error | NVIDIA Container Toolkit not configured | Run `nvidia-ctk runtime configure --runtime=docker` and restart Docker |
 | Port already in use | Previous instance still running | Run `./stop.sh` first or use `docker compose down` |
-| Default is vLLM; need Ollama instead | Prefer ArangoDB + Ollama | Start with `./start.sh --ollama`. |
+| Default is vLLM; need Ollama instead | Prefer Geode + Ollama | Start with `./start.sh --ollama`. |
 | vLLM takes long to become ready | Model load can take 30+ minutes | The start script waits and shows elapsed time. The UI shows a banner and "vLLM (Local) – Initializing…" until ready. Check progress: `docker logs vllm-service -f`. |
 
 > [!NOTE]

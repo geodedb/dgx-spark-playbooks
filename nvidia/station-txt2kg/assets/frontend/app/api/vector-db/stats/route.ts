@@ -14,46 +14,37 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-import { NextRequest, NextResponse } from 'next/server';
-import { QdrantService } from '@/lib/qdrant';
+import { NextResponse } from 'next/server';
+import { GeodeService } from '@/lib/geode';
 
 /**
- * Get Qdrant vector database stats
+ * Get vector database stats from Geode
  */
-export async function GET() {
+export async function GET(): Promise<NextResponse> {
   try {
-    // Initialize Qdrant service
-    const qdrantService = QdrantService.getInstance();
-    
-    // We can now directly call getStats() which handles initialization and error recovery
-    const stats = await qdrantService.getStats();
-    
+    const geode = GeodeService.getInstance();
+    await geode.initialize();
+
+    const stats = await geode.getStats();
+
     return NextResponse.json({
       ...stats,
       timestamp: new Date().toISOString()
     });
   } catch (error) {
-    console.error('Error getting Qdrant stats:', error);
-    
-    // Return a successful response with error information
-    // This prevents the UI from breaking when Qdrant is unavailable
+    console.error('Error getting vector stats:', error);
+
     let errorMessage = error instanceof Error ? error.message : String(error);
-    
-    // More specific error message for 404 errors
-    if (errorMessage.includes('404')) {
-      errorMessage = 'Qdrant server returned 404. The server may not be running or the collection does not exist.';
-    }
-    
+
     return NextResponse.json(
-      { 
-        error: `Failed to get Qdrant stats: ${errorMessage}`,
+      {
+        error: `Failed to get vector stats: ${errorMessage}`,
         totalVectorCount: 0,
         source: 'error',
         httpHealthy: false,
         timestamp: new Date().toISOString()
       },
-      { status: 200 } // Use 200 instead of 500 to avoid UI errors
+      { status: 200 }
     );
   }
 }
-

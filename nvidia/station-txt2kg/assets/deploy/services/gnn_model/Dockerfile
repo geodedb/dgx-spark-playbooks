@@ -1,4 +1,4 @@
-FROM nvcr.io/nvidia/pyg:25.03-py3
+FROM nvcr.io/nvidia/pyg:26.07-py3
 
 WORKDIR /app
 
@@ -6,7 +6,7 @@ WORKDIR /app
 RUN pip install --no-cache-dir \
     flask==2.0.1 \
     gunicorn==23.0.0 \
-    tqdm
+    tqdm==4.67.3
 
 # Create model directory
 RUN mkdir -p /app/models
@@ -21,6 +21,10 @@ ENV FLASK_APP=app.py
 
 # Expose the port
 EXPOSE 5000
+
+# app.py exposes GET /health
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=5 \
+    CMD python3 -c "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://localhost:5000/health', timeout=5).status < 500 else 1)"
 
 # Run the service with gunicorn
 CMD ["gunicorn", "--bind", "0.0.0.0:5000", "app:app"] 

@@ -27,5 +27,10 @@ export async function GET() {
     vllmModel: process.env.VLLM_MODEL || 'meta-llama/Llama-3.2-3B-Instruct',
     // vLLM stack uses OLLAMA_MODEL=disabled
     backendMode: process.env.OLLAMA_MODEL === 'disabled' ? 'vllm' : 'ollama',
+    // Whether the server holds a vLLM API key. The key itself is never
+    // returned to the browser; all authenticated vLLM calls happen
+    // server-side (llm-service, text-processor, /api/vllm routes).
+    vllmApiKeyConfigured: Boolean(process.env.VLLM_API_KEY),
+    // Add other config values as needed
   });
 } 

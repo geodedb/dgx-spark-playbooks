@@ -1,0 +1,70 @@
+# Override for DGX Spark testing:
+# - Workaround for geode query client hang on aarch64 (GitLab #424)
+# - Use host Ollama service instead of Docker Ollama (avoids port conflict)
+# - Use available model (gpt-oss:20b) instead of llama3.1:8b
+
+services:
+  app:
+    environment:
+      # Point to host Ollama instead of Docker container
+      - OLLAMA_BASE_URL=http://host-gateway:11434/v1
+      - OLLAMA_MODEL=gpt-oss:20b
+      # Geode configuration (keep same; QUIC — gRPC serving removed in
+      # geode v0.8.5, JIRA ENG-3907)
+      - GEODE_URL=quic://geode:3141?ca_cert=/geode-data/server.crt&insecure_tls_skip_verify=true
+      - GEODE_USERNAME=geode
+      - GEODE_PASSWORD=${GEODE_ADMIN_PASSWORD:-geodesic}
+      - GRAPH_DB_TYPE=geode
+      - VLLM_BASE_URL=http://localhost:8001/v1
+      - VLLM_MODEL=disabled
+      - LANGCHAIN_TRACING_V2=true
+      - SENTENCE_TRANSFORMER_URL=http://sentence-transformers:80
+      - MODEL_NAME=all-MiniLM-L6-v2
+      - EMBEDDINGS_API_URL=http://sentence-transformers:80
+      - NODE_TLS_REJECT_UNAUTHORIZED=0
+      - NVIDIA_API_KEY=${NVIDIA_API_KEY:-}
+      - NODE_OPTIONS=--max-http-header-size=80000
+      - UV_THREADPOOL_SIZE=128
+      - HTTP_TIMEOUT=1800000
+      - REQUEST_TIMEOUT=1800000
+    extra_hosts:
+      - "host-gateway:host-gateway"
+    depends_on:
+      geode:
+        condition: service_started
+        restart: false
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/', r => process.exit(r.statusCode < 500 ? 0 : 1)).on('error', () => process.exit(1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  geode:
+    # Use pre-built image instead of building from source
+    # Policy: test against geode:dev (latest fixes); use pinned releases only for production
+    image: registry.gitlab.com/devnw/codepros/geode/geode:dev
+    pull_policy: always
+    build: !reset null
+    # Replace broken health check (geode query hangs on aarch64 - #424)
+    # Check that the QUIC (UDP) port 3141 is bound instead (gRPC serving
+    # removed in geode v0.8.5 — JIRA ENG-3907)
+    healthcheck:
+      test: ["CMD-SHELL", "ss -ulnp | grep -q ':3141'"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+
+  # Override Ollama to be a lightweight stub (host Ollama used instead)
+  ollama:
+    image: busybox:latest
+    command: ["sh", "-c", "echo 'Using host Ollama' && sleep infinity"]
+    build: !reset null
+    ports: !reset []
+    volumes: !reset []
+    environment: !reset []
+    deploy: !reset {}
+    healthcheck:
+      test: ["CMD", "true"]
+      interval: 30s

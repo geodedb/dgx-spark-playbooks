@@ -24,7 +24,7 @@ import torch
 from glob import glob
 from itertools import chain
 from tqdm import tqdm
-from python_arango import ArangoClient
+from geode_client import Client
 
 # Import the necessary modules from PyTorch Geometric
 from torch_geometric import seed_everything
@@ -43,11 +43,9 @@ NV_NIM_MODEL_DEFAULT = "nvidia/llama-3.1-nemotron-70b-instruct"
 CHUNK_SIZE_DEFAULT = 512
 DEFAULT_ENDPOINT_URL = "https://integrate.api.nvidia.com/v1"
 
-# ArangoDB defaults from docker-compose.yml
-ARANGO_URL_DEFAULT = "http://localhost:8529"
-ARANGO_DB_DEFAULT = "txt2kg"
-ARANGO_USER_DEFAULT = ""
-ARANGO_PASSWORD_DEFAULT = ""
+# Geode defaults from docker-compose.yml
+GEODE_HOST_DEFAULT = "localhost"
+GEODE_PORT_DEFAULT = 3141
 
 # File paths and directories
 DATASET_FILE = "tech_qa.pt"
@@ -72,12 +70,10 @@ def parse_args():
         the maximum number of characters per chunk.")
     parser.add_argument('--checkpointing', action="store_true")
     
-    # Add ArangoDB-specific arguments
-    parser.add_argument('--arango_url', type=str, default=ARANGO_URL_DEFAULT, help="ArangoDB URL")
-    parser.add_argument('--arango_db', type=str, default=ARANGO_DB_DEFAULT, help="ArangoDB database name")
-    parser.add_argument('--arango_user', type=str, default=ARANGO_USER_DEFAULT, help="ArangoDB username")
-    parser.add_argument('--arango_password', type=str, default=ARANGO_PASSWORD_DEFAULT, help="ArangoDB password")
-    parser.add_argument('--use_arango', action="store_true", help="Use ArangoDB instead of TXT2KG")
+    # Geode connection arguments
+    parser.add_argument('--geode-host', type=str, default=GEODE_HOST_DEFAULT, help="Geode server host")
+    parser.add_argument('--geode-port', type=int, default=GEODE_PORT_DEFAULT, help="Geode server port")
+    parser.add_argument('--use_geode', action="store_true", help="Use Geode instead of TXT2KG")
     
     # Add file path arguments
     parser.add_argument('--dataset_file', type=str, default=DATASET_FILE, help="Path to save/load dataset")
@@ -90,47 +86,36 @@ def parse_args():
     
     return parser.parse_args()
 
-def load_triples_from_arangodb(arango_url: str, arango_db: str, arango_user: str, arango_password: str) -> list[str]:
+def load_triples_from_geode(host: str, port: int) -> list[str]:
     """
-     Load triples from ArangoDB for use with the TXT2KG dataset
+     Load triples from Geode for use with the TXT2KG dataset.
 
      Args:
-         arango_url: ArangoDB connection URL
-         arango_db: ArangoDB database name
-         arango_user: ArangoDB username
-         arango_password: ArangoDB password
+         host: Geode server host
+         port: Geode server port
 
      Returns:
          List of triples in the format "subject predicate object"
      """
     try:
-        # Connect to ArangoDB
-        client = ArangoClient(hosts=arango_url)
+        client = Client(host=host, port=port, skip_verify=True)
 
-        # Get database (no auth in our docker setup)
-        if arango_user and arango_password:
-            db = client.db(arango_db, username=arango_user, password=arango_password)
-        else:
-            db = client.db(arango_db)
-
-        # Query to get all triples from ArangoDB
-        # Handle case sensitivity, trim whitespace, and deduplication
-        aql_query = """
-        FOR e IN relationships
-            LET subject = TRIM(DOCUMENT(e._from).name)
-            LET object = TRIM(DOCUMENT(e._to).name)
-            LET predicate = TRIM(e.type)
-            FILTER subject != "" AND predicate != "" AND object != ""
-            COLLECT s = subject, p = predicate, o = object
-            RETURN CONCAT_SEPARATOR(" ", s, p, o)
+        gql_query = """
+        MATCH (s:Entity)-[r:RELATIONSHIP]->(o:Entity)
+        RETURN s.name AS subject, r.type AS predicate, o.name AS object
         """
 
-        # Execute the query with streaming for large datasets
-        cursor = db.aql.execute(aql_query, stream=True, batch_size=1000)
-        triples = list(cursor)
+        results = client.query(gql_query)
 
-        print(f"Loaded {len(triples)} triples from ArangoDB")
-        # Print sample triples for debugging
+        triples = []
+        for row in results:
+            subject = str(row.get("subject", ""))
+            predicate = str(row.get("predicate", ""))
+            obj = str(row.get("object", ""))
+            if subject and predicate and obj:
+                triples.append(f"{subject} {predicate} {obj}")
+
+        print(f"Loaded {len(triples)} triples from Geode")
         if len(triples) > 0:
             print("Sample triples:")
             for i in range(min(3, len(triples))):
@@ -138,7 +123,7 @@ def load_triples_from_arangodb(arango_url: str, arango_db: str, arango_user: str
 
         return triples
     except Exception as error:
-        print(f"Error loading triples from ArangoDB: {error}")
+        print(f"Error loading triples from Geode: {error}")
         raise error
 
 
@@ -156,7 +141,7 @@ def get_data(args):
     return json_obj, text_contexts
 
 def make_dataset(args):
-    """Modified make_dataset function that can use ArangoDB as a data source"""
+    """Modified make_dataset function that can use Geode as a data source"""
     # Create output directory if it doesn't exist
     os.makedirs(args.output_dir, exist_ok=True)
     dataset_path = os.path.join(args.output_dir, args.dataset_file)
@@ -176,14 +161,12 @@ def make_dataset(args):
         if os.path.exists(triples_path):
             triples = torch.load(triples_path, weights_only=False)
         else:
-            if args.use_arango:
-                # Load triples from ArangoDB instead of generating with TXT2KG
-                print("Loading triples from ArangoDB...")
-                triples = load_triples_from_arangodb(
-                    args.arango_url,
-                    args.arango_db,
-                    args.arango_user,
-                    args.arango_password
+            if args.use_geode:
+                # Load triples from Geode instead of generating with TXT2KG
+                print("Loading triples from Geode...")
+                triples = load_triples_from_geode(
+                    args.geode_host,
+                    args.geode_port,
                 )
                 # Save triples for future use
                 torch.save(triples, triples_path)

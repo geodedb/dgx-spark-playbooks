@@ -10,7 +10,7 @@ const nextConfig = {
     unoptimized: true,
   },
   // Configure external packages for server components
-  serverExternalPackages: ['@langchain/community'],
+  serverExternalPackages: ['@geodedb/client'],
   experimental: {
     // webpackBuildWorker: true,
   },

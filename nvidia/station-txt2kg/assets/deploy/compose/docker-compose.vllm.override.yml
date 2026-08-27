@@ -1,0 +1,33 @@
+# Override for DGX Spark (aarch64) - vLLM variant
+# Fixes Geode health check (geode query hangs on aarch64 - #424)
+# Uses pre-built Geode image
+
+services:
+  app:
+    environment:
+      # Disable LangSmith tracing (no API key available, causes 403 on model test)
+      - LANGCHAIN_TRACING_V2=false
+    depends_on:
+      geode:
+        condition: service_started
+        restart: false
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/', r => process.exit(r.statusCode < 500 ? 0 : 1)).on('error', () => process.exit(1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  geode:
+    # Policy: test against geode:dev (latest fixes); use pinned releases only for production
+    image: registry.gitlab.com/devnw/codepros/geode/geode:dev
+    pull_policy: always
+    build: !reset null
+    # Check that the QUIC (UDP) port 3141 is bound (gRPC serving removed in
+    # geode v0.8.5 — JIRA ENG-3907)
+    healthcheck:
+      test: ["CMD-SHELL", "ss -ulnp | grep -q ':3141'"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 5s

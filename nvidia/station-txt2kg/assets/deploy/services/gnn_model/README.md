@@ -29,8 +29,8 @@ Before using the service, you must train a GNN model using the training pipeline
 ```bash
 # See scripts/gnn/README.md for full instructions
 
-# 1. Preprocess data from ArangoDB
-python scripts/gnn/preprocess_data.py --use_arango --output_dir ./output
+# 1. Preprocess data from Geode
+python scripts/gnn/preprocess_data.py --use_geode --output_dir ./output
 
 # 2. Train the model
 python scripts/gnn/train_test_gnn.py --output_dir ./output

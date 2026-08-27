@@ -31,13 +31,12 @@ interface DatabaseConnectionProps {
 }
 
 export function DatabaseConnection({ className }: DatabaseConnectionProps) {
-  // Neo4j/Graph DB state
+  // Graph DB state
   const [graphConnectionStatus, setGraphConnectionStatus] = useState<"connected" | "disconnected" | "checking">("disconnected")
   const [graphError, setGraphError] = useState<string | null>(null)
   const [nodeCount, setNodeCount] = useState<number | null>(null)
   const [relationshipCount, setRelationshipCount] = useState<number | null>(null)
   const [connectionUrl, setConnectionUrl] = useState<string>("")
-  const [dbType, setDbType] = useState<string>("")
   const [isClearingDB, setIsClearingDB] = useState<boolean>(false)
   const [showClearDialog, setShowClearDialog] = useState<boolean>(false)
 
@@ -51,98 +50,34 @@ export function DatabaseConnection({ className }: DatabaseConnectionProps) {
   // UI state
   const [expandedSection, setExpandedSection] = useState<"graph" | "vector" | null>("graph")
   
-  // Check graph database connection status (Neo4j or ArangoDB)
+  // Check graph database connection status (Geode)
   const checkGraphConnection = async () => {
     setGraphConnectionStatus("checking")
     setGraphError(null)
-    
+
     try {
-      // Get database type from localStorage, fall back to fetching from server
-      let graphDbType = localStorage.getItem("graph_db_type")
-      if (!graphDbType) {
-        // Fetch server's default (from GRAPH_DB_TYPE env var)
-        try {
-          const settingsRes = await fetch('/api/settings')
-          const settingsData = await settingsRes.json()
-          graphDbType = settingsData.settings?.graph_db_type || 'neo4j'
-        } catch {
-          graphDbType = 'neo4j'
-        }
+      const response = await fetch('/api/graph-db')
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        const errorMessage = errorData.error || 'Failed to connect to Geode'
+        console.error('Geode connection failed:', errorMessage)
+        setGraphConnectionStatus("disconnected")
+        setGraphError(errorMessage)
+        return
       }
-      setDbType(graphDbType === "arangodb" ? "ArangoDB" : "Neo4j")
-      
-      if (graphDbType === "neo4j") {
-        // Neo4j connection logic - use the unified graph-db endpoint
-        const dbUrl = localStorage.getItem("NEO4J_URL")
-        const dbUsername = localStorage.getItem("NEO4J_USERNAME")
-        const dbPassword = localStorage.getItem("NEO4J_PASSWORD")
-        
-        // Add query parameters with type=neo4j
-        const queryParams = new URLSearchParams()
-        queryParams.append("type", "neo4j")
-        if (dbUrl) queryParams.append("url", dbUrl)
-        if (dbUsername) queryParams.append("username", dbUsername)
-        if (dbPassword) queryParams.append("password", dbPassword)
-        
-        const endpoint = `/api/graph-db?${queryParams.toString()}`
-        
-        const response = await fetch(endpoint)
-        
-        if (!response.ok) {
-          const errorData = await response.json()
-          const errorMessage = errorData.error || 'Failed to connect to Neo4j'
-          console.error('Neo4j connection failed:', errorMessage)
-          setGraphConnectionStatus("disconnected")
-          setGraphError(errorMessage)
-          return
-        }
-        
-        const data = await response.json()
-        setNodeCount(data.nodes?.length || 0)
-        setRelationshipCount(data.links?.length || 0)
-        
-        // Use the connection URL from the API response
-        if (data.connectionUrl) {
-          setConnectionUrl(data.connectionUrl)
-        } else if (dbUrl) {
-          setConnectionUrl(dbUrl)
-        }
+
+      const data = await response.json()
+      setNodeCount(data.nodes?.length || 0)
+      setRelationshipCount(data.links?.length || 0)
+
+      if (data.connectionUrl) {
+        setConnectionUrl(data.connectionUrl)
       } else {
-        // ArangoDB connection logic - use the unified graph-db endpoint with type=arangodb
-        const arangoUrl = localStorage.getItem("arango_url") || "http://localhost:8529"
-        const arangoDb = localStorage.getItem("arango_db") || "txt2kg"
-        const arangoUser = localStorage.getItem("arango_user") || ""
-        const arangoPassword = localStorage.getItem("arango_password") || ""
-        
-        // Add query parameters with type=arangodb
-        const queryParams = new URLSearchParams()
-        queryParams.append("type", "arangodb")
-        if (arangoUrl) queryParams.append("url", arangoUrl)
-        if (arangoDb) queryParams.append("dbName", arangoDb)
-        if (arangoUser) queryParams.append("username", arangoUser)
-        if (arangoPassword) queryParams.append("password", arangoPassword)
-        
-        const endpoint = `/api/graph-db?${queryParams.toString()}`
-        
-        const response = await fetch(endpoint)
-        
-        if (!response.ok) {
-          const errorData = await response.json()
-          const errorMessage = errorData.error || 'Failed to connect to ArangoDB'
-          console.error('ArangoDB connection failed:', errorMessage)
-          setGraphConnectionStatus("disconnected")
-          setGraphError(errorMessage)
-          return
-        }
-        
-        const data = await response.json()
-        setNodeCount(data.nodes?.length || 0)
-        setRelationshipCount(data.links?.length || 0)
-        
-        // Set ArangoDB connection URL
-        setConnectionUrl(`${arangoUrl}/_db/${arangoDb}`)
+        const geodeUrl = localStorage.getItem("geode_url") || "quic://localhost:3141"
+        setConnectionUrl(geodeUrl)
       }
-      
+
       setGraphConnectionStatus("connected")
     } catch (err) {
       console.error('Graph database connection error:', err)
@@ -154,22 +89,18 @@ export function DatabaseConnection({ className }: DatabaseConnectionProps) {
   // Disconnect from graph database
   const disconnectGraph = async () => {
     try {
-      // Use current dbType state which was already determined from server/localStorage
-      const graphDbType = dbType === "Neo4j" ? "neo4j" : "arangodb"
-      const endpoint = graphDbType === "neo4j" ? '/api/neo4j/disconnect' : '/api/graph-db/disconnect'
-      
-      const response = await fetch(endpoint, {
+      const response = await fetch('/api/graph-db/disconnect', {
         method: 'POST',
       })
-      
+
       if (!response.ok) {
         const errorData = await response.json()
-        const errorMessage = errorData.error || `Failed to disconnect from ${graphDbType}`
+        const errorMessage = errorData.error || 'Failed to disconnect from Geode'
         console.error('Graph database disconnect failed:', errorMessage)
         setGraphError(errorMessage)
         return
       }
-      
+
       setGraphConnectionStatus("disconnected")
       setNodeCount(null)
       setRelationshipCount(null)
@@ -191,7 +122,7 @@ export function DatabaseConnection({ className }: DatabaseConnectionProps) {
           relationships: 0, // Vector DB doesn't store relationships
           source: data.source || 'unknown',
           httpHealthy: data.httpHealthy,
-          // Store additional Qdrant stats
+          // Store additional vector DB stats
           ...(data.status && { status: data.status }),
           ...(data.vectorSize && { vectorSize: data.vectorSize }),
           ...(data.distance && { distance: data.distance }),
@@ -363,7 +294,7 @@ export function DatabaseConnection({ className }: DatabaseConnectionProps) {
               <>
                 <div className="flex items-center gap-2 text-xs md:text-sm">
                   <span className="text-foreground font-medium">
-                    {dbType}
+                    Geode
                   </span>
                   <span className="text-foreground font-mono text-[11px] bg-secondary/50 px-2 py-0.5 rounded truncate max-w-full">
                     {connectionUrl}
@@ -459,7 +390,7 @@ export function DatabaseConnection({ className }: DatabaseConnectionProps) {
                       <DialogHeader>
                         <DialogTitle className="text-destructive">Clear Database</DialogTitle>
                         <DialogDescription>
-                          Are you sure you want to clear all data from the {dbType} database? This action cannot be undone.
+                          Are you sure you want to clear all data from the Geode database? This action cannot be undone.
                         </DialogDescription>
                       </DialogHeader>
                       <Alert variant="destructive" className="mt-2">
@@ -545,10 +476,10 @@ export function DatabaseConnection({ className }: DatabaseConnectionProps) {
               <>
                 <div className="flex items-center gap-2 text-xs md:text-sm">
                   <span className="text-foreground font-medium">
-                    Qdrant
+                    Geode Vector
                   </span>
                   <span className="text-foreground font-mono text-[11px] bg-secondary/50 px-2 py-0.5 rounded truncate max-w-full">
-                    {(vectorStats as any).url || 'http://qdrant:6333'}
+                    {(vectorStats as any).url || 'quic://localhost:3141'}
                   </span>
                 </div>
 
@@ -651,16 +582,16 @@ export function DatabaseConnection({ className }: DatabaseConnectionProps) {
                     </TooltipProvider>
                     <DialogContent>
                       <DialogHeader>
-                        <DialogTitle className="text-destructive">Clear Qdrant Database</DialogTitle>
+                        <DialogTitle className="text-destructive">Clear Vector Database</DialogTitle>
                         <DialogDescription>
-                          Are you sure you want to clear all data from the Qdrant vector database? This action cannot be undone.
+                          Are you sure you want to clear all data from the Geode vector database? This action cannot be undone.
                         </DialogDescription>
                       </DialogHeader>
                       <Alert variant="destructive" className="mt-2">
                         <AlertCircle className="h-4 w-4" />
                         <AlertTitle>Warning</AlertTitle>
                         <AlertDescription>
-                          This will permanently delete all vectors from the Qdrant database.
+                          This will permanently delete all vectors from the Geode vector database.
                         </AlertDescription>
                       </Alert>
                       <DialogFooter className="gap-2 mt-4">

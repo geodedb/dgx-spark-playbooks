@@ -30,13 +30,17 @@ export async function GET(req: NextRequest) {
   if (action === 'test-connection') {
     try {
       const vllmBaseUrl = process.env.VLLM_BASE_URL || 'http://localhost:8001/v1';
-      
+
+      // Remote vLLM endpoints may require Bearer auth (VLLM_API_KEY).
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (process.env.VLLM_API_KEY) {
+        headers['Authorization'] = `Bearer ${process.env.VLLM_API_KEY}`;
+      }
+
       // Test connection to vLLM service using built-in /v1/models endpoint
       const response = await fetch(`${vllmBaseUrl}/models`, {
         method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers,
         signal: AbortSignal.timeout(10000),
       });
 

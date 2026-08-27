@@ -19,10 +19,9 @@
 # Setup script for txt2kg project
 
 # Parse command line arguments
-# Default: vLLM (supported on DGX Station). Use --ollama for ArangoDB + Ollama.
+# Default: vLLM (supported on DGX Station). Use --ollama for Geode + Ollama.
 DEV_FRONTEND=false
 USE_VLLM=true
-USE_VECTOR_SEARCH=false
 WAIT_FOR_VLLM=true
 
 while [[ $# -gt 0 ]]; do
@@ -43,27 +42,21 @@ while [[ $# -gt 0 ]]; do
       WAIT_FOR_VLLM=false
       shift
       ;;
-    --vector-search)
-      USE_VECTOR_SEARCH=true
-      shift
-      ;;
     --help|-h)
       echo "Usage: ./start.sh [OPTIONS]"
       echo ""
       echo "Options:"
       echo "  --dev-frontend    Run frontend in development mode (without Docker)"
-      echo "  --ollama          Use ArangoDB + Ollama (alternative to default vLLM)"
-      echo "  --vllm            Use Neo4j + vLLM (default on DGX Station)"
+      echo "  --ollama          Use Geode + Ollama (alternative to default vLLM)"
+      echo "  --vllm            Use Geode + vLLM (default on DGX Station)"
       echo "  --no-wait         Do not wait for vLLM to be ready (default: wait)"
-      echo "  --vector-search   Enable vector search services (Qdrant + Sentence Transformers)"
       echo "  --help, -h        Show this help message"
       echo ""
-      echo "Default: Neo4j + vLLM (GPU-accelerated for DGX Station)"
+      echo "Default: Geode + vLLM (GPU-accelerated for DGX Station)"
       echo ""
       echo "Examples:"
-      echo "  ./start.sh                       # Default: Neo4j + vLLM (DGX Station)"
-      echo "  ./start.sh --ollama              # ArangoDB + Ollama instead"
-      echo "  ./start.sh --vector-search       # Add Qdrant + Sentence Transformers"
+      echo "  ./start.sh                       # Default: Geode + vLLM (DGX Station)"
+      echo "  ./start.sh --ollama              # Geode + Ollama instead"
       echo "  ./start.sh --no-wait             # Start vLLM but do not wait for readiness"
       exit 0
       ;;
@@ -142,30 +135,24 @@ echo "✓ Docker permissions OK"
 
 # Select compose file and build command
 COMPOSE_DIR="$(pwd)/deploy/compose"
-PROFILES=""
 
 if [ "$USE_VLLM" = true ]; then
   COMPOSE_FILE="$COMPOSE_DIR/docker-compose.vllm.yml"
-  echo "Using Neo4j + vLLM (GPU-accelerated)..."
+  echo "Using Geode + vLLM (GPU-accelerated)..."
   echo "  ⚡ Optimized for DGX Station GB300 Ultra with high GPU memory"
 else
   COMPOSE_FILE="$COMPOSE_DIR/docker-compose.yml"
-  echo "Using ArangoDB + Ollama configuration..."
+  echo "Using Geode + Ollama configuration..."
 fi
 
 CMD="$DOCKER_COMPOSE_CMD -f $COMPOSE_FILE"
 
-if [ "$USE_VECTOR_SEARCH" = true ]; then
-  PROFILES="--profile vector-search"
-  echo "Enabling vector search (Qdrant + Sentence Transformers)..."
-fi
-
 # Execute the command
 echo ""
 echo "Starting services..."
-echo "Running: $CMD $PROFILES up -d"
+echo "Running: $CMD up -d"
 cd $(dirname "$0")
-eval "$CMD $PROFILES up -d"
+eval "$CMD up -d"
 
 # When using vLLM, optionally wait for backend to be ready and show progress
 if [ "$USE_VLLM" = true ] && [ "$WAIT_FOR_VLLM" = true ]; then
@@ -192,21 +179,14 @@ echo "=========================================="
 echo ""
 echo "Core Services:"
 echo "  • Web UI: http://localhost:3001"
+echo "  • Geode: quic://localhost:3141"
 if [ "$USE_VLLM" = true ]; then
-  echo "  • Neo4j Browser: http://localhost:7474"
   echo "  • vLLM API: http://localhost:8001 (GPU-accelerated)"
 else
-  echo "  • ArangoDB: http://localhost:8529"
   echo "  • Ollama API: http://localhost:11434"
 fi
+echo "  • Sentence Transformers: http://localhost:8000"
 echo ""
-
-if [ "$USE_VECTOR_SEARCH" = true ]; then
-  echo "Vector Search Services:"
-  echo "  • Qdrant: http://localhost:6333"
-  echo "  • Sentence Transformers: http://localhost:8000"
-  echo ""
-fi
 
 echo "Next steps:"
 if [ "$USE_VLLM" = true ]; then
@@ -228,7 +208,6 @@ if [ "$USE_VLLM" = true ]; then
 else
   echo "  • Use vLLM (default): ./start.sh or ./start.sh --vllm"
 fi
-echo "  • Add vector search: ./start.sh --vector-search"
 echo "  • View logs: docker compose logs -f"
 echo "  • Skip vLLM wait next time: ./start.sh --no-wait"
 echo ""

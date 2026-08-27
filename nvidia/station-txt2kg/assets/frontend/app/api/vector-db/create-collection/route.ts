@@ -15,39 +15,34 @@
 // limitations under the License.
 //
 import { NextResponse } from 'next/server';
-import { QdrantService } from '@/lib/qdrant';
+import { GeodeService } from '@/lib/geode';
 
 /**
- * Create Qdrant collection API endpoint
+ * Create collection API endpoint (no-op for Geode)
  * POST /api/vector-db/create-collection
  */
-export async function POST() {
+export async function POST(): Promise<NextResponse> {
   try {
-    // Get the Qdrant service instance
-    const qdrantService = QdrantService.getInstance();
-    
-    // Force re-initialization to create the collection
-    (qdrantService as any).initialized = false;
-    await qdrantService.initialize();
-    
-    // Check if initialization was successful by getting stats
-    const stats = await qdrantService.getStats();
-    
+    const geode = GeodeService.getInstance();
+    await geode.initialize();
+    await geode.createCollection();
+
+    const stats = await geode.getStats();
+
     return NextResponse.json({
       success: true,
-      message: 'Qdrant collection created successfully',
+      message: 'Geode collection ready (no-op -- nodes are created dynamically)',
       httpHealthy: stats.httpHealthy || false
     });
   } catch (error) {
-    console.error('Error creating Qdrant collection:', error);
-    
+    console.error('Error in create-collection endpoint:', error);
+
     return NextResponse.json(
-      { 
+      {
         success: false,
-        error: `Failed to create Qdrant collection: ${error instanceof Error ? error.message : String(error)}`
+        error: `Failed to initialize Geode: ${error instanceof Error ? error.message : String(error)}`
       },
       { status: 500 }
     );
   }
 }
-
