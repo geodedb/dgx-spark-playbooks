@@ -460,29 +460,12 @@ class PyGraphistryService:
             logger.info(f"PyGraphistry object type: {type(g)}")
             logger.info(f"Available methods: {[method for method in dir(g) if not method.startswith('_')]}")
             
-            # Check what GPU methods are actually available
-            has_compute_igraph = hasattr(g, 'compute_igraph')
             has_umap = hasattr(g, 'umap')
-            logger.info(f"Has compute_igraph: {has_compute_igraph}")
             logger.info(f"Has UMAP: {has_umap}")
             
             gpu_operations_successful = 0
             total_gpu_operations = 0
             
-            # Compute centrality measures if available
-            total_gpu_operations += 1
-            try:
-                if has_compute_igraph and len(g._nodes) < 50000:  # Limit for performance
-                    logger.info("Attempting PageRank computation...")
-                    g = g.compute_igraph('pagerank', out_col='pagerank')
-                    logger.info("✓ SUCCESS: Computed PageRank centrality with GPU")
-                    gpu_operations_successful += 1
-                else:
-                    reason = "too many nodes" if len(g._nodes) >= 50000 else "compute_igraph not available"
-                    logger.warning(f"✗ SKIPPED: PageRank computation ({reason})")
-            except Exception as e:
-                logger.warning(f"✗ FAILED: PageRank computation failed: {e}")
-                
             # Apply UMAP for node positioning if available and beneficial
             total_gpu_operations += 1
             try:

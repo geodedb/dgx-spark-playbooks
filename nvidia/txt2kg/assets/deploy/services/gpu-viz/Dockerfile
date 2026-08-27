@@ -22,7 +22,7 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy the service code
-COPY unified_gpu_service.py pygraphistry_service.py ./
+COPY unified_gpu_service.py .
 
 # Create a non-root user for security (using a different UID to avoid conflicts)
 RUN useradd -m -u 1001 appuser && chown -R appuser:appuser /app
