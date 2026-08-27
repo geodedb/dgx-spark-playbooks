@@ -69,6 +69,7 @@ All user-facing assets are in `assets/`.
 - `assets/train_reranker.sh` and `assets/train_reranker_lightgbm.py` - Train the LightGBM lambdarank re-ranker on cached HLLM embeddings + handcrafted features.
 - `assets/pricing_agent.py` and `assets/pricing_agent.sh` - Train and evaluate a PPO dynamic pricing agent against simulator baselines.
 - `assets/app.py` - FastAPI recommendation UI.
+- `assets/geode_retriever.py` - Optional Geode vector retrieval backend (FAISS alternative) used when `RETRIEVER_BACKEND=geode`.
 - `assets/launch_web_ui.sh` - Starts Ollama if needed and launches the UI.
 - `assets/benchmark_retrieval.py` - In-process throughput + latency benchmark for the retrieval engine (optionally with the LightGBM re-ranker).
 - `assets/teardown.sh` - Stops playbook processes and can optionally remove downloaded assets while preserving checkpoints.
@@ -286,6 +287,35 @@ http://localhost:7860
 ```
 
 >[!Note] Run `ssh -L 7860:localhost:7860 <Station IP Address>` to enable local port forwarding if connected to DGX Station over SSH.
+
+### Optional: Geode vector retrieval backend
+
+By default the UI builds an in-process FAISS inner-product index. Setting `RETRIEVER_BACKEND=geode` swaps retrieval to a [Geode](https://gitlab.com/devnw/codepros/geode/geode) database server instead: `assets/geode_retriever.py` loads the extracted HLLM item embeddings into Geode as `RecItem {itemId, title, hllmIdx, emb: vectorf32}` nodes (idempotent — re-launches skip the load) and serves the same top-100 retrieval through Geode's HNSW vector index with the `dot` (inner-product) metric, equivalent to `faiss.IndexFlatIP`.
+
+Requirements: the `geode-client` Python package (installed by `assets/setup.sh`) and a running Geode server built from the `geode:dev` image — the 2048-dim HLLM embeddings exceed the 1792-dim `vectorf32` cap of the v0.8.5 release (dev raises it to 65535). For example:
+
+```bash
+docker run -d --name geode-recsys \
+  -e GEODE_ADMIN_PASSWORD=<password> \
+  -p 3141:3141/udp \
+  registry.gitlab.com/devnw/codepros/geode/geode:dev \
+  serve --data-dir /data --listen 0.0.0.0:3141
+
+RETRIEVER_BACKEND=geode \
+GEODE_URL=quic://127.0.0.1:3141 \
+GEODE_USERNAME=admin GEODE_PASSWORD=<password> \
+bash assets/launch_web_ui.sh
+```
+
+Expected startup output changes to:
+
+```text
+Loading Geode retrieval backend...
+  Loading 16,460 items into Geode (0 present)...
+  Geode index: 16,460 vectors, 2048 dims (HNSW, metric 'dot', quic://127.0.0.1:3141)
+```
+
+Everything downstream (LightGBM re-ranker, PPO pricing, UI) is unchanged; leave `RETRIEVER_BACKEND` unset (or set to `faiss`) to keep the upstream FAISS behavior.
 
 ## Step 7. Benchmark the retrieval engine
 

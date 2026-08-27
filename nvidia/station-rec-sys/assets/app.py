@@ -194,12 +194,40 @@ hllm_id_map = np.load(os.path.join(DATA_DIR, "processed", "hllm_item_id_map.npy"
 item_to_hllm_idx = {str(iid): i for i, iid in enumerate(hllm_id_map) if iid != '[PAD]'}
 hllm_idx_to_item = {i: str(iid) for i, iid in enumerate(hllm_id_map) if iid != '[PAD]'}
 
-# Build FAISS index over item embeddings (skip padding row 0)
-# Use all rows including padding for index consistency (HLLM uses 1-indexed)
-print("Building FAISS index...")
-faiss_index = faiss.IndexFlatIP(hllm_embeddings.shape[1])
-faiss_index.add(hllm_embeddings)
-print(f"  FAISS index: {faiss_index.ntotal:,} vectors, {hllm_embeddings.shape[1]} dims")
+# --- Vector retrieval backend: FAISS (default) or Geode -----------------
+# RETRIEVER_BACKEND=geode swaps the in-process FAISS inner-product index
+# for a Geode server (HNSW vector index, 'dot' metric) reached via
+# GEODE_URL / GEODE_USERNAME / GEODE_PASSWORD. Requires a geode:dev server
+# (2048-dim embeddings exceed the v0.8.5 1792-dim VectorF32 cap) and the
+# geode-client package installed by assets/setup.sh.
+RETRIEVER_BACKEND = os.environ.get('RETRIEVER_BACKEND', 'faiss').strip().lower()
+if RETRIEVER_BACKEND not in ('faiss', 'geode'):
+    raise ValueError(f"RETRIEVER_BACKEND must be 'faiss' or 'geode', got {RETRIEVER_BACKEND!r}")
+
+faiss_index = None
+geode_retriever = None
+if RETRIEVER_BACKEND == 'geode':
+    print("Loading Geode retrieval backend...")
+    from geode_retriever import GeodeRetriever
+    geode_retriever = GeodeRetriever.from_env(dim=hllm_embeddings.shape[1])
+    _titles = dict(zip(item_meta['item_id'].astype(str), item_meta['title'].fillna('')))
+    _n_geode = geode_retriever.load_items(hllm_embeddings, hllm_id_map, titles=_titles)
+    print(f"  Geode index: {_n_geode:,} vectors, {hllm_embeddings.shape[1]} dims "
+          f"(HNSW, metric 'dot', {geode_retriever.url})")
+else:
+    # Build FAISS index over item embeddings (skip padding row 0)
+    # Use all rows including padding for index consistency (HLLM uses 1-indexed)
+    print("Building FAISS index...")
+    faiss_index = faiss.IndexFlatIP(hllm_embeddings.shape[1])
+    faiss_index.add(hllm_embeddings)
+    print(f"  FAISS index: {faiss_index.ntotal:,} vectors, {hllm_embeddings.shape[1]} dims")
+
+
+def retrieve_top_k(query: np.ndarray, k: int):
+    """Backend-agnostic top-K inner-product search: (1, dim) -> (distances, indices)."""
+    if geode_retriever is not None:
+        return geode_retriever.search(query, k)
+    return faiss_index.search(query, k)
 
 # Build user embeddings from purchase history (mean of item embeddings)
 print("Building user embeddings...")
@@ -384,7 +412,7 @@ def api_recommend(user_id: str):
     if user_emb is not None:
         t = time.time()
         query = user_emb.reshape(1, -1).astype(np.float32)
-        distances, indices = faiss_index.search(query, RETRIEVAL_TOP_K)
+        distances, indices = retrieve_top_k(query, RETRIEVAL_TOP_K)
         lat_retriever_ms = (time.time() - t) * 1000
         cand_hllm_idxs = indices[0]
         cand_scores = distances[0].astype(np.float32)

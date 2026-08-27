@@ -229,6 +229,14 @@ fi
 run uv sync --inexact
 
 echo ""
+echo "Installing geode-client (optional Geode vector retrieval backend)..."
+# Used only when the web UI is launched with RETRIEVER_BACKEND=geode; a
+# failure here (e.g. no GitLab access) does not block the FAISS default.
+run uv pip install --python "$REPO_DIR/.venv/bin/python" \
+    "geode-client @ git+https://gitlab.com/devnw/codepros/geode/geode-client-python.git@v0.5.0" \
+    || echo "  WARNING: geode-client install failed — only needed for RETRIEVER_BACKEND=geode"
+
+echo ""
 echo "Verifying key packages..."
 CUDA_VISIBLE_DEVICES=0 uv run python -c "import torch; print(f'  PyTorch {torch.__version__}, CUDA: {torch.version.cuda}, GPU available: {torch.cuda.is_available()}')" || echo "  WARNING: PyTorch import failed"
 uv run python -c "import faiss; print(f'  FAISS installed')" || echo "  WARNING: faiss not found"
