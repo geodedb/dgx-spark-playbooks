@@ -608,7 +608,11 @@ async def store_chunks(client: Client, doc_id: str, chunks: list, embeddings: li
             {
                 "docId": doc_id,
                 "seq": seq,
-                "text": text,
+                # geode v0.8.5 caps property VALUE size (~8KB, ENG-3911);
+                # pathological chunks with unbreakable long lines (base64 /
+                # minified blobs) exceed it and failed the whole file. Clamp
+                # the stored text; the embedding covers the full chunk.
+                "text": text if len(text.encode("utf-8")) <= 7500 else text.encode("utf-8")[:7500].decode("utf-8", "ignore"),
                 "source": doc_id,
                 "vec": _vec_param(emb),
             },
