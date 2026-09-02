@@ -17,6 +17,17 @@
 #
 """Headless knowledge-graph ingestion driver for geode v0.8.5.
 
+CHANGELOG:
+  2026-09-02: store_chunks() now writes a whole file's chunks via batched
+  `FOR row IN $rows MERGE ... SET ...` (CHUNK_BATCH_SIZE rows/statement,
+  default 300) instead of one MERGE statement per chunk, now that geode's
+  FOR...IN parameter-bound-list binding is fixed (confirmed on dev
+  v0.8.9-8-g481e03c / digest e4f35123..., after being broken through build
+  235fc55 — see docs/bugs/2026-08-31-for-in-parameter-bound-list-collapses-
+  to-one-null-iteration.md in the geode engine repo). Measured ~2.5x faster
+  than the N-statement form at realistic 50-row chunk-batch scale in an
+  isolated verification container; schema and idempotency are unchanged.
+
 Ingests a directory of .md files into a geode graph database:
 
   for each file:
@@ -142,6 +153,11 @@ DEFAULT_LLM_MODEL = "Qwen/Qwen3.8-27B"
 EMBED_DIM = int(os.getenv("EMBED_DIM", "1536"))
 EMB_PROP = "emb"
 CHUNK_INDEX = "chunk_emb_idx"
+# Rows per `FOR row IN $rows MERGE ...` statement in store_chunks(). Verified
+# clean at 50/200/500-row single-statement batches on dev v0.8.9-8-g481e03c
+# (see store_chunks() docstring); 300 sits comfortably inside that verified
+# range without sending an entire large file's chunks in one param list.
+CHUNK_BATCH_SIZE = int(os.getenv("CHUNK_BATCH_SIZE", "300"))
 
 CHUNK_SIZE = 2000  # default; override with --chunk-size
 CHUNK_OVERLAP = 200  # default; override with --chunk-overlap
@@ -599,25 +615,49 @@ async def _execute_batch_resilient(client: Client, statements: list) -> None:
 
 
 async def store_chunks(client: Client, doc_id: str, chunks: list, embeddings: list) -> None:
+    """MERGE all chunks for one file via batched `FOR row IN $rows MERGE ...`.
+
+    Prior to 2026-09-02 this issued one MERGE statement per chunk (N round
+    trips per file). geode's FOR...IN param-list binding was broken through
+    build 235fc55 (every parameter-bound list collapsed to a single NULL
+    iteration — see docs/bugs/2026-08-31-for-in-parameter-bound-list-
+    collapses-to-one-null-iteration.md in the geode engine repo) and was
+    confirmed fixed on dev v0.8.9-8-g481e03c (digest e4f35123...). Re-verified
+    here at realistic payload scale (50 rows x ~2000-char text x 1024-dim
+    vector: all rows landed correctly, ~2.5x faster than the N-statement
+    form; 200- and 500-row single-statement batches also verified clean) —
+    see 2026-09-02 fresh-ingest launch report. Rows are chunked into groups
+    of CHUNK_BATCH_SIZE to keep any single statement's param list to a
+    reasonable size rather than sending an entire large file in one shot.
+
+    Schema, idempotency (MERGE on docId+seq), and the resilient-retry wrap
+    are unchanged: each FOR...IN statement is still just one (stmt, params)
+    entry run through _execute_batch_resilient, and MERGE's idempotency
+    makes replaying a batch after a reconnect safe.
+    """
+    rows = [
+        {
+            "docId": doc_id,
+            "seq": seq,
+            # geode v0.8.5 caps property VALUE size (~8KB, ENG-3911);
+            # pathological chunks with unbreakable long lines (base64 /
+            # minified blobs) exceed it and failed the whole file. Clamp
+            # the stored text; the embedding covers the full chunk.
+            "text": text if len(text.encode("utf-8")) <= 7500 else text.encode("utf-8")[:7500].decode("utf-8", "ignore"),
+            "vec": _vec_param(emb),
+        }
+        for seq, (text, emb) in enumerate(zip(chunks, embeddings))
+    ]
     statements = [
         (
-            "MERGE (c:DocumentChunk {docId: $docId, seq: $seq}) "
-            "SET c.text = $text, "
-            "c.source = $source, "
-            f"c.{EMB_PROP} = vectorf32(toString($vec))",
-            {
-                "docId": doc_id,
-                "seq": seq,
-                # geode v0.8.5 caps property VALUE size (~8KB, ENG-3911);
-                # pathological chunks with unbreakable long lines (base64 /
-                # minified blobs) exceed it and failed the whole file. Clamp
-                # the stored text; the embedding covers the full chunk.
-                "text": text if len(text.encode("utf-8")) <= 7500 else text.encode("utf-8")[:7500].decode("utf-8", "ignore"),
-                "source": doc_id,
-                "vec": _vec_param(emb),
-            },
+            "FOR row IN $rows "
+            "MERGE (c:DocumentChunk {docId: row.docId, seq: row.seq}) "
+            "SET c.text = row.text, "
+            "c.source = row.docId, "
+            f"c.{EMB_PROP} = vectorf32(toString(row.vec))",
+            {"rows": rows[i : i + CHUNK_BATCH_SIZE]},
         )
-        for seq, (text, emb) in enumerate(zip(chunks, embeddings))
+        for i in range(0, len(rows), CHUNK_BATCH_SIZE)
     ]
     await _execute_batch_resilient(client, statements)
 
