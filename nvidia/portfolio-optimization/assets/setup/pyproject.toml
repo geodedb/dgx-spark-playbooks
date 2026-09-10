@@ -5,7 +5,7 @@ description = "Quantitative Portfolio Optimization developer example"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
-    "numpy==2.5.2",
+    "numpy==2.5.3",
     "pandas==3.0.5",
     "cvxpy==1.9.2",
     "scikit-learn==1.9.0",
