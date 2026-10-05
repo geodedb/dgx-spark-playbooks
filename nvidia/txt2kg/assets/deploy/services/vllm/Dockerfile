@@ -1,5 +1,5 @@
 # Use official NVIDIA vLLM image - optimized for NVIDIA hardware
-FROM nvcr.io/nvidia/vllm:26.08-py3
+FROM nvcr.io/nvidia/vllm:26.09-py3
 
 # Install curl for health checks
 RUN apt-get update && apt-get install -y --no-install-recommends curl && rm -rf /var/lib/apt/lists/*
