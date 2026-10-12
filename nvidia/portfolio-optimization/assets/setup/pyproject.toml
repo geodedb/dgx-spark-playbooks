@@ -5,7 +5,7 @@ description = "Quantitative Portfolio Optimization developer example"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
-    "numpy==2.5.3",
+    "numpy==2.5.4",
     "pandas==3.0.6",
     "cvxpy==1.9.3",
     "scikit-learn==1.9.1",
@@ -15,17 +15,17 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
-    "black==26.10.0",
+    "black==26.10.1",
     "isort",
     "flake8",
     "pre-commit==4.6.2",
 ]
 cuda12 = [
-    "cuml-cu12==26.8.*",
+    "cuml-cu12==26.10.*",
     "cuopt-cu12==26.8.*",
 ]
 cuda13 = [
-    "cuml-cu13==26.8.*",
+    "cuml-cu13==26.10.*",
     "cuopt-cu13==26.8.*",
 ]
 

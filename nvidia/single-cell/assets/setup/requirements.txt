@@ -4,7 +4,7 @@ contourpy==1.4.0
 cycler==0.12.1
 fonttools==4.66.1
 h5py==3.16.0
-imageio==2.38.0
+imageio==2.38.1
 joblib==1.6.0
 kiwisolver==1.5.1
 lazy-loader==0.6
@@ -14,17 +14,17 @@ matplotlib==3.11.2
 natsort==8.4.0
 networkx==3.7
 numba==0.68.0
-numpy==2.5.3
+numpy==2.5.4
 optuna==5.0.0
 pandas==3.0.6
 patsy==1.0.3
 pillow==12.3.0
 pynndescent==0.6.0
-rapids-singlecell==0.17.0
+rapids-singlecell==0.18.0
 scanpy==1.12.4
 scikit-learn==1.9.1
 scikit-image==0.26.0
-scikit-misc==0.5.2
+scikit-misc==0.5.3
 scipy==1.18.1
 seaborn==0.13.2
 session-info2==0.4.2
@@ -39,4 +39,4 @@ wget==3.2
 deprecated==3.0.0
 numcodecs==0.17.0
 wrapt==2.5.0
-zarr==3.4.0
+zarr==3.4.1
