@@ -18,15 +18,15 @@ dev = [
     "black==26.10.1",
     "isort",
     "flake8",
-    "pre-commit==4.6.2",
+    "pre-commit==4.7.0",
 ]
 cuda12 = [
     "cuml-cu12==26.10.*",
-    "cuopt-cu12==26.8.*",
+    "cuopt-cu12==26.10.*",
 ]
 cuda13 = [
     "cuml-cu13==26.10.*",
-    "cuopt-cu13==26.8.*",
+    "cuopt-cu13==26.10.*",
 ]
 
 [tool.black]
