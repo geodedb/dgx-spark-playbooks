@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-FROM python:3.14
+FROM python:3.15
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends curl=8.14.1-2+deb13u4 && \
