@@ -1,0 +1,11 @@
+# Runtime jobs are supplied by the devnw group security policies.
+workflow:
+  auto_cancel:
+    on_job_failure: all
+
+# GitLab requires a visible job definition even when policy jobs supply all
+# execution. This schema anchor never runs and adds no runtime job.
+group-policy-configuration:
+  script: 'true'
+  rules:
+    - when: never
