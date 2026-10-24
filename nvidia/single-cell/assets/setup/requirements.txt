@@ -18,7 +18,7 @@ numpy==2.5.4
 optuna==5.0.0
 pandas==3.0.6
 patsy==1.0.3
-pillow==12.3.0
+pillow==13.0.0
 pynndescent==0.6.0
 rapids-singlecell==0.18.1
 scanpy==1.12.4
