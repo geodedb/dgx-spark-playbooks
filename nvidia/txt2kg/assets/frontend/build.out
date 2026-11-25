@@ -1,0 +1,101 @@
+$ next build
+▲ Next.js 16.3.2 (Turbopack)
+⚠ `eslint` configuration in next.config.mjs is no longer supported. See more info here: https://nextjs.org/docs/app/api-reference/cli/next#next-lint-options
+⚠ Invalid next.config.mjs options detected: 
+⚠     Unrecognized key(s) in object: 'eslint', 'serverRuntimeConfig'
+⚠ See more info here: https://nextjs.org/docs/messages/invalid-next-config
+✓ Running next.config.mjs took 26ms
+
+  Creating an optimized production build ...
+(node:282283) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///data/home/benji/src/gl/gitlab.com/devnw/codepros/geode/dgx-spark-playbooks/nvidia/txt2kg/assets/frontend/tailwind.config.ts?id=1787681817247 is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /data/home/benji/src/gl/gitlab.com/devnw/codepros/geode/dgx-spark-playbooks/nvidia/txt2kg/assets/frontend/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+Found 1 warning while optimizing generated CSS:
+
+[2m│   }[22m
+[2m│ }[22m
+[2m│[22m @import url('../styles/nvidia-build-typography.css');
+[2m┆[22m        [33m[2m^--[22m @import rules must precede all rules aside from @charset and @layer statements[39m
+[2m┆[22m
+[2m│ :root {[22m
+[2m│   --foreground-rgb: 255, 255, 255;[22m
+
+✓ Compiled successfully in 6.1s
+  Skipping validation of types
+  Finished TypeScript config validation in 8ms ...
+  Collecting page data using 55 workers ...
+EmbeddingsService initialized with useNvidiaApi: false format: legacy model: all-MiniLM-L6-v2
+EmbeddingsService initialized with useNvidiaApi: false format: legacy model: all-MiniLM-L6-v2
+EmbeddingsService initialized with useNvidiaApi: false format: legacy model: all-MiniLM-L6-v2
+EmbeddingsService initialized with useNvidiaApi: false format: legacy model: all-MiniLM-L6-v2
+EmbeddingsService initialized with useNvidiaApi: false format: legacy model: all-MiniLM-L6-v2
+EmbeddingsService initialized with useNvidiaApi: false format: legacy model: all-MiniLM-L6-v2
+  Generating static pages using 55 workers (0/49) ...
+EmbeddingsService initialized with useNvidiaApi: false format: legacy model: all-MiniLM-L6-v2
+EmbeddingsService initialized with useNvidiaApi: false format: legacy model: all-MiniLM-L6-v2
+  Generating static pages using 55 workers (12/49) 
+  Generating static pages using 55 workers (24/49) 
+  Generating static pages using 55 workers (36/49) 
+✓ Generating static pages using 55 workers (49/49) in 1290ms
+  Finalizing page optimization ...
+
+Route (app)
+┌ ○ /
+├ ○ /_not-found
+├ ƒ /api/backend
+├ ƒ /api/config
+├ ƒ /api/embeddings
+├ ƒ /api/enhanced-query
+├ ƒ /api/extract-triples
+├ ƒ /api/fix-query-logs
+├ ƒ /api/graph-data
+├ ƒ /api/graph-db
+├ ƒ /api/graph-db/clear
+├ ƒ /api/graph-db/disconnect
+├ ƒ /api/graph-db/triples
+├ ƒ /api/graph-query-llm
+├ ƒ /api/metrics
+├ ƒ /api/ollama
+├ ƒ /api/ollama/batch
+├ ƒ /api/ollama/tags
+├ ƒ /api/ollama/test
+├ ƒ /api/process-document
+├ ƒ /api/pygraphistry/generate
+├ ƒ /api/pygraphistry/generate/[taskId]
+├ ƒ /api/pygraphistry/health
+├ ƒ /api/pygraphistry/stats
+├ ƒ /api/pygraphistry/visualize
+├ ƒ /api/query
+├ ƒ /api/query-log
+├ ƒ /api/query-log/add
+├ ƒ /api/query-log/test
+├ ƒ /api/rag-query
+├ ƒ /api/remote-webgpu-stream/[sessionId]
+├ ƒ /api/remote-webgpu/[...path]
+├ ƒ /api/sentence-embeddings
+├ ƒ /api/settings
+├ ƒ /api/stop-embeddings
+├ ƒ /api/stop-processing
+├ ƒ /api/store-documents
+├ ƒ /api/test-proxy
+├ ƒ /api/unified-gpu/capabilities
+├ ƒ /api/unified-gpu/visualize
+├ ƒ /api/vector-db/clear
+├ ƒ /api/vector-db/create-collection
+├ ƒ /api/vector-db/stats
+├ ƒ /api/vllm
+├ ƒ /api/vllm/models
+├ ○ /document-data
+├ ○ /graph
+├ ○ /graph3d
+├ ○ /rag
+├ ○ /rag/metrics
+├ ○ /test-large-graph
+├ ○ /test-million-nodes
+└ ○ /test-webgpu-clustering
+
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+

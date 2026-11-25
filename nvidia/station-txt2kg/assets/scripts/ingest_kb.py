@@ -121,7 +121,9 @@ DEFAULT_EMBEDDINGS_URL = "https://celebrimbor.shire-altair.ts.net:8001/v1/embedd
 # (e.g. Qwen/Qwen3-Embedding-0.6B for throughput-bound full-corpus runs).
 DEFAULT_EMBEDDINGS_MODEL = os.getenv("EMBEDDINGS_MODEL_ID", "Qwen/Qwen3-Embedding-4B")
 DEFAULT_LLM_URL = "http://curumo.shire-altair.ts.net:8000/v1/chat/completions"
-DEFAULT_LLM_MODEL = "Qwen/Qwen3.8-27B"
+# 2026-09-02: curumo's /v1/models now reports Qwen/Qwen3.8-Flash-Next-FP8
+# (was Qwen/Qwen3.8-27B) — verified live via GET :8000/v1/models.
+DEFAULT_LLM_MODEL = "Qwen/Qwen3.8-Flash-Next-FP8"
 
 # ENG-3911: geode v0.8.5 caps property VALUE size (~8KB). vectorf32 storage
 # works at <=1792 dims and fails with `58000 PropertyKeyTooLong` at >=2040;

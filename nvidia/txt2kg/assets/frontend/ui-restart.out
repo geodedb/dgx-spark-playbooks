@@ -1,0 +1,2191 @@
+▲ Next.js 16.3.2
+- Local:         http://localhost:3001
+- Network:       http://10.0.0.245:3001
+✓ Ready in 221ms
+⚠ `eslint` configuration in next.config.mjs is no longer supported. See more info here: https://nextjs.org/docs/app/api-reference/cli/next#next-lint-options
+⚠ Invalid next.config.mjs options detected: 
+⚠     Unrecognized key(s) in object: 'eslint', 'serverRuntimeConfig'
+⚠ See more info here: https://nextjs.org/docs/messages/invalid-next-config
+✓ Running next.config.mjs took 25ms
+⚠ "next start" does not work with "output: standalone" configuration. Use "node .next/standalone/server.js" instead.
+Connecting to Geode at quic://127.0.0.1:3151?insecure_tls_skip_verify=true
+SECURITY WARNING: insecureSkipVerify is enabled in production environment. This disables TLS certificate verification and exposes the connection to MITM attacks. Set GEODE_ALLOW_INSECURE_PRODUCTION=true to override this warning.
+INFO:QUICClient:Create QUICClient to 127.0.0.1:3151
+INFO:QUICSocket:Start QUICSocket on [::]:0
+INFO:QUICSocket:Started QUICSocket on [::]:40005
+INFO:QUICConnection dc9885322ea2cfd5e859d8c031ba83fc396a0645:Connect QUICConnection
+INFO:QUICConnection dc9885322ea2cfd5e859d8c031ba83fc396a0645:Start QUICConnection
+INFO:QUICConnection dc9885322ea2cfd5e859d8c031ba83fc396a0645:Started QUICConnection
+INFO:QUICClient:Created QUICClient to [::ffff:127.0.0.1]:3151
+INFO:QUICStream 0:Create QUICStream
+INFO:QUICStream 0:Created QUICStream
+Geode initialized successfully
+INFO:QUICClient:ErrorQUICConnectionPeer: QUIC Connection peer error - Peer closed with transport code 0
+INFO:QUICConnection dc9885322ea2cfd5e859d8c031ba83fc396a0645:ErrorQUICConnectionPeer: QUIC Connection peer error - Peer closed with transport code 0
+INFO:QUICConnection dc9885322ea2cfd5e859d8c031ba83fc396a0645:Stop QUICConnection
+INFO:QUICStream 0:Destroy QUICStream
+INFO:QUICStream 0:Destroyed QUICStream
+INFO:QUICConnection dc9885322ea2cfd5e859d8c031ba83fc396a0645:Stopped QUICConnection
+INFO:QUICSocket:Stop QUICSocket on [::]:40005
+INFO:QUICSocket:Stopped QUICSocket on [::]:40005
+INFO:QUICClient:Destroy QUICClient
+INFO:QUICClient:Destroyed QUICClient
+SECURITY WARNING: insecureSkipVerify is enabled in production environment. This disables TLS certificate verification and exposes the connection to MITM attacks. Set GEODE_ALLOW_INSECURE_PRODUCTION=true to override this warning.
+INFO:QUICClient:Create QUICClient to 127.0.0.1:3151
+INFO:QUICSocket:Start QUICSocket on [::]:0
+INFO:QUICSocket:Started QUICSocket on [::]:49297
+INFO:QUICConnection 4cdbee53805a9ef764f343eb5f37c1405284e6cb:Connect QUICConnection
+INFO:QUICConnection 4cdbee53805a9ef764f343eb5f37c1405284e6cb:Start QUICConnection
+INFO:QUICConnection 4cdbee53805a9ef764f343eb5f37c1405284e6cb:Started QUICConnection
+INFO:QUICClient:Created QUICClient to [::ffff:127.0.0.1]:3151
+INFO:QUICStream 0:Create QUICStream
+INFO:QUICStream 0:Created QUICStream
+INFO:QUICClient:ErrorQUICConnectionPeer: QUIC Connection peer error - Peer closed with transport code 0
+INFO:QUICConnection 4cdbee53805a9ef764f343eb5f37c1405284e6cb:ErrorQUICConnectionPeer: QUIC Connection peer error - Peer closed with transport code 0
+INFO:QUICConnection 4cdbee53805a9ef764f343eb5f37c1405284e6cb:Stop QUICConnection
+INFO:QUICStream 0:Destroy QUICStream
+INFO:QUICStream 0:Destroyed QUICStream
+INFO:QUICConnection 4cdbee53805a9ef764f343eb5f37c1405284e6cb:Stopped QUICConnection
+INFO:QUICSocket:Stop QUICSocket on [::]:49297
+INFO:QUICSocket:Stopped QUICSocket on [::]:49297
+INFO:QUICClient:Destroy QUICClient
+INFO:QUICClient:Destroyed QUICClient
+[SETTINGS] Initialized at runtime with graph_db_type: "geode"
+[graph-db GET] Request received
+[graph-db GET] Ensuring connection...
+[graph-db GET] Using database type: geode
+[graph-db GET] Fetching graph data...
+Geode connection lost; reconnecting and retrying once: geode: transport sendProto to 127.0.0.1:3151: Peer closed with transport code 0
+Connecting to Geode at quic://127.0.0.1:3151?insecure_tls_skip_verify=true
+SECURITY WARNING: insecureSkipVerify is enabled in production environment. This disables TLS certificate verification and exposes the connection to MITM attacks. Set GEODE_ALLOW_INSECURE_PRODUCTION=true to override this warning.
+INFO:QUICClient:Create QUICClient to 127.0.0.1:3151
+INFO:QUICSocket:Start QUICSocket on [::]:0
+INFO:QUICSocket:Started QUICSocket on [::]:42434
+INFO:QUICConnection a497982e72aa997df44112d634ecedc97e8c4643:Connect QUICConnection
+INFO:QUICConnection a497982e72aa997df44112d634ecedc97e8c4643:Start QUICConnection
+INFO:QUICConnection a497982e72aa997df44112d634ecedc97e8c4643:Started QUICConnection
+INFO:QUICClient:Created QUICClient to [::ffff:127.0.0.1]:3151
+INFO:QUICStream 0:Create QUICStream
+INFO:QUICStream 0:Created QUICStream
+Geode initialized successfully
+SECURITY WARNING: insecureSkipVerify is enabled in production environment. This disables TLS certificate verification and exposes the connection to MITM attacks. Set GEODE_ALLOW_INSECURE_PRODUCTION=true to override this warning.
+INFO:QUICClient:Create QUICClient to 127.0.0.1:3151
+INFO:QUICSocket:Start QUICSocket on [::]:0
+INFO:QUICSocket:Started QUICSocket on [::]:15746
+INFO:QUICConnection 5eb22c5be06143e5f293737dab12262946bd6be5:Connect QUICConnection
+INFO:QUICConnection 5eb22c5be06143e5f293737dab12262946bd6be5:Start QUICConnection
+INFO:QUICConnection 5eb22c5be06143e5f293737dab12262946bd6be5:Started QUICConnection
+INFO:QUICClient:Created QUICClient to [::ffff:127.0.0.1]:3151
+INFO:QUICStream 0:Create QUICStream
+INFO:QUICStream 0:Created QUICStream
+Fetching all triples from geode...
+INFO:QUICClient:Destroy QUICClient to [::ffff:127.0.0.1]:3151
+INFO:QUICConnection a497982e72aa997df44112d634ecedc97e8c4643:Stop QUICConnection
+INFO:QUICStream 0:Destroy QUICStream
+INFO:QUICStream 0:Destroyed QUICStream
+INFO:QUICClient:ErrorQUICConnectionLocal: QUIC Connection local error - Locally closed with application code 0
+INFO:QUICConnection a497982e72aa997df44112d634ecedc97e8c4643:ErrorQUICConnectionLocal: QUIC Connection local error - Locally closed with application code 0
+INFO:QUICConnection a497982e72aa997df44112d634ecedc97e8c4643:Stopped QUICConnection
+INFO:QUICSocket:Stop QUICSocket on [::]:42434
+INFO:QUICSocket:Stopped QUICSocket on [::]:42434
+INFO:QUICClient:Destroyed QUICClient to [::ffff:127.0.0.1]:3151
+Geode connection lost; reconnecting and retrying once: geode: transport query: Invalid execute response
+INFO:QUICClient:Destroy QUICClient to [::ffff:127.0.0.1]:3151
+INFO:QUICConnection 5eb22c5be06143e5f293737dab12262946bd6be5:Stop QUICConnection
+INFO:QUICStream 0:Destroy QUICStream
+INFO:QUICStream 0:Destroyed QUICStream
+INFO:QUICClient:ErrorQUICConnectionLocal: QUIC Connection local error - Locally closed with application code 0
+INFO:QUICConnection 5eb22c5be06143e5f293737dab12262946bd6be5:ErrorQUICConnectionLocal: QUIC Connection local error - Locally closed with application code 0
+INFO:QUICConnection 5eb22c5be06143e5f293737dab12262946bd6be5:Stopped QUICConnection
+INFO:QUICSocket:Stop QUICSocket on [::]:15746
+INFO:QUICSocket:Stopped QUICSocket on [::]:15746
+INFO:QUICClient:Destroyed QUICClient to [::ffff:127.0.0.1]:3151
+Connecting to Geode at quic://127.0.0.1:3151?insecure_tls_skip_verify=true
+SECURITY WARNING: insecureSkipVerify is enabled in production environment. This disables TLS certificate verification and exposes the connection to MITM attacks. Set GEODE_ALLOW_INSECURE_PRODUCTION=true to override this warning.
+INFO:QUICClient:Create QUICClient to 127.0.0.1:3151
+INFO:QUICSocket:Start QUICSocket on [::]:0
+INFO:QUICSocket:Started QUICSocket on [::]:58174
+INFO:QUICConnection 34b844ff8e19e6d8fe677311c896ad678c95b2de:Connect QUICConnection
+INFO:QUICConnection 34b844ff8e19e6d8fe677311c896ad678c95b2de:Start QUICConnection
+INFO:QUICConnection 34b844ff8e19e6d8fe677311c896ad678c95b2de:Started QUICConnection
+INFO:QUICClient:Created QUICClient to [::ffff:127.0.0.1]:3151
+INFO:QUICStream 0:Create QUICStream
+INFO:QUICStream 0:Created QUICStream
+Geode initialized successfully
+INFO:QUICClient:Destroy QUICClient to [::ffff:127.0.0.1]:3151
+INFO:QUICConnection 34b844ff8e19e6d8fe677311c896ad678c95b2de:Stop QUICConnection
+INFO:QUICStream 0:Destroy QUICStream
+INFO:QUICStream 0:Destroyed QUICStream
+INFO:QUICClient:ErrorQUICConnectionLocal: QUIC Connection local error - Locally closed with application code 0
+INFO:QUICConnection 34b844ff8e19e6d8fe677311c896ad678c95b2de:ErrorQUICConnectionLocal: QUIC Connection local error - Locally closed with application code 0
+INFO:QUICConnection 34b844ff8e19e6d8fe677311c896ad678c95b2de:Stopped QUICConnection
+INFO:QUICSocket:Stop QUICSocket on [::]:58174
+INFO:QUICSocket:Stopped QUICSocket on [::]:58174
+INFO:QUICClient:Destroyed QUICClient to [::ffff:127.0.0.1]:3151
+Geode connection lost; reconnecting and retrying once: geode: transport query: Invalid execute response
+Connecting to Geode at quic://127.0.0.1:3151?insecure_tls_skip_verify=true
+SECURITY WARNING: insecureSkipVerify is enabled in production environment. This disables TLS certificate verification and exposes the connection to MITM attacks. Set GEODE_ALLOW_INSECURE_PRODUCTION=true to override this warning.
+INFO:QUICClient:Create QUICClient to 127.0.0.1:3151
+INFO:QUICSocket:Start QUICSocket on [::]:0
+INFO:QUICSocket:Started QUICSocket on [::]:2455
+INFO:QUICConnection f8626299e38a471beb3917b14add99492c55ac38:Connect QUICConnection
+INFO:QUICConnection f8626299e38a471beb3917b14add99492c55ac38:Start QUICConnection
+INFO:QUICConnection f8626299e38a471beb3917b14add99492c55ac38:Started QUICConnection
+INFO:QUICClient:Created QUICClient to [::ffff:127.0.0.1]:3151
+INFO:QUICStream 0:Create QUICStream
+INFO:QUICStream 0:Created QUICStream
+Geode initialized successfully
+[graph-db GET] Got 2199 nodes, 1892 relationships
+INFO:QUICClient:Destroy QUICClient to [::ffff:127.0.0.1]:3151
+INFO:QUICConnection f8626299e38a471beb3917b14add99492c55ac38:Stop QUICConnection
+INFO:QUICStream 0:Destroy QUICStream
+INFO:QUICStream 0:Destroyed QUICStream
+INFO:QUICClient:ErrorQUICConnectionLocal: QUIC Connection local error - Locally closed with application code 0
+INFO:QUICConnection f8626299e38a471beb3917b14add99492c55ac38:ErrorQUICConnectionLocal: QUIC Connection local error - Locally closed with application code 0
+INFO:QUICConnection f8626299e38a471beb3917b14add99492c55ac38:Stopped QUICConnection
+INFO:QUICSocket:Stop QUICSocket on [::]:2455
+INFO:QUICSocket:Stopped QUICSocket on [::]:2455
+INFO:QUICClient:Destroyed QUICClient to [::ffff:127.0.0.1]:3151
+Geode connection lost; reconnecting and retrying once: geode: transport query: Invalid execute response
+Connecting to Geode at quic://127.0.0.1:3151?insecure_tls_skip_verify=true
+SECURITY WARNING: insecureSkipVerify is enabled in production environment. This disables TLS certificate verification and exposes the connection to MITM attacks. Set GEODE_ALLOW_INSECURE_PRODUCTION=true to override this warning.
+INFO:QUICClient:Create QUICClient to 127.0.0.1:3151
+INFO:QUICSocket:Start QUICSocket on [::]:0
+INFO:QUICSocket:Started QUICSocket on [::]:30305
+INFO:QUICConnection 63c273607bb66e413ce904c6655eb6b591a6dbc7:Connect QUICConnection
+INFO:QUICConnection 63c273607bb66e413ce904c6655eb6b591a6dbc7:Start QUICConnection
+INFO:QUICConnection 63c273607bb66e413ce904c6655eb6b591a6dbc7:Started QUICConnection
+INFO:QUICClient:Created QUICClient to [::ffff:127.0.0.1]:3151
+INFO:QUICStream 0:Create QUICStream
+INFO:QUICStream 0:Created QUICStream
+Geode initialized successfully
+Successfully fetched 1888 unique triples from geode
+INFO:QUICClient:ErrorQUICConnectionPeer: QUIC Connection peer error - Peer closed with transport code 0
+INFO:QUICConnection 63c273607bb66e413ce904c6655eb6b591a6dbc7:ErrorQUICConnectionPeer: QUIC Connection peer error - Peer closed with transport code 0
+INFO:QUICConnection 63c273607bb66e413ce904c6655eb6b591a6dbc7:Stop QUICConnection
+INFO:QUICStream 0:Destroy QUICStream
+INFO:QUICStream 0:Destroyed QUICStream
+INFO:QUICConnection 63c273607bb66e413ce904c6655eb6b591a6dbc7:Stopped QUICConnection
+INFO:QUICSocket:Stop QUICSocket on [::]:30305
+INFO:QUICSocket:Stopped QUICSocket on [::]:30305
+INFO:QUICClient:Destroy QUICClient
+INFO:QUICClient:Destroyed QUICClient
+[graph-db GET] Request received
+[graph-db GET] Ensuring connection...
+[graph-db GET] Using database type: geode
+[graph-db GET] Fetching graph data...
+Geode connection lost; reconnecting and retrying once: geode: transport sendProto to 127.0.0.1:3151: Peer closed with transport code 0
+Connecting to Geode at quic://127.0.0.1:3151?insecure_tls_skip_verify=true
+SECURITY WARNING: insecureSkipVerify is enabled in production environment. This disables TLS certificate verification and exposes the connection to MITM attacks. Set GEODE_ALLOW_INSECURE_PRODUCTION=true to override this warning.
+INFO:QUICClient:Create QUICClient to 127.0.0.1:3151
+INFO:QUICSocket:Start QUICSocket on [::]:0
+INFO:QUICSocket:Started QUICSocket on [::]:50560
+INFO:QUICConnection e9fe7680f84cb28dddc0b0023db97b1fc1423b9e:Connect QUICConnection
+INFO:QUICConnection e9fe7680f84cb28dddc0b0023db97b1fc1423b9e:Start QUICConnection
+INFO:QUICConnection e9fe7680f84cb28dddc0b0023db97b1fc1423b9e:Started QUICConnection
+INFO:QUICClient:Created QUICClient to [::ffff:127.0.0.1]:3151
+INFO:QUICStream 0:Create QUICStream
+INFO:QUICStream 0:Created QUICStream
+Geode initialized successfully
+Fetching all triples from geode...
+SECURITY WARNING: insecureSkipVerify is enabled in production environment. This disables TLS certificate verification and exposes the connection to MITM attacks. Set GEODE_ALLOW_INSECURE_PRODUCTION=true to override this warning.
+INFO:QUICClient:Create QUICClient to 127.0.0.1:3151
+INFO:QUICSocket:Start QUICSocket on [::]:0
+INFO:QUICSocket:Started QUICSocket on [::]:51551
+INFO:QUICConnection 720069afaa717a88dc0cdcc018f31adb84812216:Connect QUICConnection
+INFO:QUICConnection 720069afaa717a88dc0cdcc018f31adb84812216:Start QUICConnection
+INFO:QUICConnection 720069afaa717a88dc0cdcc018f31adb84812216:Started QUICConnection
+INFO:QUICClient:Created QUICClient to [::ffff:127.0.0.1]:3151
+INFO:QUICStream 0:Create QUICStream
+INFO:QUICStream 0:Created QUICStream
+INFO:QUICClient:Destroy QUICClient to [::ffff:127.0.0.1]:3151
+INFO:QUICConnection e9fe7680f84cb28dddc0b0023db97b1fc1423b9e:Stop QUICConnection
+INFO:QUICStream 0:Destroy QUICStream
+INFO:QUICStream 0:Destroyed QUICStream
+INFO:QUICClient:ErrorQUICConnectionLocal: QUIC Connection local error - Locally closed with application code 0
+INFO:QUICConnection e9fe7680f84cb28dddc0b0023db97b1fc1423b9e:ErrorQUICConnectionLocal: QUIC Connection local error - Locally closed with application code 0
+INFO:QUICConnection e9fe7680f84cb28dddc0b0023db97b1fc1423b9e:Stopped QUICConnection
+INFO:QUICSocket:Stop QUICSocket on [::]:50560
+INFO:QUICSocket:Stopped QUICSocket on [::]:50560
+INFO:QUICClient:Destroyed QUICClient to [::ffff:127.0.0.1]:3151
+Geode connection lost; reconnecting and retrying once: geode: transport query: Invalid execute response
+INFO:QUICClient:Destroy QUICClient to [::ffff:127.0.0.1]:3151
+INFO:QUICConnection 720069afaa717a88dc0cdcc018f31adb84812216:Stop QUICConnection
+INFO:QUICStream 0:Destroy QUICStream
+INFO:QUICStream 0:Destroyed QUICStream
+INFO:QUICClient:ErrorQUICConnectionLocal: QUIC Connection local error - Locally closed with application code 0
+INFO:QUICConnection 720069afaa717a88dc0cdcc018f31adb84812216:ErrorQUICConnectionLocal: QUIC Connection local error - Locally closed with application code 0
+INFO:QUICConnection 720069afaa717a88dc0cdcc018f31adb84812216:Stopped QUICConnection
+INFO:QUICSocket:Stop QUICSocket on [::]:51551
+INFO:QUICSocket:Stopped QUICSocket on [::]:51551
+INFO:QUICClient:Destroyed QUICClient to [::ffff:127.0.0.1]:3151
+Connecting to Geode at quic://127.0.0.1:3151?insecure_tls_skip_verify=true
+SECURITY WARNING: insecureSkipVerify is enabled in production environment. This disables TLS certificate verification and exposes the connection to MITM attacks. Set GEODE_ALLOW_INSECURE_PRODUCTION=true to override this warning.
+INFO:QUICClient:Create QUICClient to 127.0.0.1:3151
+INFO:QUICSocket:Start QUICSocket on [::]:0
+INFO:QUICSocket:Started QUICSocket on [::]:53050
+INFO:QUICConnection dca8137b0ebca571be1f3d3da5dec73ab8c65afb:Connect QUICConnection
+INFO:QUICConnection dca8137b0ebca571be1f3d3da5dec73ab8c65afb:Start QUICConnection
+INFO:QUICConnection dca8137b0ebca571be1f3d3da5dec73ab8c65afb:Started QUICConnection
+INFO:QUICClient:Created QUICClient to [::ffff:127.0.0.1]:3151
+INFO:QUICStream 0:Create QUICStream
+INFO:QUICStream 0:Created QUICStream
+Geode initialized successfully
+INFO:QUICClient:Destroy QUICClient to [::ffff:127.0.0.1]:3151
+INFO:QUICConnection dca8137b0ebca571be1f3d3da5dec73ab8c65afb:Stop QUICConnection
+INFO:QUICStream 0:Destroy QUICStream
+INFO:QUICStream 0:Destroyed QUICStream
+INFO:QUICClient:ErrorQUICConnectionLocal: QUIC Connection local error - Locally closed with application code 0
+INFO:QUICConnection dca8137b0ebca571be1f3d3da5dec73ab8c65afb:ErrorQUICConnectionLocal: QUIC Connection local error - Locally closed with application code 0
+INFO:QUICConnection dca8137b0ebca571be1f3d3da5dec73ab8c65afb:Stopped QUICConnection
+INFO:QUICSocket:Stop QUICSocket on [::]:53050
+INFO:QUICSocket:Stopped QUICSocket on [::]:53050
+INFO:QUICClient:Destroyed QUICClient to [::ffff:127.0.0.1]:3151
+Geode connection lost; reconnecting and retrying once: geode: transport query: Invalid execute response
+Connecting to Geode at quic://127.0.0.1:3151?insecure_tls_skip_verify=true
+SECURITY WARNING: insecureSkipVerify is enabled in production environment. This disables TLS certificate verification and exposes the connection to MITM attacks. Set GEODE_ALLOW_INSECURE_PRODUCTION=true to override this warning.
+INFO:QUICClient:Create QUICClient to 127.0.0.1:3151
+INFO:QUICSocket:Start QUICSocket on [::]:0
+INFO:QUICSocket:Started QUICSocket on [::]:22129
+INFO:QUICConnection 8d006919cb94d866d81fc5cd0e7328aeb2aeeed0:Connect QUICConnection
+INFO:QUICConnection 8d006919cb94d866d81fc5cd0e7328aeb2aeeed0:Start QUICConnection
+INFO:QUICConnection 8d006919cb94d866d81fc5cd0e7328aeb2aeeed0:Started QUICConnection
+INFO:QUICClient:Created QUICClient to [::ffff:127.0.0.1]:3151
+INFO:QUICStream 0:Create QUICStream
+INFO:QUICStream 0:Created QUICStream
+Geode initialized successfully
+[graph-db GET] Got 2199 nodes, 1892 relationships
+INFO:QUICClient:Destroy QUICClient to [::ffff:127.0.0.1]:3151
+INFO:QUICConnection 8d006919cb94d866d81fc5cd0e7328aeb2aeeed0:Stop QUICConnection
+INFO:QUICStream 0:Destroy QUICStream
+INFO:QUICStream 0:Destroyed QUICStream
+INFO:QUICClient:ErrorQUICConnectionLocal: QUIC Connection local error - Locally closed with application code 0
+INFO:QUICConnection 8d006919cb94d866d81fc5cd0e7328aeb2aeeed0:ErrorQUICConnectionLocal: QUIC Connection local error - Locally closed with application code 0
+INFO:QUICConnection 8d006919cb94d866d81fc5cd0e7328aeb2aeeed0:Stopped QUICConnection
+INFO:QUICSocket:Stop QUICSocket on [::]:22129
+INFO:QUICSocket:Stopped QUICSocket on [::]:22129
+INFO:QUICClient:Destroyed QUICClient to [::ffff:127.0.0.1]:3151
+Geode connection lost; reconnecting and retrying once: geode: transport query: Invalid execute response
+Connecting to Geode at quic://127.0.0.1:3151?insecure_tls_skip_verify=true
+SECURITY WARNING: insecureSkipVerify is enabled in production environment. This disables TLS certificate verification and exposes the connection to MITM attacks. Set GEODE_ALLOW_INSECURE_PRODUCTION=true to override this warning.
+INFO:QUICClient:Create QUICClient to 127.0.0.1:3151
+INFO:QUICSocket:Start QUICSocket on [::]:0
+INFO:QUICSocket:Started QUICSocket on [::]:60296
+INFO:QUICConnection 392891dbf7d84ebb9be5ed7f5b2176f2881b4e5a:Connect QUICConnection
+INFO:QUICConnection 392891dbf7d84ebb9be5ed7f5b2176f2881b4e5a:Start QUICConnection
+INFO:QUICConnection 392891dbf7d84ebb9be5ed7f5b2176f2881b4e5a:Started QUICConnection
+INFO:QUICClient:Created QUICClient to [::ffff:127.0.0.1]:3151
+INFO:QUICStream 0:Create QUICStream
+INFO:QUICStream 0:Created QUICStream
+Geode initialized successfully
+Successfully fetched 1888 unique triples from geode
+[graph-db GET] Request received
+[graph-db GET] Ensuring connection...
+[graph-db GET] Using database type: geode
+[graph-db GET] Fetching graph data...
+INFO:QUICClient:Destroy QUICClient to [::ffff:127.0.0.1]:3151
+INFO:QUICConnection 392891dbf7d84ebb9be5ed7f5b2176f2881b4e5a:Stop QUICConnection
+INFO:QUICStream 0:Destroy QUICStream
+INFO:QUICStream 0:Destroyed QUICStream
+INFO:QUICClient:ErrorQUICConnectionLocal: QUIC Connection local error - Locally closed with application code 0
+INFO:QUICConnection 392891dbf7d84ebb9be5ed7f5b2176f2881b4e5a:ErrorQUICConnectionLocal: QUIC Connection local error - Locally closed with application code 0
+SECURITY WARNING: insecureSkipVerify is enabled in production environment. This disables TLS certificate verification and exposes the connection to MITM attacks. Set GEODE_ALLOW_INSECURE_PRODUCTION=true to override this warning.
+INFO:QUICClient:Create QUICClient to 127.0.0.1:3151
+INFO:QUICSocket:Start QUICSocket on [::]:0
+INFO:QUICSocket:Started QUICSocket on [::]:2733
+INFO:QUICConnection 678e8465b5bc6104a5f303caa4aa371a781b8465:Connect QUICConnection
+INFO:QUICConnection 678e8465b5bc6104a5f303caa4aa371a781b8465:Start QUICConnection
+INFO:QUICConnection 678e8465b5bc6104a5f303caa4aa371a781b8465:Started QUICConnection
+INFO:QUICClient:Created QUICClient to [::ffff:127.0.0.1]:3151
+INFO:QUICStream 0:Create QUICStream
+INFO:QUICStream 0:Created QUICStream
+INFO:QUICConnection 392891dbf7d84ebb9be5ed7f5b2176f2881b4e5a:Stopped QUICConnection
+INFO:QUICSocket:Stop QUICSocket on [::]:60296
+INFO:QUICSocket:Stopped QUICSocket on [::]:60296
+INFO:QUICClient:Destroyed QUICClient to [::ffff:127.0.0.1]:3151
+Geode connection lost; reconnecting and retrying once: geode: transport query: Invalid execute response
+INFO:QUICClient:Destroy QUICClient to [::ffff:127.0.0.1]:3151
+INFO:QUICConnection 678e8465b5bc6104a5f303caa4aa371a781b8465:Stop QUICConnection
+INFO:QUICStream 0:Destroy QUICStream
+INFO:QUICStream 0:Destroyed QUICStream
+INFO:QUICClient:ErrorQUICConnectionLocal: QUIC Connection local error - Locally closed with application code 0
+INFO:QUICConnection 678e8465b5bc6104a5f303caa4aa371a781b8465:ErrorQUICConnectionLocal: QUIC Connection local error - Locally closed with application code 0
+INFO:QUICConnection 678e8465b5bc6104a5f303caa4aa371a781b8465:Stopped QUICConnection
+INFO:QUICSocket:Stop QUICSocket on [::]:2733
+INFO:QUICSocket:Stopped QUICSocket on [::]:2733
+INFO:QUICClient:Destroyed QUICClient to [::ffff:127.0.0.1]:3151
+Connecting to Geode at quic://127.0.0.1:3151?insecure_tls_skip_verify=true
+SECURITY WARNING: insecureSkipVerify is enabled in production environment. This disables TLS certificate verification and exposes the connection to MITM attacks. Set GEODE_ALLOW_INSECURE_PRODUCTION=true to override this warning.
+INFO:QUICClient:Create QUICClient to 127.0.0.1:3151
+INFO:QUICSocket:Start QUICSocket on [::]:0
+INFO:QUICSocket:Started QUICSocket on [::]:22800
+INFO:QUICConnection 62fd8f663040d88887af69f5a1e9f09d2792bbc2:Connect QUICConnection
+INFO:QUICConnection 62fd8f663040d88887af69f5a1e9f09d2792bbc2:Start QUICConnection
+INFO:QUICConnection 62fd8f663040d88887af69f5a1e9f09d2792bbc2:Started QUICConnection
+INFO:QUICClient:Created QUICClient to [::ffff:127.0.0.1]:3151
+INFO:QUICStream 0:Create QUICStream
+INFO:QUICStream 0:Created QUICStream
+Geode initialized successfully
+INFO:QUICClient:Destroy QUICClient to [::ffff:127.0.0.1]:3151
+INFO:QUICConnection 62fd8f663040d88887af69f5a1e9f09d2792bbc2:Stop QUICConnection
+INFO:QUICStream 0:Destroy QUICStream
+INFO:QUICStream 0:Destroyed QUICStream
+INFO:QUICClient:ErrorQUICConnectionLocal: QUIC Connection local error - Locally closed with application code 0
+INFO:QUICConnection 62fd8f663040d88887af69f5a1e9f09d2792bbc2:ErrorQUICConnectionLocal: QUIC Connection local error - Locally closed with application code 0
+INFO:QUICConnection 62fd8f663040d88887af69f5a1e9f09d2792bbc2:Stopped QUICConnection
+INFO:QUICSocket:Stop QUICSocket on [::]:22800
+INFO:QUICSocket:Stopped QUICSocket on [::]:22800
+INFO:QUICClient:Destroyed QUICClient to [::ffff:127.0.0.1]:3151
+Geode connection lost; reconnecting and retrying once: geode: transport query: Invalid execute response
+Connecting to Geode at quic://127.0.0.1:3151?insecure_tls_skip_verify=true
+SECURITY WARNING: insecureSkipVerify is enabled in production environment. This disables TLS certificate verification and exposes the connection to MITM attacks. Set GEODE_ALLOW_INSECURE_PRODUCTION=true to override this warning.
+INFO:QUICClient:Create QUICClient to 127.0.0.1:3151
+INFO:QUICSocket:Start QUICSocket on [::]:0
+INFO:QUICSocket:Started QUICSocket on [::]:36713
+INFO:QUICConnection 314ac85e6a39683f58345b7152cbf100d6c98ae7:Connect QUICConnection
+INFO:QUICConnection 314ac85e6a39683f58345b7152cbf100d6c98ae7:Start QUICConnection
+INFO:QUICConnection 314ac85e6a39683f58345b7152cbf100d6c98ae7:Started QUICConnection
+INFO:QUICClient:Created QUICClient to [::ffff:127.0.0.1]:3151
+INFO:QUICStream 0:Create QUICStream
+INFO:QUICStream 0:Created QUICStream
+Geode initialized successfully
+[graph-db GET] Got 2199 nodes, 1892 relationships
+Fetching all triples from geode...
+INFO:QUICClient:Destroy QUICClient to [::ffff:127.0.0.1]:3151
+INFO:QUICConnection 314ac85e6a39683f58345b7152cbf100d6c98ae7:Stop QUICConnection
+INFO:QUICStream 0:Destroy QUICStream
+INFO:QUICStream 0:Destroyed QUICStream
+INFO:QUICClient:ErrorQUICConnectionLocal: QUIC Connection local error - Locally closed with application code 0
+INFO:QUICConnection 314ac85e6a39683f58345b7152cbf100d6c98ae7:ErrorQUICConnectionLocal: QUIC Connection local error - Locally closed with application code 0
+INFO:QUICConnection 314ac85e6a39683f58345b7152cbf100d6c98ae7:Stopped QUICConnection
+INFO:QUICSocket:Stop QUICSocket on [::]:36713
+INFO:QUICSocket:Stopped QUICSocket on [::]:36713
+INFO:QUICClient:Destroyed QUICClient to [::ffff:127.0.0.1]:3151
+Geode connection lost; reconnecting and retrying once: geode: transport query: Invalid execute response
+Connecting to Geode at quic://127.0.0.1:3151?insecure_tls_skip_verify=true
+SECURITY WARNING: insecureSkipVerify is enabled in production environment. This disables TLS certificate verification and exposes the connection to MITM attacks. Set GEODE_ALLOW_INSECURE_PRODUCTION=true to override this warning.
+INFO:QUICClient:Create QUICClient to 127.0.0.1:3151
+INFO:QUICSocket:Start QUICSocket on [::]:0
+INFO:QUICSocket:Started QUICSocket on [::]:20080
+INFO:QUICConnection d5a004106dda1503004ab721b65321052c0e18f3:Connect QUICConnection
+INFO:QUICConnection d5a004106dda1503004ab721b65321052c0e18f3:Start QUICConnection
+INFO:QUICConnection d5a004106dda1503004ab721b65321052c0e18f3:Started QUICConnection
+INFO:QUICClient:Created QUICClient to [::ffff:127.0.0.1]:3151
+INFO:QUICStream 0:Create QUICStream
+INFO:QUICStream 0:Created QUICStream
+Geode initialized successfully
+INFO:QUICClient:Destroy QUICClient to [::ffff:127.0.0.1]:3151
+INFO:QUICConnection d5a004106dda1503004ab721b65321052c0e18f3:Stop QUICConnection
+INFO:QUICStream 0:Destroy QUICStream
+INFO:QUICStream 0:Destroyed QUICStream
+INFO:QUICClient:ErrorQUICConnectionLocal: QUIC Connection local error - Locally closed with application code 0
+INFO:QUICConnection d5a004106dda1503004ab721b65321052c0e18f3:ErrorQUICConnectionLocal: QUIC Connection local error - Locally closed with application code 0
+INFO:QUICConnection d5a004106dda1503004ab721b65321052c0e18f3:Stopped QUICConnection
+INFO:QUICSocket:Stop QUICSocket on [::]:20080
+INFO:QUICSocket:Stopped QUICSocket on [::]:20080
+INFO:QUICClient:Destroyed QUICClient to [::ffff:127.0.0.1]:3151
+Geode connection lost; reconnecting and retrying once: geode: transport query: Invalid execute response
+Connecting to Geode at quic://127.0.0.1:3151?insecure_tls_skip_verify=true
+SECURITY WARNING: insecureSkipVerify is enabled in production environment. This disables TLS certificate verification and exposes the connection to MITM attacks. Set GEODE_ALLOW_INSECURE_PRODUCTION=true to override this warning.
+INFO:QUICClient:Create QUICClient to 127.0.0.1:3151
+INFO:QUICSocket:Start QUICSocket on [::]:0
+INFO:QUICSocket:Started QUICSocket on [::]:24531
+INFO:QUICConnection 9d5369d11e78bcf46f0c4f8ff532696cf6bc1d23:Connect QUICConnection
+INFO:QUICConnection 9d5369d11e78bcf46f0c4f8ff532696cf6bc1d23:Start QUICConnection
+INFO:QUICConnection 9d5369d11e78bcf46f0c4f8ff532696cf6bc1d23:Started QUICConnection
+INFO:QUICClient:Created QUICClient to [::ffff:127.0.0.1]:3151
+INFO:QUICStream 0:Create QUICStream
+INFO:QUICStream 0:Created QUICStream
+Geode initialized successfully
+Successfully fetched 1888 unique triples from geode
+[graph-db GET] Request received
+[graph-db GET] Ensuring connection...
+[graph-db GET] Using database type: geode
+[graph-db GET] Fetching graph data...
+INFO:QUICClient:Destroy QUICClient to [::ffff:127.0.0.1]:3151
+INFO:QUICConnection 9d5369d11e78bcf46f0c4f8ff532696cf6bc1d23:Stop QUICConnection
+INFO:QUICStream 0:Destroy QUICStream
+INFO:QUICStream 0:Destroyed QUICStream
+INFO:QUICClient:ErrorQUICConnectionLocal: QUIC Connection local error - Locally closed with application code 0
+INFO:QUICConnection 9d5369d11e78bcf46f0c4f8ff532696cf6bc1d23:ErrorQUICConnectionLocal: QUIC Connection local error - Locally closed with application code 0
+SECURITY WARNING: insecureSkipVerify is enabled in production environment. This disables TLS certificate verification and exposes the connection to MITM attacks. Set GEODE_ALLOW_INSECURE_PRODUCTION=true to override this warning.
+INFO:QUICClient:Create QUICClient to 127.0.0.1:3151
+INFO:QUICSocket:Start QUICSocket on [::]:0
+INFO:QUICSocket:Started QUICSocket on [::]:39115
+INFO:QUICConnection d3fcecf8ca822aa3d85fa919b509546d8cecfec7:Connect QUICConnection
+INFO:QUICConnection d3fcecf8ca822aa3d85fa919b509546d8cecfec7:Start QUICConnection
+INFO:QUICConnection d3fcecf8ca822aa3d85fa919b509546d8cecfec7:Started QUICConnection
+INFO:QUICClient:Created QUICClient to [::ffff:127.0.0.1]:3151
+INFO:QUICStream 0:Create QUICStream
+INFO:QUICStream 0:Created QUICStream
+INFO:QUICConnection 9d5369d11e78bcf46f0c4f8ff532696cf6bc1d23:Stopped QUICConnection
+INFO:QUICSocket:Stop QUICSocket on [::]:24531
+INFO:QUICSocket:Stopped QUICSocket on [::]:24531
+INFO:QUICClient:Destroyed QUICClient to [::ffff:127.0.0.1]:3151
+Geode connection lost; reconnecting and retrying once: geode: transport query: Invalid execute response
+INFO:QUICClient:Destroy QUICClient to [::ffff:127.0.0.1]:3151
+INFO:QUICConnection d3fcecf8ca822aa3d85fa919b509546d8cecfec7:Stop QUICConnection
+INFO:QUICStream 0:Destroy QUICStream
+INFO:QUICStream 0:Destroyed QUICStream
+INFO:QUICClient:ErrorQUICConnectionLocal: QUIC Connection local error - Locally closed with application code 0
+INFO:QUICConnection d3fcecf8ca822aa3d85fa919b509546d8cecfec7:ErrorQUICConnectionLocal: QUIC Connection local error - Locally closed with application code 0
+INFO:QUICConnection d3fcecf8ca822aa3d85fa919b509546d8cecfec7:Stopped QUICConnection
+INFO:QUICSocket:Stop QUICSocket on [::]:39115
+INFO:QUICSocket:Stopped QUICSocket on [::]:39115
+INFO:QUICClient:Destroyed QUICClient to [::ffff:127.0.0.1]:3151
+Connecting to Geode at quic://127.0.0.1:3151?insecure_tls_skip_verify=true
+SECURITY WARNING: insecureSkipVerify is enabled in production environment. This disables TLS certificate verification and exposes the connection to MITM attacks. Set GEODE_ALLOW_INSECURE_PRODUCTION=true to override this warning.
+INFO:QUICClient:Create QUICClient to 127.0.0.1:3151
+INFO:QUICSocket:Start QUICSocket on [::]:0
+INFO:QUICSocket:Started QUICSocket on [::]:33869
+INFO:QUICConnection 39daddc2425d1b26351557ca63ae86a0e32d2b54:Connect QUICConnection
+INFO:QUICConnection 39daddc2425d1b26351557ca63ae86a0e32d2b54:Start QUICConnection
+INFO:QUICConnection 39daddc2425d1b26351557ca63ae86a0e32d2b54:Started QUICConnection
+INFO:QUICClient:Created QUICClient to [::ffff:127.0.0.1]:3151
+INFO:QUICStream 0:Create QUICStream
+INFO:QUICStream 0:Created QUICStream
+Geode initialized successfully
+INFO:QUICClient:Destroy QUICClient to [::ffff:127.0.0.1]:3151
+INFO:QUICConnection 39daddc2425d1b26351557ca63ae86a0e32d2b54:Stop QUICConnection
+INFO:QUICStream 0:Destroy QUICStream
+INFO:QUICStream 0:Destroyed QUICStream
+INFO:QUICClient:ErrorQUICConnectionLocal: QUIC Connection local error - Locally closed with application code 0
+INFO:QUICConnection 39daddc2425d1b26351557ca63ae86a0e32d2b54:ErrorQUICConnectionLocal: QUIC Connection local error - Locally closed with application code 0
+INFO:QUICConnection 39daddc2425d1b26351557ca63ae86a0e32d2b54:Stopped QUICConnection
+INFO:QUICSocket:Stop QUICSocket on [::]:33869
+INFO:QUICSocket:Stopped QUICSocket on [::]:33869
+INFO:QUICClient:Destroyed QUICClient to [::ffff:127.0.0.1]:3151
+Geode connection lost; reconnecting and retrying once: geode: transport query: Invalid execute response
+Connecting to Geode at quic://127.0.0.1:3151?insecure_tls_skip_verify=true
+SECURITY WARNING: insecureSkipVerify is enabled in production environment. This disables TLS certificate verification and exposes the connection to MITM attacks. Set GEODE_ALLOW_INSECURE_PRODUCTION=true to override this warning.
+INFO:QUICClient:Create QUICClient to 127.0.0.1:3151
+INFO:QUICSocket:Start QUICSocket on [::]:0
+INFO:QUICSocket:Started QUICSocket on [::]:49241
+INFO:QUICConnection ddf3b8d06dd6fa0d3d38db6205b286f0bb6ba8ca:Connect QUICConnection
+INFO:QUICConnection ddf3b8d06dd6fa0d3d38db6205b286f0bb6ba8ca:Start QUICConnection
+INFO:QUICConnection ddf3b8d06dd6fa0d3d38db6205b286f0bb6ba8ca:Started QUICConnection
+INFO:QUICClient:Created QUICClient to [::ffff:127.0.0.1]:3151
+INFO:QUICStream 0:Create QUICStream
+INFO:QUICStream 0:Created QUICStream
+Geode initialized successfully
+[graph-db GET] Got 2199 nodes, 1892 relationships
+[graph-db GET] Request received
+[graph-db GET] Ensuring connection...
+[graph-db GET] Using database type: geode
+[graph-db GET] Fetching graph data...
+INFO:QUICClient:Destroy QUICClient to [::ffff:127.0.0.1]:3151
+INFO:QUICConnection ddf3b8d06dd6fa0d3d38db6205b286f0bb6ba8ca:Stop QUICConnection
+INFO:QUICStream 0:Destroy QUICStream
+INFO:QUICStream 0:Destroyed QUICStream
+INFO:QUICClient:ErrorQUICConnectionLocal: QUIC Connection local error - Locally closed with application code 0
+INFO:QUICConnection ddf3b8d06dd6fa0d3d38db6205b286f0bb6ba8ca:ErrorQUICConnectionLocal: QUIC Connection local error - Locally closed with application code 0
+EmbeddingsService initialized with useNvidiaApi: false format: openai model: Qwen/Qwen3-Embedding-0.6B
+Initializing backend with graph DB type: geode
+(node:846357) Warning: Setting the NODE_TLS_REJECT_UNAUTHORIZED environment variable to '0' makes TLS connections and HTTPS requests insecure by disabling certificate verification.
+(Use `node --trace-warnings ...` to show where the warning was created)
+Embeddings service initialized successfully using model: Qwen/Qwen3-Embedding-0.6B
+Graph query with LLM: "Graph Rag", topK=40, traditional=true, model=default, provider=default
+Querying with LLM enhancement: "Graph Rag", topK=40, traditional=true
+Querying backend with Geode, useTraditional: true
+Performing traditional graph query: "Graph Rag"
+Extracted keywords: graph, rag
+Using Geode graph traversal for keywords: graph, rag
+[Geode] graphTraversal with keywords: graph, rag
+INFO:QUICConnection ddf3b8d06dd6fa0d3d38db6205b286f0bb6ba8ca:Stopped QUICConnection
+INFO:QUICSocket:Stop QUICSocket on [::]:49241
+INFO:QUICSocket:Stopped QUICSocket on [::]:49241
+INFO:QUICClient:Destroyed QUICClient to [::ffff:127.0.0.1]:3151
+Geode connection lost; reconnecting and retrying once: geode: transport query: Invalid execute response
+Connecting to Geode at quic://127.0.0.1:3151?insecure_tls_skip_verify=true
+SECURITY WARNING: insecureSkipVerify is enabled in production environment. This disables TLS certificate verification and exposes the connection to MITM attacks. Set GEODE_ALLOW_INSECURE_PRODUCTION=true to override this warning.
+INFO:QUICClient:Create QUICClient to 127.0.0.1:3151
+INFO:QUICSocket:Start QUICSocket on [::]:0
+INFO:QUICSocket:Started QUICSocket on [::]:25130
+INFO:QUICConnection 06d2a33e31cbe8df7ead326a6e0fdd3910a61210:Connect QUICConnection
+INFO:QUICConnection 06d2a33e31cbe8df7ead326a6e0fdd3910a61210:Start QUICConnection
+INFO:QUICConnection 06d2a33e31cbe8df7ead326a6e0fdd3910a61210:Started QUICConnection
+INFO:QUICClient:Created QUICClient to [::ffff:127.0.0.1]:3151
+INFO:QUICStream 0:Create QUICStream
+INFO:QUICStream 0:Created QUICStream
+Geode initialized successfully
+INFO:QUICClient:Destroy QUICClient to [::ffff:127.0.0.1]:3151
+INFO:QUICConnection 06d2a33e31cbe8df7ead326a6e0fdd3910a61210:Stop QUICConnection
+INFO:QUICStream 0:Destroy QUICStream
+INFO:QUICStream 0:Destroyed QUICStream
+INFO:QUICClient:ErrorQUICConnectionLocal: QUIC Connection local error - Locally closed with application code 0
+INFO:QUICConnection 06d2a33e31cbe8df7ead326a6e0fdd3910a61210:ErrorQUICConnectionLocal: QUIC Connection local error - Locally closed with application code 0
+INFO:QUICConnection 06d2a33e31cbe8df7ead326a6e0fdd3910a61210:Stopped QUICConnection
+INFO:QUICSocket:Stop QUICSocket on [::]:25130
+INFO:QUICSocket:Stopped QUICSocket on [::]:25130
+INFO:QUICClient:Destroyed QUICClient to [::ffff:127.0.0.1]:3151
+Geode connection lost; reconnecting and retrying once: geode: transport query: Invalid execute response
+Connecting to Geode at quic://127.0.0.1:3151?insecure_tls_skip_verify=true
+SECURITY WARNING: insecureSkipVerify is enabled in production environment. This disables TLS certificate verification and exposes the connection to MITM attacks. Set GEODE_ALLOW_INSECURE_PRODUCTION=true to override this warning.
+INFO:QUICClient:Create QUICClient to 127.0.0.1:3151
+INFO:QUICSocket:Start QUICSocket on [::]:0
+INFO:QUICSocket:Started QUICSocket on [::]:40664
+INFO:QUICConnection c8e4fb5e8d814e91bb624c767ceeb341301d1744:Connect QUICConnection
+INFO:QUICConnection c8e4fb5e8d814e91bb624c767ceeb341301d1744:Start QUICConnection
+INFO:QUICConnection c8e4fb5e8d814e91bb624c767ceeb341301d1744:Started QUICConnection
+INFO:QUICClient:Created QUICClient to [::ffff:127.0.0.1]:3151
+INFO:QUICStream 0:Create QUICStream
+INFO:QUICStream 0:Created QUICStream
+Geode initialized successfully
+[graph-db GET] Got 2199 nodes, 1892 relationships
+SECURITY WARNING: insecureSkipVerify is enabled in production environment. This disables TLS certificate verification and exposes the connection to MITM attacks. Set GEODE_ALLOW_INSECURE_PRODUCTION=true to override this warning.
+INFO:QUICClient:Create QUICClient to 127.0.0.1:3151
+INFO:QUICSocket:Start QUICSocket on [::]:0
+INFO:QUICSocket:Started QUICSocket on [::]:15477
+INFO:QUICConnection 46beef58fe103cbc9fc83a99e1e4a8ccd6003b56:Connect QUICConnection
+INFO:QUICConnection 46beef58fe103cbc9fc83a99e1e4a8ccd6003b56:Start QUICConnection
+INFO:QUICConnection 46beef58fe103cbc9fc83a99e1e4a8ccd6003b56:Started QUICConnection
+INFO:QUICClient:Created QUICClient to [::ffff:127.0.0.1]:3151
+INFO:QUICStream 0:Create QUICStream
+INFO:QUICStream 0:Created QUICStream
+INFO:QUICClient:Destroy QUICClient to [::ffff:127.0.0.1]:3151
+INFO:QUICConnection c8e4fb5e8d814e91bb624c767ceeb341301d1744:Stop QUICConnection
+INFO:QUICStream 0:Destroy QUICStream
+INFO:QUICStream 0:Destroyed QUICStream
+INFO:QUICClient:ErrorQUICConnectionLocal: QUIC Connection local error - Locally closed with application code 0
+INFO:QUICConnection c8e4fb5e8d814e91bb624c767ceeb341301d1744:ErrorQUICConnectionLocal: QUIC Connection local error - Locally closed with application code 0
+INFO:QUICConnection c8e4fb5e8d814e91bb624c767ceeb341301d1744:Stopped QUICConnection
+INFO:QUICSocket:Stop QUICSocket on [::]:40664
+INFO:QUICSocket:Stopped QUICSocket on [::]:40664
+INFO:QUICClient:Destroyed QUICClient to [::ffff:127.0.0.1]:3151
+Geode connection lost; reconnecting and retrying once: geode: transport query: Invalid execute response
+INFO:QUICClient:Destroy QUICClient to [::ffff:127.0.0.1]:3151
+INFO:QUICConnection 46beef58fe103cbc9fc83a99e1e4a8ccd6003b56:Stop QUICConnection
+INFO:QUICStream 0:Destroy QUICStream
+INFO:QUICStream 0:Destroyed QUICStream
+INFO:QUICClient:ErrorQUICConnectionLocal: QUIC Connection local error - Locally closed with application code 0
+INFO:QUICConnection 46beef58fe103cbc9fc83a99e1e4a8ccd6003b56:ErrorQUICConnectionLocal: QUIC Connection local error - Locally closed with application code 0
+INFO:QUICConnection 46beef58fe103cbc9fc83a99e1e4a8ccd6003b56:Stopped QUICConnection
+INFO:QUICSocket:Stop QUICSocket on [::]:15477
+INFO:QUICSocket:Stopped QUICSocket on [::]:15477
+INFO:QUICClient:Destroyed QUICClient to [::ffff:127.0.0.1]:3151
+Connecting to Geode at quic://127.0.0.1:3151?insecure_tls_skip_verify=true
+SECURITY WARNING: insecureSkipVerify is enabled in production environment. This disables TLS certificate verification and exposes the connection to MITM attacks. Set GEODE_ALLOW_INSECURE_PRODUCTION=true to override this warning.
+INFO:QUICClient:Create QUICClient to 127.0.0.1:3151
+INFO:QUICSocket:Start QUICSocket on [::]:0
+INFO:QUICSocket:Started QUICSocket on [::]:8833
+INFO:QUICConnection 1f8b41b483c9b5b758968ecb937a8736fc3b47b2:Connect QUICConnection
+INFO:QUICConnection 1f8b41b483c9b5b758968ecb937a8736fc3b47b2:Start QUICConnection
+INFO:QUICConnection 1f8b41b483c9b5b758968ecb937a8736fc3b47b2:Started QUICConnection
+INFO:QUICClient:Created QUICClient to [::ffff:127.0.0.1]:3151
+INFO:QUICStream 0:Create QUICStream
+INFO:QUICStream 0:Created QUICStream
+Geode initialized successfully
+[Geode] Found 41 triples for keywords: graph, rag
+Geode graph traversal found 41 relevant triples
+Top 10 triples by confidence:
+  1. [1.000] Differential Privacy -> differs from -> cryptography-based schemes (depth: 0)
+  2. [0.990] Paths -> is defined as -> Number of paths in the module control flow graph (depth: 0)
+  3. [0.980] Recent works -> have focused on -> optimizing the performance of cryptographic tools (depth: 0)
+  4. [0.971] privacy-preserving computing schemes -> are based on -> techniques such as cryptography (depth: 0)
+  5. [0.962] Nodes -> is defined as -> Number of nodes in the module control flow graph (depth: 0)
+  6. [0.952] Privacy-preserving computation -> aims to introduce -> noncryptographic techniques to achieve privacy-preserving computing (depth: 0)
+  7. [0.943] Cryptography tools -> encrypt -> data as ciphertext (depth: 0)
+  8. [0.935] The book -> begins by introducing -> cryptographic techniques such as secret sharing, homomorphic encryption, and oblivious transfer (depth: 0)
+  9. [0.926] Privacy-preserving computing -> incorporates -> cryptography (depth: 0)
+  10. [0.917] AvePath -> is -> The average length of the paths in the module control flow graph (depth: 0)
+Using top 40 triples as context for LLM
+First triple structure: {
+  "subject": "Differential Privacy",
+  "predicate": "differs from",
+  "object": "cryptography-based schemes",
+  "confidence": 1,
+  "depth": 0
+}
+Using LLM: provider=ollama, model=llama3.1:8b
+Error calling LLM for answer generation: Error [AggregateError]: connect ECONNREFUSED ::1:11434; connect ECONNREFUSED 127.0.0.1:11434
+    at <unknown> (AggregateError: connect ECONNREFUSED ::1:11434; connect ECONNREFUSED 127.0.0.1:11434)
+    at el.from (.next/server/chunks/[root-of-the-server]__0rskeu5._.js:4:28699)
+    at k.<anonymous> (.next/server/chunks/[root-of-the-server]__0rskeu5._.js:6:21117)
+    at h.<computed> (.next/server/chunks/[root-of-the-server]__0rskeu5._.js:4:9449)
+    at iS.request (.next/server/chunks/[root-of-the-server]__0rskeu5._.js:6:38291)
+    at async l.queryWithLLM (.next/server/chunks/[root-of-the-server]__1kcxpbm._.js:8:746)
+    at async s (.next/server/chunks/_1g1-zbq._.js:1:557)
+    at async J (.next/server/chunks/_1g1-zbq._.js:1:4171)
+    at async Q (.next/server/chunks/_1g1-zbq._.js:1:5249)
+    at async Module.C [as handler] (.next/server/chunks/_1g1-zbq._.js:1:7306) {
+  isAxiosError: true,
+  code: 'ECONNREFUSED',
+  config: [Object: null prototype] {
+    transitional: {
+      silentJSONParsing: true,
+      forcedJSONParsing: true,
+      clarifyTimeoutError: false,
+      legacyInterceptorReqResOrdering: true,
+      advertiseZstdAcceptEncoding: false,
+      validateStatusUndefinedResolves: true
+    },
+    adapter: [ 'xhr', 'http', 'fetch' ],
+    transformRequest: [ [Function (anonymous)] ],
+    transformResponse: [ [Function (anonymous)] ],
+    timeout: 0,
+    xsrfCookieName: 'XSRF-TOKEN',
+    xsrfHeaderName: 'X-XSRF-TOKEN',
+    maxContentLength: -1,
+    maxBodyLength: -1,
+    env: { FormData: [Function], Blob: [class Blob] },
+    validateStatus: [Function: validateStatus],
+    headers: Object [AxiosHeaders] {
+      Accept: 'application/json, text/plain, */*',
+      'Content-Type': 'application/json',
+      'User-Agent': 'axios/1.19.0',
+      'Content-Length': '4098',
+      'Accept-Encoding': 'gzip, compress, deflate, br'
+    },
+    method: 'post',
+    url: 'http://localhost:11434/v1/chat/completions',
+    data: '{"model":"llama3.1:8b","messages":[{"role":"system","content":"You are a knowledgeable research assistant specializing in biomedical and scientific literature. Provide accurate, well-structured answers based on the provided context. Maintain a professional yet accessible tone, and clearly indicate when information is limited or uncertain."},{"role":"user","content":"Answer the question based on the following context from the knowledge graph.\\n\\nContext:\\nDifferential Privacy differs from cryptography-based schemes. Paths is defined as Number of paths in the module control flow graph. Recent works have focused on optimizing the performance of cryptographic tools. privacy-preserving computing schemes are based on techniques such as cryptography. Nodes is defined as Number of nodes in the module control flow graph. Privacy-preserving computation aims to introduce noncryptographic techniques to achieve privacy-preserving computing. Cryptography tools encrypt data as ciphertext. The book begins by introducing cryptographic techniques such as secret sharing, homomorphic encryption, and oblivious transfer. Privacy-preserving computing incorporates cryptography. AvePath is The average length of the paths in the module control flow graph. cryptography tools need to be used to prevent privacy leakage. cryptography tools are at the core of privacy-preserving computation. differential privacy is faster than cryptography-based schemes. traditional encrypted computation techniques are based on cryptography tools. Encrypted computation aims to introduce cryptographic techniques to achieve privacy-preserving computing. Encrypted computation uses cryptography tools. Encrypted computation guarantees cryptography-level security of data privacy. Encrypted computation is inefficient in practice due to high computational or communication complexity of the cryptography tools. TEE employs cryptography tools. Edges is defined as Number of edges in the module control flow graph. Cryptographic techniques serve as foundations of many privacy-preserving computing protocols and applications. optimizing the performance of cryptographic tools applies to machine learning. optimizing the performance of cryptographic tools applies to data mining. small-scale cases of using simple cryptography tools can be seen as early examples of privacy-preserving computing. Homomorphic Encryption is A cryptographic scheme allowing cipher computing. cryptography played an important role in military intelligence. Chapters 2-5 introduce common cryptography tools in privacy-preserving computing. schemes that employ cryptography are developed based on the difficulty of NP-hard problems. schemes that employ cryptography may be broken with increase of computational power in the future. Cycles is Total number of cycles in the module control flow graph. Multi-Party Computation uses cryptography tools. Secure Multi-Party Computing uses cryptography tools. common cryptography tools in privacy-preserving computing include secret sharing. common cryptography tools in privacy-preserving computing include homomorphic encryption. common cryptography tools in privacy-preserving computing include oblivious transfer. common cryptography tools in privacy-preserving computing include garbled circuit. Privacy Computing is Encrypted computation based on cryptography tools in a narrow sense. encrypted computation has cryptography-based security protocols at its core. simple computing tasks include averaging. GxsGAwGgUBISkqaMGFCT08PkNgYDAY+n6/Vah0cHICdRqPR9Pb2cjicD2rlTTh58uTt27ffvHkzceJEa2tr0NBrtdrw8PBly5Z9ukj/HNRq9dq1a7lcbmBgIIIgKpXK3d19xYoVfX19HA4HWunYsWOPHz++c+fOpwtvhhlmmGGGGf2BomhjY6O3t/f/dEHMMOP/wsOHD11cXEzEdP9HQAfLZiKRiKKoXq8Hu4UB1g63bt1qaWnB4XAoipLJ5AULFvQXMf8UbW1tT548AesOBEEmTZr0p3be70MkEl24cAGDwaAoqtVqQ0JCBt4I/CMwGAwPHz5samoikUgIgmi12qioqCFDhvyVd2Uy2cWLF41Go8FgsLe3nzRp0ic4Gf978OrVq8LCQhKJBKWaNm2as7Pzfz3bmpqajIwMAoGg1+vRv5t6GwyGMWPGgAD9L4darb527Rp4xEJf29ragoOpCTKZrKOjA3whzDDDDDPMMMMMM/5XA2Qe058Y1OxdZ8Z/J is a string\\n\\nQuestion: Graph Rag\\n\\nAnswer:"}],"temperature":0.2,"max_tokens":800}',
+    allowAbsoluteUrls: true
+  },
+  request: <ref *1> Writable {
+    _events: {
+      close: undefined,
+      error: [Function (anonymous)],
+      prefinish: undefined,
+      finish: undefined,
+      drain: undefined,
+      response: [Function (anonymous)],
+      socket: [Array],
+      abort: undefined
+    },
+    _writableState: WritableState {
+      highWaterMark: 65536,
+      length: 0,
+      corked: 0,
+      onwrite: [Function (anonymous)],
+      writelen: 0,
+      bufferedIndex: 0,
+      pendingcb: 0,
+      Symbol(kState): 17581054,
+      Symbol(kBufferedValue): null,
+      Symbol(kErroredValue): [AggregateError]
+    },
+    _maxListeners: undefined,
+    _options: {
+      maxRedirects: 21,
+      maxBodyLength: Infinity,
+      protocol: 'http:',
+      path: '/v1/chat/completions',
+      method: 'POST',
+      headers: [Object: null prototype],
+      agents: [Object],
+      auth: undefined,
+      family: undefined,
+      beforeRedirect: [Function: a6],
+      beforeRedirects: [Object: null prototype],
+      http2Options: undefined,
+      hostname: 'localhost',
+      port: '11434',
+      agent: undefined,
+      sensitiveHeaders: [],
+      insecureHTTPParser: false,
+      nativeProtocols: [Object],
+      pathname: '/v1/chat/completions'
+    },
+    _ended: true,
+    _ending: true,
+    _redirectCount: 0,
+    _redirects: [],
+    _requestBodyLength: 4098,
+    _requestBodyBuffers: [ [Object] ],
+    _eventsCount: 3,
+    _onNativeResponse: [Function (anonymous)],
+    _headerFilter: /^(?:Authorization|Proxy-Authorization|Cookie)$/i,
+    _currentRequest: ClientRequest {
+      _events: [Object: null prototype],
+      _eventsCount: 2,
+      _maxListeners: undefined,
+      outputData: [],
+      outputSize: 0,
+      writable: true,
+      destroyed: true,
+      _last: false,
+      chunkedEncoding: false,
+      shouldKeepAlive: true,
+      maxRequestsOnConnectionReached: false,
+      _defaultKeepAlive: true,
+      useChunkedEncodingByDefault: true,
+      sendDate: false,
+      _removedConnection: false,
+      _removedContLen: false,
+      _removedTE: false,
+      strictContentLength: false,
+      _contentLength: 4098,
+      _hasBody: true,
+      _trailer: '',
+      finished: true,
+      _headerSent: true,
+      _closed: false,
+      _header: 'POST /v1/chat/completions HTTP/1.1\r\n' +
+        'Accept: application/json, text/plain, */*\r\n' +
+        'Content-Type: application/json\r\n' +
+        'User-Agent: axios/1.19.0\r\n' +
+        'Content-Length: 4098\r\n' +
+        'Accept-Encoding: gzip, compress, deflate, br\r\n' +
+        'Host: localhost:11434\r\n' +
+        'Connection: keep-alive\r\n' +
+        '\r\n',
+      _keepAliveTimeout: 0,
+      _onPendingData: [Function: nop],
+      agent: [Agent],
+      socketPath: undefined,
+      method: 'POST',
+      maxHeaderSize: undefined,
+      insecureHTTPParser: false,
+      httpValidation: undefined,
+      joinDuplicateHeaders: undefined,
+      _ended: false,
+      res: null,
+      aborted: false,
+      timeoutCb: [Function: emitRequestTimeout],
+      upgradeOrConnect: false,
+      parser: null,
+      maxHeadersCount: null,
+      reusedSocket: false,
+      host: 'localhost',
+      protocol: 'http:',
+      _redirectable: [Circular *1],
+      Symbol(shapeMode): false,
+      Symbol(kCapture): false,
+      Symbol(kBytesWritten): 0,
+      Symbol(kNeedDrain): false,
+      Symbol(corked): 0,
+      Symbol(kChunkedBuffer): [],
+      Symbol(kChunkedLength): 0,
+      Symbol(kSocket): [Socket],
+      Symbol(kOutHeaders): [Object: null prototype],
+      Symbol(errored): null,
+      Symbol(kWritableFinished): false,
+      Symbol(kEndCallbacks): null,
+      Symbol(kFlushError): null,
+      Symbol(kHighWaterMark): 65536,
+      Symbol(kRejectNonStandardBodyWrites): false,
+      Symbol(kPath): '/v1/chat/completions',
+      Symbol(kProxyRewrittenToAbsolute): false,
+      Symbol(kAuthority): 'localhost:11434',
+      Symbol(kUniqueHeaders): null,
+      Symbol(kError): [AggregateError]
+    },
+    _currentUrl: 'http://localhost:11434/v1/chat/completions',
+    _timeout: null,
+    Symbol(shapeMode): true,
+    Symbol(kCapture): false
+  },
+  [cause]: AggregateError: 
+      at ignore-listed frames {
+    code: 'ECONNREFUSED',
+    [errors]: [ [Error], [Error] ]
+  }
+}
+API route - first triple: {
+  "subject": "Differential Privacy",
+  "predicate": "differs from",
+  "object": "cryptography-based schemes",
+  "confidence": 1,
+  "depth": 0
+}
+Received query log request: {"query":"Graph Rag","queryMode":"traditional","metrics":{"executionTimeMs":5793,"relevanceScore":0,"resultCount":40,"precision":0,"recall":0}}
+Initializing query logger service
+[QueryLogger] Using existing log file at /data/home/benji/src/gl/gitlab.com/devnw/codepros/geode/dgx-spark-playbooks/nvidia/txt2kg/assets/frontend/data/query-logs.json
+Logging query "Graph Rag" with mode "traditional"
+[QueryLogger] Logging query: "Graph Rag" (traditional)
+[QueryLogger] Query logged successfully to file
+Query logged successfully to file
+INFO:QUICClient:Destroy QUICClient to [::ffff:127.0.0.1]:3151
+INFO:QUICConnection 1f8b41b483c9b5b758968ecb937a8736fc3b47b2:Stop QUICConnection
+INFO:QUICStream 0:Destroy QUICStream
+INFO:QUICStream 0:Destroyed QUICStream
+INFO:QUICClient:ErrorQUICConnectionLocal: QUIC Connection local error - Locally closed with application code 0
+INFO:QUICConnection 1f8b41b483c9b5b758968ecb937a8736fc3b47b2:ErrorQUICConnectionLocal: QUIC Connection local error - Locally closed with application code 0
+INFO:QUICConnection 1f8b41b483c9b5b758968ecb937a8736fc3b47b2:Stopped QUICConnection
+INFO:QUICSocket:Stop QUICSocket on [::]:8833
+INFO:QUICSocket:Stopped QUICSocket on [::]:8833
+INFO:QUICClient:Destroyed QUICClient to [::ffff:127.0.0.1]:3151
+Geode connection lost; reconnecting and retrying once: geode: transport query: Invalid execute response
+Connecting to Geode at quic://127.0.0.1:3151?insecure_tls_skip_verify=true
+SECURITY WARNING: insecureSkipVerify is enabled in production environment. This disables TLS certificate verification and exposes the connection to MITM attacks. Set GEODE_ALLOW_INSECURE_PRODUCTION=true to override this warning.
+INFO:QUICClient:Create QUICClient to 127.0.0.1:3151
+INFO:QUICSocket:Start QUICSocket on [::]:0
+INFO:QUICSocket:Started QUICSocket on [::]:26131
+INFO:QUICConnection 21fb911d059ffc6fdb314fa5612d971cc10b3bfd:Connect QUICConnection
+INFO:QUICConnection 21fb911d059ffc6fdb314fa5612d971cc10b3bfd:Start QUICConnection
+INFO:QUICConnection 21fb911d059ffc6fdb314fa5612d971cc10b3bfd:Started QUICConnection
+INFO:QUICClient:Created QUICClient to [::ffff:127.0.0.1]:3151
+INFO:QUICStream 0:Create QUICStream
+INFO:QUICStream 0:Created QUICStream
+Geode initialized successfully
+INFO:QUICClient:Destroy QUICClient to [::ffff:127.0.0.1]:3151
+INFO:QUICConnection 21fb911d059ffc6fdb314fa5612d971cc10b3bfd:Stop QUICConnection
+INFO:QUICStream 0:Destroy QUICStream
+INFO:QUICStream 0:Destroyed QUICStream
+INFO:QUICClient:ErrorQUICConnectionLocal: QUIC Connection local error - Locally closed with application code 0
+INFO:QUICConnection 21fb911d059ffc6fdb314fa5612d971cc10b3bfd:ErrorQUICConnectionLocal: QUIC Connection local error - Locally closed with application code 0
+INFO:QUICConnection 21fb911d059ffc6fdb314fa5612d971cc10b3bfd:Stopped QUICConnection
+INFO:QUICSocket:Stop QUICSocket on [::]:26131
+INFO:QUICSocket:Stopped QUICSocket on [::]:26131
+INFO:QUICClient:Destroyed QUICClient to [::ffff:127.0.0.1]:3151
+Getting query logs from file
+[QueryLogger] Getting query logs with limit: 25
+Found 5 query logs from file-based logger
+SECURITY WARNING: insecureSkipVerify is enabled in production environment. This disables TLS certificate verification and exposes the connection to MITM attacks. Set GEODE_ALLOW_INSECURE_PRODUCTION=true to override this warning.
+INFO:QUICClient:Create QUICClient to 127.0.0.1:3151
+INFO:QUICSocket:Start QUICSocket on [::]:0
+INFO:QUICSocket:Started QUICSocket on [::]:13315
+INFO:QUICConnection 0e68af043be01b58616448238298a704f44ebfa1:Connect QUICConnection
+INFO:QUICConnection 0e68af043be01b58616448238298a704f44ebfa1:Start QUICConnection
+INFO:QUICConnection 0e68af043be01b58616448238298a704f44ebfa1:Started QUICConnection
+INFO:QUICClient:Created QUICClient to [::ffff:127.0.0.1]:3151
+INFO:QUICStream 0:Create QUICStream
+INFO:QUICStream 0:Created QUICStream
+INFO:QUICClient:ErrorQUICConnectionPeer: QUIC Connection peer error - Peer closed with transport code 0
+INFO:QUICConnection 0e68af043be01b58616448238298a704f44ebfa1:ErrorQUICConnectionPeer: QUIC Connection peer error - Peer closed with transport code 0
+INFO:QUICConnection 0e68af043be01b58616448238298a704f44ebfa1:Stop QUICConnection
+INFO:QUICStream 0:Destroy QUICStream
+INFO:QUICStream 0:Destroyed QUICStream
+INFO:QUICConnection 0e68af043be01b58616448238298a704f44ebfa1:Stopped QUICConnection
+INFO:QUICSocket:Stop QUICSocket on [::]:13315
+INFO:QUICSocket:Stopped QUICSocket on [::]:13315
+INFO:QUICClient:Destroy QUICClient
+INFO:QUICClient:Destroyed QUICClient
+[graph-db GET] Request received
+[graph-db GET] Ensuring connection...
+[graph-db GET] Using database type: geode
+[graph-db GET] Fetching graph data...
+Geode connection lost; reconnecting and retrying once: geode: transport sendProto to 127.0.0.1:3151: Peer closed with transport code 0
+Connecting to Geode at quic://127.0.0.1:3151?insecure_tls_skip_verify=true
+SECURITY WARNING: insecureSkipVerify is enabled in production environment. This disables TLS certificate verification and exposes the connection to MITM attacks. Set GEODE_ALLOW_INSECURE_PRODUCTION=true to override this warning.
+INFO:QUICClient:Create QUICClient to 127.0.0.1:3151
+INFO:QUICSocket:Start QUICSocket on [::]:0
+INFO:QUICSocket:Started QUICSocket on [::]:19231
+INFO:QUICConnection c0e6cc27eadb39fe0d5644fd84dcbf7a9a5ebfa6:Connect QUICConnection
+INFO:QUICConnection c0e6cc27eadb39fe0d5644fd84dcbf7a9a5ebfa6:Start QUICConnection
+INFO:QUICConnection c0e6cc27eadb39fe0d5644fd84dcbf7a9a5ebfa6:Started QUICConnection
+INFO:QUICClient:Created QUICClient to [::ffff:127.0.0.1]:3151
+INFO:QUICStream 0:Create QUICStream
+INFO:QUICStream 0:Created QUICStream
+Geode initialized successfully
+SECURITY WARNING: insecureSkipVerify is enabled in production environment. This disables TLS certificate verification and exposes the connection to MITM attacks. Set GEODE_ALLOW_INSECURE_PRODUCTION=true to override this warning.
+INFO:QUICClient:Create QUICClient to 127.0.0.1:3151
+INFO:QUICSocket:Start QUICSocket on [::]:0
+INFO:QUICSocket:Started QUICSocket on [::]:61470
+INFO:QUICConnection 8d2d54bf5040de69d0f096e58b980773d5c1f55b:Connect QUICConnection
+INFO:QUICConnection 8d2d54bf5040de69d0f096e58b980773d5c1f55b:Start QUICConnection
+INFO:QUICConnection 8d2d54bf5040de69d0f096e58b980773d5c1f55b:Started QUICConnection
+INFO:QUICClient:Created QUICClient to [::ffff:127.0.0.1]:3151
+INFO:QUICStream 0:Create QUICStream
+INFO:QUICStream 0:Created QUICStream
+INFO:QUICClient:Destroy QUICClient to [::ffff:127.0.0.1]:3151
+INFO:QUICConnection c0e6cc27eadb39fe0d5644fd84dcbf7a9a5ebfa6:Stop QUICConnection
+INFO:QUICStream 0:Destroy QUICStream
+INFO:QUICStream 0:Destroyed QUICStream
+INFO:QUICClient:ErrorQUICConnectionLocal: QUIC Connection local error - Locally closed with application code 0
+INFO:QUICConnection c0e6cc27eadb39fe0d5644fd84dcbf7a9a5ebfa6:ErrorQUICConnectionLocal: QUIC Connection local error - Locally closed with application code 0
+INFO:QUICConnection c0e6cc27eadb39fe0d5644fd84dcbf7a9a5ebfa6:Stopped QUICConnection
+INFO:QUICSocket:Stop QUICSocket on [::]:19231
+INFO:QUICSocket:Stopped QUICSocket on [::]:19231
+INFO:QUICClient:Destroyed QUICClient to [::ffff:127.0.0.1]:3151
+Geode connection lost; reconnecting and retrying once: geode: transport query: Invalid execute response
+INFO:QUICClient:Destroy QUICClient to [::ffff:127.0.0.1]:3151
+INFO:QUICConnection 8d2d54bf5040de69d0f096e58b980773d5c1f55b:Stop QUICConnection
+INFO:QUICStream 0:Destroy QUICStream
+INFO:QUICStream 0:Destroyed QUICStream
+INFO:QUICClient:ErrorQUICConnectionLocal: QUIC Connection local error - Locally closed with application code 0
+INFO:QUICConnection 8d2d54bf5040de69d0f096e58b980773d5c1f55b:ErrorQUICConnectionLocal: QUIC Connection local error - Locally closed with application code 0
+INFO:QUICConnection 8d2d54bf5040de69d0f096e58b980773d5c1f55b:Stopped QUICConnection
+INFO:QUICSocket:Stop QUICSocket on [::]:61470
+INFO:QUICSocket:Stopped QUICSocket on [::]:61470
+INFO:QUICClient:Destroyed QUICClient to [::ffff:127.0.0.1]:3151
+Connecting to Geode at quic://127.0.0.1:3151?insecure_tls_skip_verify=true
+SECURITY WARNING: insecureSkipVerify is enabled in production environment. This disables TLS certificate verification and exposes the connection to MITM attacks. Set GEODE_ALLOW_INSECURE_PRODUCTION=true to override this warning.
+INFO:QUICClient:Create QUICClient to 127.0.0.1:3151
+INFO:QUICSocket:Start QUICSocket on [::]:0
+INFO:QUICSocket:Started QUICSocket on [::]:11597
+INFO:QUICConnection b2ebb0100bfd57f28054c23a4a40e63b7cecef6e:Connect QUICConnection
+INFO:QUICConnection b2ebb0100bfd57f28054c23a4a40e63b7cecef6e:Start QUICConnection
+INFO:QUICConnection b2ebb0100bfd57f28054c23a4a40e63b7cecef6e:Started QUICConnection
+INFO:QUICClient:Created QUICClient to [::ffff:127.0.0.1]:3151
+INFO:QUICStream 0:Create QUICStream
+INFO:QUICStream 0:Created QUICStream
+Geode initialized successfully
+Fetching all triples from geode...
+[graph-db GET] Got 2199 nodes, 1892 relationships
+INFO:QUICClient:Destroy QUICClient to [::ffff:127.0.0.1]:3151
+INFO:QUICConnection b2ebb0100bfd57f28054c23a4a40e63b7cecef6e:Stop QUICConnection
+INFO:QUICStream 0:Destroy QUICStream
+INFO:QUICStream 0:Destroyed QUICStream
+INFO:QUICClient:ErrorQUICConnectionLocal: QUIC Connection local error - Locally closed with application code 0
+INFO:QUICConnection b2ebb0100bfd57f28054c23a4a40e63b7cecef6e:ErrorQUICConnectionLocal: QUIC Connection local error - Locally closed with application code 0
+INFO:QUICConnection b2ebb0100bfd57f28054c23a4a40e63b7cecef6e:Stopped QUICConnection
+INFO:QUICSocket:Stop QUICSocket on [::]:11597
+INFO:QUICSocket:Stopped QUICSocket on [::]:11597
+INFO:QUICClient:Destroyed QUICClient to [::ffff:127.0.0.1]:3151
+Geode connection lost; reconnecting and retrying once: geode: transport query: Invalid execute response
+Connecting to Geode at quic://127.0.0.1:3151?insecure_tls_skip_verify=true
+SECURITY WARNING: insecureSkipVerify is enabled in production environment. This disables TLS certificate verification and exposes the connection to MITM attacks. Set GEODE_ALLOW_INSECURE_PRODUCTION=true to override this warning.
+INFO:QUICClient:Create QUICClient to 127.0.0.1:3151
+INFO:QUICSocket:Start QUICSocket on [::]:0
+INFO:QUICSocket:Started QUICSocket on [::]:46711
+INFO:QUICConnection f3d86e3f0e44e01c4d6bd8f0c6dc762d0a447dc9:Connect QUICConnection
+INFO:QUICConnection f3d86e3f0e44e01c4d6bd8f0c6dc762d0a447dc9:Start QUICConnection
+INFO:QUICConnection f3d86e3f0e44e01c4d6bd8f0c6dc762d0a447dc9:Started QUICConnection
+INFO:QUICClient:Created QUICClient to [::ffff:127.0.0.1]:3151
+INFO:QUICStream 0:Create QUICStream
+INFO:QUICStream 0:Created QUICStream
+Geode initialized successfully
+INFO:QUICClient:Destroy QUICClient to [::ffff:127.0.0.1]:3151
+INFO:QUICConnection f3d86e3f0e44e01c4d6bd8f0c6dc762d0a447dc9:Stop QUICConnection
+INFO:QUICStream 0:Destroy QUICStream
+INFO:QUICStream 0:Destroyed QUICStream
+INFO:QUICClient:ErrorQUICConnectionLocal: QUIC Connection local error - Locally closed with application code 0
+INFO:QUICConnection f3d86e3f0e44e01c4d6bd8f0c6dc762d0a447dc9:ErrorQUICConnectionLocal: QUIC Connection local error - Locally closed with application code 0
+INFO:QUICConnection f3d86e3f0e44e01c4d6bd8f0c6dc762d0a447dc9:Stopped QUICConnection
+INFO:QUICSocket:Stop QUICSocket on [::]:46711
+INFO:QUICSocket:Stopped QUICSocket on [::]:46711
+INFO:QUICClient:Destroyed QUICClient to [::ffff:127.0.0.1]:3151
+Geode connection lost; reconnecting and retrying once: geode: transport query: Invalid execute response
+Connecting to Geode at quic://127.0.0.1:3151?insecure_tls_skip_verify=true
+SECURITY WARNING: insecureSkipVerify is enabled in production environment. This disables TLS certificate verification and exposes the connection to MITM attacks. Set GEODE_ALLOW_INSECURE_PRODUCTION=true to override this warning.
+INFO:QUICClient:Create QUICClient to 127.0.0.1:3151
+INFO:QUICSocket:Start QUICSocket on [::]:0
+INFO:QUICSocket:Started QUICSocket on [::]:40699
+INFO:QUICConnection 7cb522ae6d26ece8e20c5d4379676d33d2668d41:Connect QUICConnection
+INFO:QUICConnection 7cb522ae6d26ece8e20c5d4379676d33d2668d41:Start QUICConnection
+INFO:QUICConnection 7cb522ae6d26ece8e20c5d4379676d33d2668d41:Started QUICConnection
+INFO:QUICClient:Created QUICClient to [::ffff:127.0.0.1]:3151
+INFO:QUICStream 0:Create QUICStream
+INFO:QUICStream 0:Created QUICStream
+Geode initialized successfully
+Successfully fetched 1888 unique triples from geode
+[graph-db GET] Request received
+[graph-db GET] Ensuring connection...
+[graph-db GET] Using database type: geode
+[graph-db GET] Fetching graph data...
+INFO:QUICClient:Destroy QUICClient to [::ffff:127.0.0.1]:3151
+INFO:QUICConnection 7cb522ae6d26ece8e20c5d4379676d33d2668d41:Stop QUICConnection
+INFO:QUICStream 0:Destroy QUICStream
+INFO:QUICStream 0:Destroyed QUICStream
+INFO:QUICClient:ErrorQUICConnectionLocal: QUIC Connection local error - Locally closed with application code 0
+INFO:QUICConnection 7cb522ae6d26ece8e20c5d4379676d33d2668d41:ErrorQUICConnectionLocal: QUIC Connection local error - Locally closed with application code 0
+SECURITY WARNING: insecureSkipVerify is enabled in production environment. This disables TLS certificate verification and exposes the connection to MITM attacks. Set GEODE_ALLOW_INSECURE_PRODUCTION=true to override this warning.
+INFO:QUICClient:Create QUICClient to 127.0.0.1:3151
+INFO:QUICSocket:Start QUICSocket on [::]:0
+INFO:QUICSocket:Started QUICSocket on [::]:18306
+INFO:QUICConnection ccf12b25e40c4a65d168e1e4e85f85fa4ca17ad4:Connect QUICConnection
+INFO:QUICConnection ccf12b25e40c4a65d168e1e4e85f85fa4ca17ad4:Start QUICConnection
+INFO:QUICConnection ccf12b25e40c4a65d168e1e4e85f85fa4ca17ad4:Started QUICConnection
+INFO:QUICClient:Created QUICClient to [::ffff:127.0.0.1]:3151
+INFO:QUICStream 0:Create QUICStream
+INFO:QUICStream 0:Created QUICStream
+INFO:QUICConnection 7cb522ae6d26ece8e20c5d4379676d33d2668d41:Stopped QUICConnection
+INFO:QUICSocket:Stop QUICSocket on [::]:40699
+INFO:QUICSocket:Stopped QUICSocket on [::]:40699
+INFO:QUICClient:Destroyed QUICClient to [::ffff:127.0.0.1]:3151
+Geode connection lost; reconnecting and retrying once: geode: transport query: Invalid execute response
+INFO:QUICClient:Destroy QUICClient to [::ffff:127.0.0.1]:3151
+INFO:QUICConnection ccf12b25e40c4a65d168e1e4e85f85fa4ca17ad4:Stop QUICConnection
+INFO:QUICStream 0:Destroy QUICStream
+INFO:QUICStream 0:Destroyed QUICStream
+INFO:QUICClient:ErrorQUICConnectionLocal: QUIC Connection local error - Locally closed with application code 0
+INFO:QUICConnection ccf12b25e40c4a65d168e1e4e85f85fa4ca17ad4:ErrorQUICConnectionLocal: QUIC Connection local error - Locally closed with application code 0
+INFO:QUICConnection ccf12b25e40c4a65d168e1e4e85f85fa4ca17ad4:Stopped QUICConnection
+INFO:QUICSocket:Stop QUICSocket on [::]:18306
+INFO:QUICSocket:Stopped QUICSocket on [::]:18306
+INFO:QUICClient:Destroyed QUICClient to [::ffff:127.0.0.1]:3151
+Connecting to Geode at quic://127.0.0.1:3151?insecure_tls_skip_verify=true
+SECURITY WARNING: insecureSkipVerify is enabled in production environment. This disables TLS certificate verification and exposes the connection to MITM attacks. Set GEODE_ALLOW_INSECURE_PRODUCTION=true to override this warning.
+INFO:QUICClient:Create QUICClient to 127.0.0.1:3151
+INFO:QUICSocket:Start QUICSocket on [::]:0
+INFO:QUICSocket:Started QUICSocket on [::]:60020
+INFO:QUICConnection db6e9833ec1c0f0c5755ad890c26bd22ce482a10:Connect QUICConnection
+INFO:QUICConnection db6e9833ec1c0f0c5755ad890c26bd22ce482a10:Start QUICConnection
+INFO:QUICConnection db6e9833ec1c0f0c5755ad890c26bd22ce482a10:Started QUICConnection
+INFO:QUICClient:Created QUICClient to [::ffff:127.0.0.1]:3151
+INFO:QUICStream 0:Create QUICStream
+INFO:QUICStream 0:Created QUICStream
+Geode initialized successfully
+INFO:QUICClient:Destroy QUICClient to [::ffff:127.0.0.1]:3151
+INFO:QUICConnection db6e9833ec1c0f0c5755ad890c26bd22ce482a10:Stop QUICConnection
+INFO:QUICStream 0:Destroy QUICStream
+INFO:QUICStream 0:Destroyed QUICStream
+INFO:QUICClient:ErrorQUICConnectionLocal: QUIC Connection local error - Locally closed with application code 0
+INFO:QUICConnection db6e9833ec1c0f0c5755ad890c26bd22ce482a10:ErrorQUICConnectionLocal: QUIC Connection local error - Locally closed with application code 0
+INFO:QUICConnection db6e9833ec1c0f0c5755ad890c26bd22ce482a10:Stopped QUICConnection
+INFO:QUICSocket:Stop QUICSocket on [::]:60020
+INFO:QUICSocket:Stopped QUICSocket on [::]:60020
+INFO:QUICClient:Destroyed QUICClient to [::ffff:127.0.0.1]:3151
+Geode connection lost; reconnecting and retrying once: geode: transport query: Invalid execute response
+Connecting to Geode at quic://127.0.0.1:3151?insecure_tls_skip_verify=true
+SECURITY WARNING: insecureSkipVerify is enabled in production environment. This disables TLS certificate verification and exposes the connection to MITM attacks. Set GEODE_ALLOW_INSECURE_PRODUCTION=true to override this warning.
+INFO:QUICClient:Create QUICClient to 127.0.0.1:3151
+INFO:QUICSocket:Start QUICSocket on [::]:0
+INFO:QUICSocket:Started QUICSocket on [::]:49289
+INFO:QUICConnection 7c77918030726c8b0ef5380596255e36483457cc:Connect QUICConnection
+INFO:QUICConnection 7c77918030726c8b0ef5380596255e36483457cc:Start QUICConnection
+INFO:QUICConnection 7c77918030726c8b0ef5380596255e36483457cc:Started QUICConnection
+INFO:QUICClient:Created QUICClient to [::ffff:127.0.0.1]:3151
+INFO:QUICStream 0:Create QUICStream
+INFO:QUICStream 0:Created QUICStream
+Initializing backend with graph DB type: geode
+Geode initialized successfully
+Geode initialized successfully in backend service
+Embeddings service initialized successfully using model: Qwen/Qwen3-Embedding-0.6B
+Graph query with LLM: "test", topK=40, traditional=true, model=default, provider=default
+Querying with LLM enhancement: "test", topK=40, traditional=true
+Querying backend with Geode, useTraditional: true
+Performing traditional graph query: "test"
+Extracted keywords: test
+Using Geode graph traversal for keywords: test
+[Geode] graphTraversal with keywords: test
+[graph-db GET] Got 2199 nodes, 1892 relationships
+[graph-db GET] Request received
+[graph-db GET] Ensuring connection...
+[graph-db GET] Using database type: geode
+[graph-db GET] Fetching graph data...
+INFO:QUICClient:Destroy QUICClient to [::ffff:127.0.0.1]:3151
+INFO:QUICConnection 7c77918030726c8b0ef5380596255e36483457cc:Stop QUICConnection
+INFO:QUICStream 0:Destroy QUICStream
+INFO:QUICStream 0:Destroyed QUICStream
+INFO:QUICClient:ErrorQUICConnectionLocal: QUIC Connection local error - Locally closed with application code 0
+INFO:QUICConnection 7c77918030726c8b0ef5380596255e36483457cc:ErrorQUICConnectionLocal: QUIC Connection local error - Locally closed with application code 0
+INFO:QUICConnection 7c77918030726c8b0ef5380596255e36483457cc:Stopped QUICConnection
+INFO:QUICSocket:Stop QUICSocket on [::]:49289
+INFO:QUICSocket:Stopped QUICSocket on [::]:49289
+INFO:QUICClient:Destroyed QUICClient to [::ffff:127.0.0.1]:3151
+Geode connection lost; reconnecting and retrying once: geode: transport query: Invalid execute response
+Connecting to Geode at quic://127.0.0.1:3151?insecure_tls_skip_verify=true
+SECURITY WARNING: insecureSkipVerify is enabled in production environment. This disables TLS certificate verification and exposes the connection to MITM attacks. Set GEODE_ALLOW_INSECURE_PRODUCTION=true to override this warning.
+INFO:QUICClient:Create QUICClient to 127.0.0.1:3151
+INFO:QUICSocket:Start QUICSocket on [::]:0
+INFO:QUICSocket:Started QUICSocket on [::]:14483
+INFO:QUICConnection 0031e679c71e41248d79109e3a50b7b51a914b77:Connect QUICConnection
+INFO:QUICConnection 0031e679c71e41248d79109e3a50b7b51a914b77:Start QUICConnection
+INFO:QUICConnection 0031e679c71e41248d79109e3a50b7b51a914b77:Started QUICConnection
+INFO:QUICClient:Created QUICClient to [::ffff:127.0.0.1]:3151
+INFO:QUICStream 0:Create QUICStream
+INFO:QUICStream 0:Created QUICStream
+Geode initialized successfully
+[Geode] Found 9 triples for keywords: test
+Geode graph traversal found 9 relevant triples
+Top 10 triples by confidence:
+  1. [1.000] software test activity -> controlled by -> measures of test activity (depth: 0)
+  2. [0.990] testRTDurati0n.cpp -> has version -> 0 (depth: 0)
+  3. [0.980] testRTDurati0n.cpp -> has ID Problem Report -> IAR-00182 (depth: 0)
+  4. [0.971] testRTEpoch~cpp -> has_line_count -> 1 (depth: 0)
+  5. [0.962] testRTEpoch~cpp -> has_id -> IAR-00182 (depth: 0)
+  6. [0.952] Structural Measurement -> recommends measuring -> components that have passed unit tests, but have not been integrated yet (depth: 0)
+  7. [0.943] CR -> is tracked -> through implementation and test (depth: 0)
+  8. [0.935] MDS testing -> produces -> failure observed (depth: 0)
+  9. [0.926] Recommend -> measuring -> components that have passed unit tests, but have not been integrated yet (depth: 0)
+Using top 9 triples as context for LLM
+First triple structure: {
+  "subject": "software test activity",
+  "predicate": "controlled by",
+  "object": "measures of test activity",
+  "confidence": 1,
+  "depth": 0
+}
+Using LLM: provider=ollama, model=llama3.1:8b
+Error calling LLM for answer generation: Error [AggregateError]: connect ECONNREFUSED ::1:11434; connect ECONNREFUSED 127.0.0.1:11434
+    at <unknown> (AggregateError: connect ECONNREFUSED ::1:11434; connect ECONNREFUSED 127.0.0.1:11434)
+    at el.from (.next/server/chunks/[root-of-the-server]__0rskeu5._.js:4:28699)
+    at k.<anonymous> (.next/server/chunks/[root-of-the-server]__0rskeu5._.js:6:21117)
+    at h.<computed> (.next/server/chunks/[root-of-the-server]__0rskeu5._.js:4:9449)
+    at iS.request (.next/server/chunks/[root-of-the-server]__0rskeu5._.js:6:38291)
+    at async l.queryWithLLM (.next/server/chunks/[root-of-the-server]__1kcxpbm._.js:8:746)
+    at async s (.next/server/chunks/_1g1-zbq._.js:1:557)
+    at async J (.next/server/chunks/_1g1-zbq._.js:1:4171)
+    at async Q (.next/server/chunks/_1g1-zbq._.js:1:5249)
+    at async Module.C [as handler] (.next/server/chunks/_1g1-zbq._.js:1:7306) {
+  isAxiosError: true,
+  code: 'ECONNREFUSED',
+  config: [Object: null prototype] {
+    transitional: {
+      silentJSONParsing: true,
+      forcedJSONParsing: true,
+      clarifyTimeoutError: false,
+      legacyInterceptorReqResOrdering: true,
+      advertiseZstdAcceptEncoding: false,
+      validateStatusUndefinedResolves: true
+    },
+    adapter: [ 'xhr', 'http', 'fetch' ],
+    transformRequest: [ [Function (anonymous)] ],
+    transformResponse: [ [Function (anonymous)] ],
+    timeout: 0,
+    xsrfCookieName: 'XSRF-TOKEN',
+    xsrfHeaderName: 'X-XSRF-TOKEN',
+    maxContentLength: -1,
+    maxBodyLength: -1,
+    env: { FormData: [Function], Blob: [class Blob] },
+    validateStatus: [Function: validateStatus],
+    headers: Object [AxiosHeaders] {
+      Accept: 'application/json, text/plain, */*',
+      'Content-Type': 'application/json',
+      'User-Agent': 'axios/1.19.0',
+      'Content-Length': '1041',
+      'Accept-Encoding': 'gzip, compress, deflate, br'
+    },
+    method: 'post',
+    url: 'http://localhost:11434/v1/chat/completions',
+    data: '{"model":"llama3.1:8b","messages":[{"role":"system","content":"You are a knowledgeable research assistant specializing in biomedical and scientific literature. Provide accurate, well-structured answers based on the provided context. Maintain a professional yet accessible tone, and clearly indicate when information is limited or uncertain."},{"role":"user","content":"Answer the question based on the following context from the knowledge graph.\\n\\nContext:\\nsoftware test activity controlled by measures of test activity. testRTDurati0n.cpp has version 0. testRTDurati0n.cpp has id problem report IAR-00182. testRTEpoch~cpp has line count 1. testRTEpoch~cpp has id IAR-00182. Structural Measurement recommends measuring components that have passed unit tests, but have not been integrated yet. CR is tracked through implementation and test. MDS testing produces failure observed. Recommend measuring components that have passed unit tests, but have not been integrated yet\\n\\nQuestion: test\\n\\nAnswer:"}],"temperature":0.2,"max_tokens":800}',
+    allowAbsoluteUrls: true
+  },
+  request: <ref *1> Writable {
+    _events: {
+      close: undefined,
+      error: [Function (anonymous)],
+      prefinish: undefined,
+      finish: undefined,
+      drain: undefined,
+      response: [Function (anonymous)],
+      socket: [Array],
+      abort: undefined
+    },
+    _writableState: WritableState {
+      highWaterMark: 65536,
+      length: 0,
+      corked: 0,
+      onwrite: [Function (anonymous)],
+      writelen: 0,
+      bufferedIndex: 0,
+      pendingcb: 0,
+      Symbol(kState): 17581054,
+      Symbol(kBufferedValue): null,
+      Symbol(kErroredValue): [AggregateError]
+    },
+    _maxListeners: undefined,
+    _options: {
+      maxRedirects: 21,
+      maxBodyLength: Infinity,
+      protocol: 'http:',
+      path: '/v1/chat/completions',
+      method: 'POST',
+      headers: [Object: null prototype],
+      agents: [Object],
+      auth: undefined,
+      family: undefined,
+      beforeRedirect: [Function: a6],
+      beforeRedirects: [Object: null prototype],
+      http2Options: undefined,
+      hostname: 'localhost',
+      port: '11434',
+      agent: undefined,
+      sensitiveHeaders: [],
+      insecureHTTPParser: false,
+      nativeProtocols: [Object],
+      pathname: '/v1/chat/completions'
+    },
+    _ended: true,
+    _ending: true,
+    _redirectCount: 0,
+    _redirects: [],
+    _requestBodyLength: 1041,
+    _requestBodyBuffers: [ [Object] ],
+    _eventsCount: 3,
+    _onNativeResponse: [Function (anonymous)],
+    _headerFilter: /^(?:Authorization|Proxy-Authorization|Cookie)$/i,
+    _currentRequest: ClientRequest {
+      _events: [Object: null prototype],
+      _eventsCount: 2,
+      _maxListeners: undefined,
+      outputData: [],
+      outputSize: 0,
+      writable: true,
+      destroyed: true,
+      _last: false,
+      chunkedEncoding: false,
+      shouldKeepAlive: true,
+      maxRequestsOnConnectionReached: false,
+      _defaultKeepAlive: true,
+      useChunkedEncodingByDefault: true,
+      sendDate: false,
+      _removedConnection: false,
+      _removedContLen: false,
+      _removedTE: false,
+      strictContentLength: false,
+      _contentLength: 1041,
+      _hasBody: true,
+      _trailer: '',
+      finished: true,
+      _headerSent: true,
+      _closed: false,
+      _header: 'POST /v1/chat/completions HTTP/1.1\r\n' +
+        'Accept: application/json, text/plain, */*\r\n' +
+        'Content-Type: application/json\r\n' +
+        'User-Agent: axios/1.19.0\r\n' +
+        'Content-Length: 1041\r\n' +
+        'Accept-Encoding: gzip, compress, deflate, br\r\n' +
+        'Host: localhost:11434\r\n' +
+        'Connection: keep-alive\r\n' +
+        '\r\n',
+      _keepAliveTimeout: 0,
+      _onPendingData: [Function: nop],
+      agent: [Agent],
+      socketPath: undefined,
+      method: 'POST',
+      maxHeaderSize: undefined,
+      insecureHTTPParser: false,
+      httpValidation: undefined,
+      joinDuplicateHeaders: undefined,
+      _ended: false,
+      res: null,
+      aborted: false,
+      timeoutCb: [Function: emitRequestTimeout],
+      upgradeOrConnect: false,
+      parser: null,
+      maxHeadersCount: null,
+      reusedSocket: false,
+      host: 'localhost',
+      protocol: 'http:',
+      _redirectable: [Circular *1],
+      Symbol(shapeMode): false,
+      Symbol(kCapture): false,
+      Symbol(kBytesWritten): 0,
+      Symbol(kNeedDrain): false,
+      Symbol(corked): 0,
+      Symbol(kChunkedBuffer): [],
+      Symbol(kChunkedLength): 0,
+      Symbol(kSocket): [Socket],
+      Symbol(kOutHeaders): [Object: null prototype],
+      Symbol(errored): null,
+      Symbol(kWritableFinished): false,
+      Symbol(kEndCallbacks): null,
+      Symbol(kFlushError): null,
+      Symbol(kHighWaterMark): 65536,
+      Symbol(kRejectNonStandardBodyWrites): false,
+      Symbol(kPath): '/v1/chat/completions',
+      Symbol(kProxyRewrittenToAbsolute): false,
+      Symbol(kAuthority): 'localhost:11434',
+      Symbol(kUniqueHeaders): null,
+      Symbol(kError): [AggregateError]
+    },
+    _currentUrl: 'http://localhost:11434/v1/chat/completions',
+    _timeout: null,
+    Symbol(shapeMode): true,
+    Symbol(kCapture): false
+  },
+  [cause]: AggregateError: 
+      at ignore-listed frames {
+    code: 'ECONNREFUSED',
+    [errors]: [ [Error], [Error] ]
+  }
+}
+API route - first triple: {
+  "subject": "software test activity",
+  "predicate": "controlled by",
+  "object": "measures of test activity",
+  "confidence": 1,
+  "depth": 0
+}
+Received query log request: {"query":"test","queryMode":"traditional","metrics":{"executionTimeMs":2810,"relevanceScore":0,"resultCount":9,"precision":0,"recall":0}}
+Logging query "test" with mode "traditional"
+[QueryLogger] Logging query: "test" (traditional)
+[QueryLogger] Query logged successfully to file
+Query logged successfully to file
+INFO:QUICClient:Destroy QUICClient to [::ffff:127.0.0.1]:3151
+INFO:QUICConnection 0031e679c71e41248d79109e3a50b7b51a914b77:Stop QUICConnection
+INFO:QUICStream 0:Destroy QUICStream
+INFO:QUICStream 0:Destroyed QUICStream
+INFO:QUICClient:ErrorQUICConnectionLocal: QUIC Connection local error - Locally closed with application code 0
+INFO:QUICConnection 0031e679c71e41248d79109e3a50b7b51a914b77:ErrorQUICConnectionLocal: QUIC Connection local error - Locally closed with application code 0
+INFO:QUICConnection 0031e679c71e41248d79109e3a50b7b51a914b77:Stopped QUICConnection
+INFO:QUICSocket:Stop QUICSocket on [::]:14483
+INFO:QUICSocket:Stopped QUICSocket on [::]:14483
+INFO:QUICClient:Destroyed QUICClient to [::ffff:127.0.0.1]:3151
+Geode connection lost; reconnecting and retrying once: geode: transport query: Invalid execute response
+Connecting to Geode at quic://127.0.0.1:3151?insecure_tls_skip_verify=true
+SECURITY WARNING: insecureSkipVerify is enabled in production environment. This disables TLS certificate verification and exposes the connection to MITM attacks. Set GEODE_ALLOW_INSECURE_PRODUCTION=true to override this warning.
+INFO:QUICClient:Create QUICClient to 127.0.0.1:3151
+INFO:QUICSocket:Start QUICSocket on [::]:0
+INFO:QUICSocket:Started QUICSocket on [::]:45695
+INFO:QUICConnection 791bfef6ff1a7c80afcfbced9e2db034ac38456f:Connect QUICConnection
+INFO:QUICConnection 791bfef6ff1a7c80afcfbced9e2db034ac38456f:Start QUICConnection
+INFO:QUICConnection 791bfef6ff1a7c80afcfbced9e2db034ac38456f:Started QUICConnection
+INFO:QUICClient:Created QUICClient to [::ffff:127.0.0.1]:3151
+INFO:QUICStream 0:Create QUICStream
+INFO:QUICStream 0:Created QUICStream
+Geode initialized successfully
+[graph-db GET] Got 2199 nodes, 1892 relationships
+INFO:QUICClient:Destroy QUICClient to [::ffff:127.0.0.1]:3151
+INFO:QUICConnection 791bfef6ff1a7c80afcfbced9e2db034ac38456f:Stop QUICConnection
+INFO:QUICStream 0:Destroy QUICStream
+INFO:QUICStream 0:Destroyed QUICStream
+INFO:QUICClient:ErrorQUICConnectionLocal: QUIC Connection local error - Locally closed with application code 0
+INFO:QUICConnection 791bfef6ff1a7c80afcfbced9e2db034ac38456f:ErrorQUICConnectionLocal: QUIC Connection local error - Locally closed with application code 0
+INFO:QUICConnection 791bfef6ff1a7c80afcfbced9e2db034ac38456f:Stopped QUICConnection
+INFO:QUICSocket:Stop QUICSocket on [::]:45695
+INFO:QUICSocket:Stopped QUICSocket on [::]:45695
+INFO:QUICClient:Destroyed QUICClient to [::ffff:127.0.0.1]:3151
+SECURITY WARNING: insecureSkipVerify is enabled in production environment. This disables TLS certificate verification and exposes the connection to MITM attacks. Set GEODE_ALLOW_INSECURE_PRODUCTION=true to override this warning.
+INFO:QUICClient:Create QUICClient to 127.0.0.1:3151
+INFO:QUICSocket:Start QUICSocket on [::]:0
+INFO:QUICSocket:Started QUICSocket on [::]:30051
+INFO:QUICConnection 8eea15387b67c13c4268484886d98e4819c099c3:Connect QUICConnection
+INFO:QUICConnection 8eea15387b67c13c4268484886d98e4819c099c3:Start QUICConnection
+INFO:QUICConnection 8eea15387b67c13c4268484886d98e4819c099c3:Started QUICConnection
+INFO:QUICClient:Created QUICClient to [::ffff:127.0.0.1]:3151
+INFO:QUICStream 0:Create QUICStream
+INFO:QUICStream 0:Created QUICStream
+INFO:QUICClient:Destroy QUICClient to [::ffff:127.0.0.1]:3151
+INFO:QUICConnection 8eea15387b67c13c4268484886d98e4819c099c3:Stop QUICConnection
+INFO:QUICStream 0:Destroy QUICStream
+INFO:QUICStream 0:Destroyed QUICStream
+INFO:QUICClient:ErrorQUICConnectionLocal: QUIC Connection local error - Locally closed with application code 0
+INFO:QUICConnection 8eea15387b67c13c4268484886d98e4819c099c3:ErrorQUICConnectionLocal: QUIC Connection local error - Locally closed with application code 0
+INFO:QUICConnection 8eea15387b67c13c4268484886d98e4819c099c3:Stopped QUICConnection
+INFO:QUICSocket:Stop QUICSocket on [::]:30051
+INFO:QUICSocket:Stopped QUICSocket on [::]:30051
+INFO:QUICClient:Destroyed QUICClient to [::ffff:127.0.0.1]:3151
+Geode connection lost; reconnecting and retrying once: geode: transport query: Invalid execute response
+Connecting to Geode at quic://127.0.0.1:3151?insecure_tls_skip_verify=true
+SECURITY WARNING: insecureSkipVerify is enabled in production environment. This disables TLS certificate verification and exposes the connection to MITM attacks. Set GEODE_ALLOW_INSECURE_PRODUCTION=true to override this warning.
+INFO:QUICClient:Create QUICClient to 127.0.0.1:3151
+INFO:QUICSocket:Start QUICSocket on [::]:0
+INFO:QUICSocket:Started QUICSocket on [::]:65464
+INFO:QUICConnection afe873ad7efaacd7951d78d9980ccb9c4018d203:Connect QUICConnection
+INFO:QUICConnection afe873ad7efaacd7951d78d9980ccb9c4018d203:Start QUICConnection
+INFO:QUICConnection afe873ad7efaacd7951d78d9980ccb9c4018d203:Started QUICConnection
+INFO:QUICClient:Created QUICClient to [::ffff:127.0.0.1]:3151
+INFO:QUICStream 0:Create QUICStream
+INFO:QUICStream 0:Created QUICStream
+Geode initialized successfully
+INFO:QUICClient:Destroy QUICClient to [::ffff:127.0.0.1]:3151
+INFO:QUICConnection afe873ad7efaacd7951d78d9980ccb9c4018d203:Stop QUICConnection
+INFO:QUICStream 0:Destroy QUICStream
+INFO:QUICStream 0:Destroyed QUICStream
+INFO:QUICClient:ErrorQUICConnectionLocal: QUIC Connection local error - Locally closed with application code 0
+INFO:QUICConnection afe873ad7efaacd7951d78d9980ccb9c4018d203:ErrorQUICConnectionLocal: QUIC Connection local error - Locally closed with application code 0
+INFO:QUICConnection afe873ad7efaacd7951d78d9980ccb9c4018d203:Stopped QUICConnection
+INFO:QUICSocket:Stop QUICSocket on [::]:65464
+INFO:QUICSocket:Stopped QUICSocket on [::]:65464
+INFO:QUICClient:Destroyed QUICClient to [::ffff:127.0.0.1]:3151
+Getting query logs from file
+[QueryLogger] Getting query logs with limit: 25
+Found 6 query logs from file-based logger
+SECURITY WARNING: insecureSkipVerify is enabled in production environment. This disables TLS certificate verification and exposes the connection to MITM attacks. Set GEODE_ALLOW_INSECURE_PRODUCTION=true to override this warning.
+INFO:QUICClient:Create QUICClient to 127.0.0.1:3151
+INFO:QUICSocket:Start QUICSocket on [::]:0
+INFO:QUICSocket:Started QUICSocket on [::]:50543
+INFO:QUICConnection 99b0891ef9dc2d9cd7c0b99d946a76ea6b69ee4e:Connect QUICConnection
+INFO:QUICConnection 99b0891ef9dc2d9cd7c0b99d946a76ea6b69ee4e:Start QUICConnection
+INFO:QUICConnection 99b0891ef9dc2d9cd7c0b99d946a76ea6b69ee4e:Started QUICConnection
+INFO:QUICClient:Created QUICClient to [::ffff:127.0.0.1]:3151
+INFO:QUICStream 0:Create QUICStream
+INFO:QUICStream 0:Created QUICStream
+INFO:QUICClient:ErrorQUICConnectionPeer: QUIC Connection peer error - Peer closed with transport code 0
+INFO:QUICConnection 99b0891ef9dc2d9cd7c0b99d946a76ea6b69ee4e:ErrorQUICConnectionPeer: QUIC Connection peer error - Peer closed with transport code 0
+INFO:QUICConnection 99b0891ef9dc2d9cd7c0b99d946a76ea6b69ee4e:Stop QUICConnection
+INFO:QUICStream 0:Destroy QUICStream
+INFO:QUICStream 0:Destroyed QUICStream
+INFO:QUICConnection 99b0891ef9dc2d9cd7c0b99d946a76ea6b69ee4e:Stopped QUICConnection
+INFO:QUICSocket:Stop QUICSocket on [::]:50543
+INFO:QUICSocket:Stopped QUICSocket on [::]:50543
+INFO:QUICClient:Destroy QUICClient
+INFO:QUICClient:Destroyed QUICClient
+[graph-db GET] Request received
+[graph-db GET] Ensuring connection...
+[graph-db GET] Using database type: geode
+[graph-db GET] Fetching graph data...
+Geode connection lost; reconnecting and retrying once: geode: transport sendProto to 127.0.0.1:3151: Peer closed with transport code 0
+Connecting to Geode at quic://127.0.0.1:3151?insecure_tls_skip_verify=true
+SECURITY WARNING: insecureSkipVerify is enabled in production environment. This disables TLS certificate verification and exposes the connection to MITM attacks. Set GEODE_ALLOW_INSECURE_PRODUCTION=true to override this warning.
+INFO:QUICClient:Create QUICClient to 127.0.0.1:3151
+INFO:QUICSocket:Start QUICSocket on [::]:0
+INFO:QUICSocket:Started QUICSocket on [::]:64535
+INFO:QUICConnection 38f29d64fcf5263edfa08f83c74fd4afaf038ad0:Connect QUICConnection
+INFO:QUICConnection 38f29d64fcf5263edfa08f83c74fd4afaf038ad0:Start QUICConnection
+INFO:QUICConnection 38f29d64fcf5263edfa08f83c74fd4afaf038ad0:Started QUICConnection
+INFO:QUICClient:Created QUICClient to [::ffff:127.0.0.1]:3151
+INFO:QUICStream 0:Create QUICStream
+INFO:QUICStream 0:Created QUICStream
+Geode initialized successfully
+SECURITY WARNING: insecureSkipVerify is enabled in production environment. This disables TLS certificate verification and exposes the connection to MITM attacks. Set GEODE_ALLOW_INSECURE_PRODUCTION=true to override this warning.
+INFO:QUICClient:Create QUICClient to 127.0.0.1:3151
+INFO:QUICSocket:Start QUICSocket on [::]:0
+INFO:QUICSocket:Started QUICSocket on [::]:33904
+INFO:QUICConnection 5ab34a03f2604f6d366f61b2660c454483734c14:Connect QUICConnection
+INFO:QUICConnection 5ab34a03f2604f6d366f61b2660c454483734c14:Start QUICConnection
+INFO:QUICConnection 5ab34a03f2604f6d366f61b2660c454483734c14:Started QUICConnection
+INFO:QUICClient:Created QUICClient to [::ffff:127.0.0.1]:3151
+INFO:QUICStream 0:Create QUICStream
+INFO:QUICStream 0:Created QUICStream
+Fetching all triples from geode...
+INFO:QUICClient:Destroy QUICClient to [::ffff:127.0.0.1]:3151
+INFO:QUICConnection 38f29d64fcf5263edfa08f83c74fd4afaf038ad0:Stop QUICConnection
+INFO:QUICStream 0:Destroy QUICStream
+INFO:QUICStream 0:Destroyed QUICStream
+INFO:QUICClient:ErrorQUICConnectionLocal: QUIC Connection local error - Locally closed with application code 0
+INFO:QUICConnection 38f29d64fcf5263edfa08f83c74fd4afaf038ad0:ErrorQUICConnectionLocal: QUIC Connection local error - Locally closed with application code 0
+INFO:QUICConnection 38f29d64fcf5263edfa08f83c74fd4afaf038ad0:Stopped QUICConnection
+INFO:QUICSocket:Stop QUICSocket on [::]:64535
+INFO:QUICSocket:Stopped QUICSocket on [::]:64535
+INFO:QUICClient:Destroyed QUICClient to [::ffff:127.0.0.1]:3151
+Geode connection lost; reconnecting and retrying once: geode: transport query: Invalid execute response
+INFO:QUICClient:Destroy QUICClient to [::ffff:127.0.0.1]:3151
+INFO:QUICConnection 5ab34a03f2604f6d366f61b2660c454483734c14:Stop QUICConnection
+INFO:QUICStream 0:Destroy QUICStream
+INFO:QUICStream 0:Destroyed QUICStream
+INFO:QUICClient:ErrorQUICConnectionLocal: QUIC Connection local error - Locally closed with application code 0
+INFO:QUICConnection 5ab34a03f2604f6d366f61b2660c454483734c14:ErrorQUICConnectionLocal: QUIC Connection local error - Locally closed with application code 0
+INFO:QUICConnection 5ab34a03f2604f6d366f61b2660c454483734c14:Stopped QUICConnection
+INFO:QUICSocket:Stop QUICSocket on [::]:33904
+INFO:QUICSocket:Stopped QUICSocket on [::]:33904
+INFO:QUICClient:Destroyed QUICClient to [::ffff:127.0.0.1]:3151
+Connecting to Geode at quic://127.0.0.1:3151?insecure_tls_skip_verify=true
+SECURITY WARNING: insecureSkipVerify is enabled in production environment. This disables TLS certificate verification and exposes the connection to MITM attacks. Set GEODE_ALLOW_INSECURE_PRODUCTION=true to override this warning.
+INFO:QUICClient:Create QUICClient to 127.0.0.1:3151
+INFO:QUICSocket:Start QUICSocket on [::]:0
+INFO:QUICSocket:Started QUICSocket on [::]:53095
+INFO:QUICConnection 35f6fef77d219940e3c1d3947ec24e54884eb816:Connect QUICConnection
+INFO:QUICConnection 35f6fef77d219940e3c1d3947ec24e54884eb816:Start QUICConnection
+INFO:QUICConnection 35f6fef77d219940e3c1d3947ec24e54884eb816:Started QUICConnection
+INFO:QUICClient:Created QUICClient to [::ffff:127.0.0.1]:3151
+INFO:QUICStream 0:Create QUICStream
+INFO:QUICStream 0:Created QUICStream
+Geode initialized successfully
+INFO:QUICClient:Destroy QUICClient to [::ffff:127.0.0.1]:3151
+INFO:QUICConnection 35f6fef77d219940e3c1d3947ec24e54884eb816:Stop QUICConnection
+INFO:QUICStream 0:Destroy QUICStream
+INFO:QUICStream 0:Destroyed QUICStream
+INFO:QUICClient:ErrorQUICConnectionLocal: QUIC Connection local error - Locally closed with application code 0
+INFO:QUICConnection 35f6fef77d219940e3c1d3947ec24e54884eb816:ErrorQUICConnectionLocal: QUIC Connection local error - Locally closed with application code 0
+INFO:QUICConnection 35f6fef77d219940e3c1d3947ec24e54884eb816:Stopped QUICConnection
+INFO:QUICSocket:Stop QUICSocket on [::]:53095
+INFO:QUICSocket:Stopped QUICSocket on [::]:53095
+INFO:QUICClient:Destroyed QUICClient to [::ffff:127.0.0.1]:3151
+Geode connection lost; reconnecting and retrying once: geode: transport query: Invalid execute response
+Connecting to Geode at quic://127.0.0.1:3151?insecure_tls_skip_verify=true
+SECURITY WARNING: insecureSkipVerify is enabled in production environment. This disables TLS certificate verification and exposes the connection to MITM attacks. Set GEODE_ALLOW_INSECURE_PRODUCTION=true to override this warning.
+INFO:QUICClient:Create QUICClient to 127.0.0.1:3151
+INFO:QUICSocket:Start QUICSocket on [::]:0
+INFO:QUICSocket:Started QUICSocket on [::]:58918
+INFO:QUICConnection 4962ceb114250fbb1058a173e8fa508fa35de104:Connect QUICConnection
+INFO:QUICConnection 4962ceb114250fbb1058a173e8fa508fa35de104:Start QUICConnection
+INFO:QUICConnection 4962ceb114250fbb1058a173e8fa508fa35de104:Started QUICConnection
+INFO:QUICClient:Created QUICClient to [::ffff:127.0.0.1]:3151
+INFO:QUICStream 0:Create QUICStream
+INFO:QUICStream 0:Created QUICStream
+Geode initialized successfully
+[graph-db GET] Got 2199 nodes, 1892 relationships
+INFO:QUICClient:Destroy QUICClient to [::ffff:127.0.0.1]:3151
+INFO:QUICConnection 4962ceb114250fbb1058a173e8fa508fa35de104:Stop QUICConnection
+INFO:QUICStream 0:Destroy QUICStream
+INFO:QUICStream 0:Destroyed QUICStream
+INFO:QUICClient:ErrorQUICConnectionLocal: QUIC Connection local error - Locally closed with application code 0
+INFO:QUICConnection 4962ceb114250fbb1058a173e8fa508fa35de104:ErrorQUICConnectionLocal: QUIC Connection local error - Locally closed with application code 0
+INFO:QUICConnection 4962ceb114250fbb1058a173e8fa508fa35de104:Stopped QUICConnection
+INFO:QUICSocket:Stop QUICSocket on [::]:58918
+INFO:QUICSocket:Stopped QUICSocket on [::]:58918
+INFO:QUICClient:Destroyed QUICClient to [::ffff:127.0.0.1]:3151
+Geode connection lost; reconnecting and retrying once: geode: transport query: Invalid execute response
+Connecting to Geode at quic://127.0.0.1:3151?insecure_tls_skip_verify=true
+SECURITY WARNING: insecureSkipVerify is enabled in production environment. This disables TLS certificate verification and exposes the connection to MITM attacks. Set GEODE_ALLOW_INSECURE_PRODUCTION=true to override this warning.
+INFO:QUICClient:Create QUICClient to 127.0.0.1:3151
+INFO:QUICSocket:Start QUICSocket on [::]:0
+INFO:QUICSocket:Started QUICSocket on [::]:25770
+INFO:QUICConnection 19dd854f7963ce36e8012d582e05a0e75a055c9b:Connect QUICConnection
+INFO:QUICConnection 19dd854f7963ce36e8012d582e05a0e75a055c9b:Start QUICConnection
+INFO:QUICConnection 19dd854f7963ce36e8012d582e05a0e75a055c9b:Started QUICConnection
+INFO:QUICClient:Created QUICClient to [::ffff:127.0.0.1]:3151
+INFO:QUICStream 0:Create QUICStream
+INFO:QUICStream 0:Created QUICStream
+Geode initialized successfully
+Successfully fetched 1888 unique triples from geode
+[graph-db GET] Request received
+[graph-db GET] Ensuring connection...
+[graph-db GET] Using database type: geode
+[graph-db GET] Fetching graph data...
+INFO:QUICClient:Destroy QUICClient to [::ffff:127.0.0.1]:3151
+INFO:QUICConnection 19dd854f7963ce36e8012d582e05a0e75a055c9b:Stop QUICConnection
+INFO:QUICStream 0:Destroy QUICStream
+INFO:QUICStream 0:Destroyed QUICStream
+INFO:QUICClient:ErrorQUICConnectionLocal: QUIC Connection local error - Locally closed with application code 0
+INFO:QUICConnection 19dd854f7963ce36e8012d582e05a0e75a055c9b:ErrorQUICConnectionLocal: QUIC Connection local error - Locally closed with application code 0
+SECURITY WARNING: insecureSkipVerify is enabled in production environment. This disables TLS certificate verification and exposes the connection to MITM attacks. Set GEODE_ALLOW_INSECURE_PRODUCTION=true to override this warning.
+INFO:QUICClient:Create QUICClient to 127.0.0.1:3151
+INFO:QUICSocket:Start QUICSocket on [::]:0
+INFO:QUICSocket:Started QUICSocket on [::]:60990
+INFO:QUICConnection 534fb140e8c81112dfd7dbf7cdf89e1412b1dcb7:Connect QUICConnection
+INFO:QUICConnection 534fb140e8c81112dfd7dbf7cdf89e1412b1dcb7:Start QUICConnection
+INFO:QUICConnection 534fb140e8c81112dfd7dbf7cdf89e1412b1dcb7:Started QUICConnection
+INFO:QUICClient:Created QUICClient to [::ffff:127.0.0.1]:3151
+INFO:QUICStream 0:Create QUICStream
+INFO:QUICStream 0:Created QUICStream
+INFO:QUICConnection 19dd854f7963ce36e8012d582e05a0e75a055c9b:Stopped QUICConnection
+INFO:QUICSocket:Stop QUICSocket on [::]:25770
+INFO:QUICSocket:Stopped QUICSocket on [::]:25770
+INFO:QUICClient:Destroyed QUICClient to [::ffff:127.0.0.1]:3151
+Geode connection lost; reconnecting and retrying once: geode: transport query: Invalid execute response
+Connecting to Geode at quic://127.0.0.1:3151?insecure_tls_skip_verify=true
+SECURITY WARNING: insecureSkipVerify is enabled in production environment. This disables TLS certificate verification and exposes the connection to MITM attacks. Set GEODE_ALLOW_INSECURE_PRODUCTION=true to override this warning.
+INFO:QUICClient:Create QUICClient to 127.0.0.1:3151
+INFO:QUICSocket:Start QUICSocket on [::]:0
+INFO:QUICSocket:Started QUICSocket on [::]:27266
+INFO:QUICConnection 190b91ffef510bf8791090a7f6854dd1bbbe05df:Connect QUICConnection
+INFO:QUICConnection 190b91ffef510bf8791090a7f6854dd1bbbe05df:Start QUICConnection
+INFO:QUICConnection 190b91ffef510bf8791090a7f6854dd1bbbe05df:Started QUICConnection
+INFO:QUICClient:Created QUICClient to [::ffff:127.0.0.1]:3151
+INFO:QUICStream 0:Create QUICStream
+INFO:QUICStream 0:Created QUICStream
+Geode initialized successfully
+SECURITY WARNING: insecureSkipVerify is enabled in production environment. This disables TLS certificate verification and exposes the connection to MITM attacks. Set GEODE_ALLOW_INSECURE_PRODUCTION=true to override this warning.
+INFO:QUICClient:Create QUICClient to 127.0.0.1:3151
+INFO:QUICSocket:Start QUICSocket on [::]:0
+INFO:QUICSocket:Started QUICSocket on [::]:9454
+INFO:QUICConnection 53c0f889b55551c8baa616a709f7761107325b75:Connect QUICConnection
+INFO:QUICConnection 53c0f889b55551c8baa616a709f7761107325b75:Start QUICConnection
+INFO:QUICConnection 53c0f889b55551c8baa616a709f7761107325b75:Started QUICConnection
+INFO:QUICClient:Created QUICClient to [::ffff:127.0.0.1]:3151
+INFO:QUICStream 0:Create QUICStream
+INFO:QUICStream 0:Created QUICStream
+INFO:QUICClient:Destroy QUICClient to [::ffff:127.0.0.1]:3151
+INFO:QUICConnection 190b91ffef510bf8791090a7f6854dd1bbbe05df:Stop QUICConnection
+INFO:QUICStream 0:Destroy QUICStream
+INFO:QUICStream 0:Destroyed QUICStream
+INFO:QUICClient:ErrorQUICConnectionLocal: QUIC Connection local error - Locally closed with application code 0
+INFO:QUICConnection 190b91ffef510bf8791090a7f6854dd1bbbe05df:ErrorQUICConnectionLocal: QUIC Connection local error - Locally closed with application code 0
+INFO:QUICConnection 190b91ffef510bf8791090a7f6854dd1bbbe05df:Stopped QUICConnection
+INFO:QUICSocket:Stop QUICSocket on [::]:27266
+INFO:QUICSocket:Stopped QUICSocket on [::]:27266
+INFO:QUICClient:Destroyed QUICClient to [::ffff:127.0.0.1]:3151
+Geode connection lost; reconnecting and retrying once: geode: transport query: Invalid execute response
+INFO:QUICClient:Destroy QUICClient to [::ffff:127.0.0.1]:3151
+INFO:QUICConnection 53c0f889b55551c8baa616a709f7761107325b75:Stop QUICConnection
+INFO:QUICStream 0:Destroy QUICStream
+INFO:QUICStream 0:Destroyed QUICStream
+INFO:QUICClient:ErrorQUICConnectionLocal: QUIC Connection local error - Locally closed with application code 0
+INFO:QUICConnection 53c0f889b55551c8baa616a709f7761107325b75:ErrorQUICConnectionLocal: QUIC Connection local error - Locally closed with application code 0
+Connecting to Geode at quic://127.0.0.1:3151?insecure_tls_skip_verify=true
+SECURITY WARNING: insecureSkipVerify is enabled in production environment. This disables TLS certificate verification and exposes the connection to MITM attacks. Set GEODE_ALLOW_INSECURE_PRODUCTION=true to override this warning.
+INFO:QUICClient:Create QUICClient to 127.0.0.1:3151
+INFO:QUICSocket:Start QUICSocket on [::]:0
+INFO:QUICSocket:Started QUICSocket on [::]:63383
+INFO:QUICConnection 5a3d1f203ba5e6c152ad45ee1bf2cf35e5dac7e8:Connect QUICConnection
+INFO:QUICConnection 5a3d1f203ba5e6c152ad45ee1bf2cf35e5dac7e8:Start QUICConnection
+INFO:QUICConnection 5a3d1f203ba5e6c152ad45ee1bf2cf35e5dac7e8:Started QUICConnection
+INFO:QUICClient:Created QUICClient to [::ffff:127.0.0.1]:3151
+INFO:QUICStream 0:Create QUICStream
+INFO:QUICStream 0:Created QUICStream
+INFO:QUICConnection 53c0f889b55551c8baa616a709f7761107325b75:Stopped QUICConnection
+INFO:QUICSocket:Stop QUICSocket on [::]:9454
+INFO:QUICSocket:Stopped QUICSocket on [::]:9454
+INFO:QUICClient:Destroyed QUICClient to [::ffff:127.0.0.1]:3151
+Geode initialized successfully
+SECURITY WARNING: insecureSkipVerify is enabled in production environment. This disables TLS certificate verification and exposes the connection to MITM attacks. Set GEODE_ALLOW_INSECURE_PRODUCTION=true to override this warning.
+INFO:QUICClient:Create QUICClient to 127.0.0.1:3151
+INFO:QUICSocket:Start QUICSocket on [::]:0
+INFO:QUICSocket:Started QUICSocket on [::]:1372
+INFO:QUICConnection 7476a85b138cfd3ce9313b3da07128135fafeba0:Connect QUICConnection
+INFO:QUICConnection 7476a85b138cfd3ce9313b3da07128135fafeba0:Start QUICConnection
+INFO:QUICConnection 7476a85b138cfd3ce9313b3da07128135fafeba0:Started QUICConnection
+INFO:QUICClient:Created QUICClient to [::ffff:127.0.0.1]:3151
+INFO:QUICStream 0:Create QUICStream
+INFO:QUICStream 0:Created QUICStream
+[graph-db GET] Got 2199 nodes, 1892 relationships
+[graph-db GET] Request received
+[graph-db GET] Ensuring connection...
+[graph-db GET] Using database type: geode
+[graph-db GET] Fetching graph data...
+INFO:QUICClient:Destroy QUICClient to [::ffff:127.0.0.1]:3151
+INFO:QUICConnection 5a3d1f203ba5e6c152ad45ee1bf2cf35e5dac7e8:Stop QUICConnection
+INFO:QUICStream 0:Destroy QUICStream
+INFO:QUICStream 0:Destroyed QUICStream
+INFO:QUICClient:ErrorQUICConnectionLocal: QUIC Connection local error - Locally closed with application code 0
+INFO:QUICConnection 5a3d1f203ba5e6c152ad45ee1bf2cf35e5dac7e8:ErrorQUICConnectionLocal: QUIC Connection local error - Locally closed with application code 0
+INFO:QUICConnection 5a3d1f203ba5e6c152ad45ee1bf2cf35e5dac7e8:Stopped QUICConnection
+INFO:QUICSocket:Stop QUICSocket on [::]:63383
+INFO:QUICSocket:Stopped QUICSocket on [::]:63383
+INFO:QUICClient:Destroyed QUICClient to [::ffff:127.0.0.1]:3151
+Geode connection lost; reconnecting and retrying once: geode: transport query: Invalid execute response
+INFO:QUICClient:Destroy QUICClient to [::ffff:127.0.0.1]:3151
+INFO:QUICConnection 7476a85b138cfd3ce9313b3da07128135fafeba0:Stop QUICConnection
+INFO:QUICStream 0:Destroy QUICStream
+INFO:QUICStream 0:Destroyed QUICStream
+INFO:QUICClient:ErrorQUICConnectionLocal: QUIC Connection local error - Locally closed with application code 0
+INFO:QUICConnection 7476a85b138cfd3ce9313b3da07128135fafeba0:ErrorQUICConnectionLocal: QUIC Connection local error - Locally closed with application code 0
+INFO:QUICConnection 7476a85b138cfd3ce9313b3da07128135fafeba0:Stopped QUICConnection
+INFO:QUICSocket:Stop QUICSocket on [::]:1372
+INFO:QUICSocket:Stopped QUICSocket on [::]:1372
+INFO:QUICClient:Destroyed QUICClient to [::ffff:127.0.0.1]:3151
+Connecting to Geode at quic://127.0.0.1:3151?insecure_tls_skip_verify=true
+SECURITY WARNING: insecureSkipVerify is enabled in production environment. This disables TLS certificate verification and exposes the connection to MITM attacks. Set GEODE_ALLOW_INSECURE_PRODUCTION=true to override this warning.
+INFO:QUICClient:Create QUICClient to 127.0.0.1:3151
+INFO:QUICSocket:Start QUICSocket on [::]:0
+INFO:QUICSocket:Started QUICSocket on [::]:57939
+INFO:QUICConnection 82709dd6cb9323af907cd2fc3968af0e46a75041:Connect QUICConnection
+INFO:QUICConnection 82709dd6cb9323af907cd2fc3968af0e46a75041:Start QUICConnection
+INFO:QUICConnection 82709dd6cb9323af907cd2fc3968af0e46a75041:Started QUICConnection
+INFO:QUICClient:Created QUICClient to [::ffff:127.0.0.1]:3151
+INFO:QUICStream 0:Create QUICStream
+INFO:QUICStream 0:Created QUICStream
+Geode initialized successfully
+SECURITY WARNING: insecureSkipVerify is enabled in production environment. This disables TLS certificate verification and exposes the connection to MITM attacks. Set GEODE_ALLOW_INSECURE_PRODUCTION=true to override this warning.
+INFO:QUICClient:Create QUICClient to 127.0.0.1:3151
+INFO:QUICSocket:Start QUICSocket on [::]:0
+INFO:QUICSocket:Started QUICSocket on [::]:35137
+INFO:QUICConnection 023df14c1014b49c14e2a15f2ae82bf5c161f6f9:Connect QUICConnection
+INFO:QUICConnection 023df14c1014b49c14e2a15f2ae82bf5c161f6f9:Start QUICConnection
+INFO:QUICConnection 023df14c1014b49c14e2a15f2ae82bf5c161f6f9:Started QUICConnection
+INFO:QUICClient:Created QUICClient to [::ffff:127.0.0.1]:3151
+INFO:QUICStream 0:Create QUICStream
+INFO:QUICStream 0:Created QUICStream
+INFO:QUICClient:Destroy QUICClient to [::ffff:127.0.0.1]:3151
+INFO:QUICConnection 82709dd6cb9323af907cd2fc3968af0e46a75041:Stop QUICConnection
+INFO:QUICStream 0:Destroy QUICStream
+INFO:QUICStream 0:Destroyed QUICStream
+INFO:QUICClient:ErrorQUICConnectionLocal: QUIC Connection local error - Locally closed with application code 0
+INFO:QUICConnection 82709dd6cb9323af907cd2fc3968af0e46a75041:ErrorQUICConnectionLocal: QUIC Connection local error - Locally closed with application code 0
+INFO:QUICConnection 82709dd6cb9323af907cd2fc3968af0e46a75041:Stopped QUICConnection
+INFO:QUICSocket:Stop QUICSocket on [::]:57939
+INFO:QUICSocket:Stopped QUICSocket on [::]:57939
+INFO:QUICClient:Destroyed QUICClient to [::ffff:127.0.0.1]:3151
+Geode connection lost; reconnecting and retrying once: geode: transport query: Invalid execute response
+INFO:QUICClient:Destroy QUICClient to [::ffff:127.0.0.1]:3151
+INFO:QUICConnection 023df14c1014b49c14e2a15f2ae82bf5c161f6f9:Stop QUICConnection
+INFO:QUICStream 0:Destroy QUICStream
+INFO:QUICStream 0:Destroyed QUICStream
+INFO:QUICClient:ErrorQUICConnectionLocal: QUIC Connection local error - Locally closed with application code 0
+INFO:QUICConnection 023df14c1014b49c14e2a15f2ae82bf5c161f6f9:ErrorQUICConnectionLocal: QUIC Connection local error - Locally closed with application code 0
+INFO:QUICConnection 023df14c1014b49c14e2a15f2ae82bf5c161f6f9:Stopped QUICConnection
+INFO:QUICSocket:Stop QUICSocket on [::]:35137
+INFO:QUICSocket:Stopped QUICSocket on [::]:35137
+INFO:QUICClient:Destroyed QUICClient to [::ffff:127.0.0.1]:3151
+Connecting to Geode at quic://127.0.0.1:3151?insecure_tls_skip_verify=true
+SECURITY WARNING: insecureSkipVerify is enabled in production environment. This disables TLS certificate verification and exposes the connection to MITM attacks. Set GEODE_ALLOW_INSECURE_PRODUCTION=true to override this warning.
+INFO:QUICClient:Create QUICClient to 127.0.0.1:3151
+INFO:QUICSocket:Start QUICSocket on [::]:0
+INFO:QUICSocket:Started QUICSocket on [::]:42284
+INFO:QUICConnection 5ed7e9553ea6310ff6e14137d12ae613ccc8b8c7:Connect QUICConnection
+INFO:QUICConnection 5ed7e9553ea6310ff6e14137d12ae613ccc8b8c7:Start QUICConnection
+INFO:QUICConnection 5ed7e9553ea6310ff6e14137d12ae613ccc8b8c7:Started QUICConnection
+INFO:QUICClient:Created QUICClient to [::ffff:127.0.0.1]:3151
+INFO:QUICStream 0:Create QUICStream
+INFO:QUICStream 0:Created QUICStream
+Geode initialized successfully
+[graph-db GET] Got 2199 nodes, 1892 relationships
+[graph-db GET] Request received
+[graph-db GET] Ensuring connection...
+[graph-db GET] Using database type: geode
+[graph-db GET] Fetching graph data...
+INFO:QUICClient:Destroy QUICClient to [::ffff:127.0.0.1]:3151
+INFO:QUICConnection 5ed7e9553ea6310ff6e14137d12ae613ccc8b8c7:Stop QUICConnection
+INFO:QUICStream 0:Destroy QUICStream
+INFO:QUICStream 0:Destroyed QUICStream
+INFO:QUICClient:ErrorQUICConnectionLocal: QUIC Connection local error - Locally closed with application code 0
+INFO:QUICConnection 5ed7e9553ea6310ff6e14137d12ae613ccc8b8c7:ErrorQUICConnectionLocal: QUIC Connection local error - Locally closed with application code 0
+INFO:QUICConnection 5ed7e9553ea6310ff6e14137d12ae613ccc8b8c7:Stopped QUICConnection
+INFO:QUICSocket:Stop QUICSocket on [::]:42284
+INFO:QUICSocket:Stopped QUICSocket on [::]:42284
+INFO:QUICClient:Destroyed QUICClient to [::ffff:127.0.0.1]:3151
+Geode connection lost; reconnecting and retrying once: geode: transport query: Invalid execute response
+Connecting to Geode at quic://127.0.0.1:3151?insecure_tls_skip_verify=true
+SECURITY WARNING: insecureSkipVerify is enabled in production environment. This disables TLS certificate verification and exposes the connection to MITM attacks. Set GEODE_ALLOW_INSECURE_PRODUCTION=true to override this warning.
+INFO:QUICClient:Create QUICClient to 127.0.0.1:3151
+INFO:QUICSocket:Start QUICSocket on [::]:0
+INFO:QUICSocket:Started QUICSocket on [::]:28589
+INFO:QUICConnection ca876eeaa2204fc50a5623fa3e7413711b84b71f:Connect QUICConnection
+INFO:QUICConnection ca876eeaa2204fc50a5623fa3e7413711b84b71f:Start QUICConnection
+INFO:QUICConnection ca876eeaa2204fc50a5623fa3e7413711b84b71f:Started QUICConnection
+INFO:QUICClient:Created QUICClient to [::ffff:127.0.0.1]:3151
+INFO:QUICStream 0:Create QUICStream
+INFO:QUICStream 0:Created QUICStream
+Geode initialized successfully
+INFO:QUICClient:Destroy QUICClient to [::ffff:127.0.0.1]:3151
+INFO:QUICConnection ca876eeaa2204fc50a5623fa3e7413711b84b71f:Stop QUICConnection
+INFO:QUICStream 0:Destroy QUICStream
+INFO:QUICStream 0:Destroyed QUICStream
+INFO:QUICClient:ErrorQUICConnectionLocal: QUIC Connection local error - Locally closed with application code 0
+INFO:QUICConnection ca876eeaa2204fc50a5623fa3e7413711b84b71f:ErrorQUICConnectionLocal: QUIC Connection local error - Locally closed with application code 0
+INFO:QUICConnection ca876eeaa2204fc50a5623fa3e7413711b84b71f:Stopped QUICConnection
+INFO:QUICSocket:Stop QUICSocket on [::]:28589
+INFO:QUICSocket:Stopped QUICSocket on [::]:28589
+INFO:QUICClient:Destroyed QUICClient to [::ffff:127.0.0.1]:3151
+Geode connection lost; reconnecting and retrying once: geode: transport query: Invalid execute response
+Connecting to Geode at quic://127.0.0.1:3151?insecure_tls_skip_verify=true
+SECURITY WARNING: insecureSkipVerify is enabled in production environment. This disables TLS certificate verification and exposes the connection to MITM attacks. Set GEODE_ALLOW_INSECURE_PRODUCTION=true to override this warning.
+INFO:QUICClient:Create QUICClient to 127.0.0.1:3151
+INFO:QUICSocket:Start QUICSocket on [::]:0
+INFO:QUICSocket:Started QUICSocket on [::]:65346
+INFO:QUICConnection c0b482b5ae128395bd1dcedcefd952c09725b53b:Connect QUICConnection
+INFO:QUICConnection c0b482b5ae128395bd1dcedcefd952c09725b53b:Start QUICConnection
+INFO:QUICConnection c0b482b5ae128395bd1dcedcefd952c09725b53b:Started QUICConnection
+INFO:QUICClient:Created QUICClient to [::ffff:127.0.0.1]:3151
+INFO:QUICStream 0:Create QUICStream
+INFO:QUICStream 0:Created QUICStream
+Geode initialized successfully
+[graph-db GET] Got 2199 nodes, 1892 relationships
+INFO:QUICClient:ErrorQUICConnectionPeer: QUIC Connection peer error - Peer closed with transport code 0
+INFO:QUICConnection 534fb140e8c81112dfd7dbf7cdf89e1412b1dcb7:ErrorQUICConnectionPeer: QUIC Connection peer error - Peer closed with transport code 0
+INFO:QUICConnection 534fb140e8c81112dfd7dbf7cdf89e1412b1dcb7:Stop QUICConnection
+INFO:QUICStream 0:Destroy QUICStream
+INFO:QUICStream 0:Destroyed QUICStream
+INFO:QUICConnection 534fb140e8c81112dfd7dbf7cdf89e1412b1dcb7:Stopped QUICConnection
+INFO:QUICSocket:Stop QUICSocket on [::]:60990
+INFO:QUICSocket:Stopped QUICSocket on [::]:60990
+INFO:QUICClient:Destroy QUICClient
+INFO:QUICClient:Destroyed QUICClient
+INFO:QUICClient:ErrorQUICConnectionPeer: QUIC Connection peer error - Peer closed with transport code 0
+INFO:QUICConnection c0b482b5ae128395bd1dcedcefd952c09725b53b:ErrorQUICConnectionPeer: QUIC Connection peer error - Peer closed with transport code 0
+INFO:QUICConnection c0b482b5ae128395bd1dcedcefd952c09725b53b:Stop QUICConnection
+INFO:QUICStream 0:Destroy QUICStream
+INFO:QUICStream 0:Destroyed QUICStream
+INFO:QUICConnection c0b482b5ae128395bd1dcedcefd952c09725b53b:Stopped QUICConnection
+INFO:QUICSocket:Stop QUICSocket on [::]:65346
+INFO:QUICSocket:Stopped QUICSocket on [::]:65346
+INFO:QUICClient:Destroy QUICClient
+INFO:QUICClient:Destroyed QUICClient
+Fetching all triples from geode...
+Geode connection lost; reconnecting and retrying once: geode: transport sendProto to 127.0.0.1:3151: Peer closed with transport code 0
+Connecting to Geode at quic://127.0.0.1:3151?insecure_tls_skip_verify=true
+SECURITY WARNING: insecureSkipVerify is enabled in production environment. This disables TLS certificate verification and exposes the connection to MITM attacks. Set GEODE_ALLOW_INSECURE_PRODUCTION=true to override this warning.
+INFO:QUICClient:Create QUICClient to 127.0.0.1:3151
+INFO:QUICSocket:Start QUICSocket on [::]:0
+INFO:QUICSocket:Started QUICSocket on [::]:4878
+INFO:QUICConnection e078204a4efa3e4352d6d3426146f3406f58acc3:Connect QUICConnection
+INFO:QUICConnection e078204a4efa3e4352d6d3426146f3406f58acc3:Start QUICConnection
+INFO:QUICConnection e078204a4efa3e4352d6d3426146f3406f58acc3:Started QUICConnection
+INFO:QUICClient:Created QUICClient to [::ffff:127.0.0.1]:3151
+INFO:QUICStream 0:Create QUICStream
+INFO:QUICStream 0:Created QUICStream
+Geode initialized successfully
+INFO:QUICClient:Destroy QUICClient to [::ffff:127.0.0.1]:3151
+INFO:QUICConnection e078204a4efa3e4352d6d3426146f3406f58acc3:Stop QUICConnection
+INFO:QUICStream 0:Destroy QUICStream
+INFO:QUICStream 0:Destroyed QUICStream
+INFO:QUICClient:ErrorQUICConnectionLocal: QUIC Connection local error - Locally closed with application code 0
+INFO:QUICConnection e078204a4efa3e4352d6d3426146f3406f58acc3:ErrorQUICConnectionLocal: QUIC Connection local error - Locally closed with application code 0
+INFO:QUICConnection e078204a4efa3e4352d6d3426146f3406f58acc3:Stopped QUICConnection
+INFO:QUICSocket:Stop QUICSocket on [::]:4878
+INFO:QUICSocket:Stopped QUICSocket on [::]:4878
+INFO:QUICClient:Destroyed QUICClient to [::ffff:127.0.0.1]:3151
+Geode connection lost; reconnecting and retrying once: geode: transport query: Invalid execute response
+Connecting to Geode at quic://127.0.0.1:3151?insecure_tls_skip_verify=true
+SECURITY WARNING: insecureSkipVerify is enabled in production environment. This disables TLS certificate verification and exposes the connection to MITM attacks. Set GEODE_ALLOW_INSECURE_PRODUCTION=true to override this warning.
+INFO:QUICClient:Create QUICClient to 127.0.0.1:3151
+INFO:QUICSocket:Start QUICSocket on [::]:0
+INFO:QUICSocket:Started QUICSocket on [::]:41700
+INFO:QUICConnection 4c97b8df731a493b1976bc52d0036cb0be20954a:Connect QUICConnection
+INFO:QUICConnection 4c97b8df731a493b1976bc52d0036cb0be20954a:Start QUICConnection
+INFO:QUICConnection 4c97b8df731a493b1976bc52d0036cb0be20954a:Started QUICConnection
+INFO:QUICClient:Created QUICClient to [::ffff:127.0.0.1]:3151
+INFO:QUICStream 0:Create QUICStream
+INFO:QUICStream 0:Created QUICStream
+Geode initialized successfully
+Successfully fetched 1888 unique triples from geode
+INFO:QUICClient:ErrorQUICConnectionPeer: QUIC Connection peer error - Peer closed with transport code 0
+INFO:QUICConnection 4c97b8df731a493b1976bc52d0036cb0be20954a:ErrorQUICConnectionPeer: QUIC Connection peer error - Peer closed with transport code 0
+INFO:QUICConnection 4c97b8df731a493b1976bc52d0036cb0be20954a:Stop QUICConnection
+INFO:QUICStream 0:Destroy QUICStream
+INFO:QUICStream 0:Destroyed QUICStream
+INFO:QUICConnection 4c97b8df731a493b1976bc52d0036cb0be20954a:Stopped QUICConnection
+INFO:QUICSocket:Stop QUICSocket on [::]:41700
+INFO:QUICSocket:Stopped QUICSocket on [::]:41700
+INFO:QUICClient:Destroy QUICClient
+INFO:QUICClient:Destroyed QUICClient
+[graph-db GET] Request received
+[graph-db GET] Ensuring connection...
+[graph-db GET] Using database type: geode
+[graph-db GET] Fetching graph data...
+Geode connection lost; reconnecting and retrying once: geode: transport sendProto to 127.0.0.1:3151: Peer closed with transport code 0
+Connecting to Geode at quic://127.0.0.1:3151?insecure_tls_skip_verify=true
+SECURITY WARNING: insecureSkipVerify is enabled in production environment. This disables TLS certificate verification and exposes the connection to MITM attacks. Set GEODE_ALLOW_INSECURE_PRODUCTION=true to override this warning.
+INFO:QUICClient:Create QUICClient to 127.0.0.1:3151
+INFO:QUICSocket:Start QUICSocket on [::]:0
+INFO:QUICSocket:Started QUICSocket on [::]:64047
+INFO:QUICConnection 91b9b0a0307c63ef6a9e452dcd233e58684365cb:Connect QUICConnection
+INFO:QUICConnection 91b9b0a0307c63ef6a9e452dcd233e58684365cb:Start QUICConnection
+INFO:QUICConnection 91b9b0a0307c63ef6a9e452dcd233e58684365cb:Started QUICConnection
+INFO:QUICClient:Created QUICClient to [::ffff:127.0.0.1]:3151
+INFO:QUICStream 0:Create QUICStream
+INFO:QUICStream 0:Created QUICStream
+Geode initialized successfully
+SECURITY WARNING: insecureSkipVerify is enabled in production environment. This disables TLS certificate verification and exposes the connection to MITM attacks. Set GEODE_ALLOW_INSECURE_PRODUCTION=true to override this warning.
+INFO:QUICClient:Create QUICClient to 127.0.0.1:3151
+INFO:QUICSocket:Start QUICSocket on [::]:0
+INFO:QUICSocket:Started QUICSocket on [::]:11837
+INFO:QUICConnection 956f8eb183cf2d05a7e58d4b605ff336dfe5c34e:Connect QUICConnection
+INFO:QUICConnection 956f8eb183cf2d05a7e58d4b605ff336dfe5c34e:Start QUICConnection
+INFO:QUICConnection 956f8eb183cf2d05a7e58d4b605ff336dfe5c34e:Started QUICConnection
+INFO:QUICClient:Created QUICClient to [::ffff:127.0.0.1]:3151
+INFO:QUICStream 0:Create QUICStream
+INFO:QUICStream 0:Created QUICStream
+Fetching all triples from geode...
+SECURITY WARNING: insecureSkipVerify is enabled in production environment. This disables TLS certificate verification and exposes the connection to MITM attacks. Set GEODE_ALLOW_INSECURE_PRODUCTION=true to override this warning.
+INFO:QUICClient:Create QUICClient to 127.0.0.1:3151
+INFO:QUICSocket:Start QUICSocket on [::]:0
+INFO:QUICSocket:Started QUICSocket on [::]:48854
+INFO:QUICConnection a976c31dcd11a3e8c073e9341133e1ce62ea3425:Connect QUICConnection
+INFO:QUICConnection a976c31dcd11a3e8c073e9341133e1ce62ea3425:Start QUICConnection
+INFO:QUICConnection a976c31dcd11a3e8c073e9341133e1ce62ea3425:Started QUICConnection
+INFO:QUICClient:Created QUICClient to [::ffff:127.0.0.1]:3151
+INFO:QUICStream 0:Create QUICStream
+INFO:QUICStream 0:Created QUICStream
+[graph-db GET] Request received
+[graph-db GET] Ensuring connection...
+[graph-db GET] Using database type: geode
+[graph-db GET] Fetching graph data...
+Fetching all triples from geode...
+Error getting graph data from Geode: Error [TransportError]: geode: transport receiveProto: Aborted
+    at ignore-listed frames {
+  statusClass: '58000',
+  operation: 'receiveProto',
+  address: undefined,
+  [cause]: Error: Aborted
+      at ignore-listed frames
+}
+Error in graph database GET handler: Error [TransportError]: geode: transport receiveProto: Aborted
+    at ignore-listed frames {
+  statusClass: '58000',
+  operation: 'receiveProto',
+  address: undefined,
+  [cause]: Error: Aborted
+      at ignore-listed frames
+}
+INFO:QUICClient:Destroy QUICClient to [::ffff:127.0.0.1]:3151
+INFO:QUICConnection a976c31dcd11a3e8c073e9341133e1ce62ea3425:Stop QUICConnection
+INFO:QUICStream 0:Destroy QUICStream
+INFO:QUICStream 0:Destroyed QUICStream
+INFO:QUICClient:ErrorQUICConnectionLocal: QUIC Connection local error - Locally closed with application code 0
+INFO:QUICConnection a976c31dcd11a3e8c073e9341133e1ce62ea3425:ErrorQUICConnectionLocal: QUIC Connection local error - Locally closed with application code 0
+INFO:QUICConnection a976c31dcd11a3e8c073e9341133e1ce62ea3425:Stopped QUICConnection
+INFO:QUICSocket:Stop QUICSocket on [::]:48854
+INFO:QUICSocket:Stopped QUICSocket on [::]:48854
+INFO:QUICClient:Destroyed QUICClient to [::ffff:127.0.0.1]:3151
+Geode connection lost; reconnecting and retrying once: geode: transport receiveProto: Aborted
+INFO:QUICClient:Destroy QUICClient to [::ffff:127.0.0.1]:3151
+INFO:QUICClient:Destroy QUICClient to [::ffff:127.0.0.1]:3151
+INFO:QUICConnection 91b9b0a0307c63ef6a9e452dcd233e58684365cb:Stop QUICConnection
+INFO:QUICConnection 956f8eb183cf2d05a7e58d4b605ff336dfe5c34e:Stop QUICConnection
+INFO:QUICStream 0:Destroy QUICStream
+INFO:QUICStream 0:Destroy QUICStream
+INFO:QUICStream 0:Destroyed QUICStream
+INFO:QUICStream 0:Destroyed QUICStream
+INFO:QUICClient:ErrorQUICConnectionLocal: QUIC Connection local error - Locally closed with application code 0
+INFO:QUICConnection 91b9b0a0307c63ef6a9e452dcd233e58684365cb:ErrorQUICConnectionLocal: QUIC Connection local error - Locally closed with application code 0
+INFO:QUICClient:ErrorQUICConnectionLocal: QUIC Connection local error - Locally closed with application code 0
+INFO:QUICConnection 956f8eb183cf2d05a7e58d4b605ff336dfe5c34e:ErrorQUICConnectionLocal: QUIC Connection local error - Locally closed with application code 0
+INFO:QUICConnection 91b9b0a0307c63ef6a9e452dcd233e58684365cb:Stopped QUICConnection
+INFO:QUICSocket:Stop QUICSocket on [::]:64047
+INFO:QUICSocket:Stopped QUICSocket on [::]:64047
+INFO:QUICClient:Destroyed QUICClient to [::ffff:127.0.0.1]:3151
+INFO:QUICConnection 956f8eb183cf2d05a7e58d4b605ff336dfe5c34e:Stopped QUICConnection
+INFO:QUICSocket:Stop QUICSocket on [::]:11837
+INFO:QUICSocket:Stopped QUICSocket on [::]:11837
+INFO:QUICClient:Destroyed QUICClient to [::ffff:127.0.0.1]:3151
+Connecting to Geode at quic://127.0.0.1:3151?insecure_tls_skip_verify=true
+SECURITY WARNING: insecureSkipVerify is enabled in production environment. This disables TLS certificate verification and exposes the connection to MITM attacks. Set GEODE_ALLOW_INSECURE_PRODUCTION=true to override this warning.
+INFO:QUICClient:Create QUICClient to 127.0.0.1:3151
+INFO:QUICSocket:Start QUICSocket on [::]:0
+INFO:QUICSocket:Started QUICSocket on [::]:43098
+INFO:QUICConnection 8e44c4bd9b544f38732fe68ff1c14378c2b251a6:Connect QUICConnection
+INFO:QUICConnection 8e44c4bd9b544f38732fe68ff1c14378c2b251a6:Start QUICConnection
+INFO:QUICConnection 8e44c4bd9b544f38732fe68ff1c14378c2b251a6:Started QUICConnection
+INFO:QUICClient:Created QUICClient to [::ffff:127.0.0.1]:3151
+INFO:QUICStream 0:Create QUICStream
+INFO:QUICStream 0:Created QUICStream
+Geode initialized successfully
+Error getting graph data from Geode: Error [DriverError]: geode: 57014: ReadQueryCancelled: the client disconnected or the server canceled this read (stall watchdog); execution aborted at a row/batch boundary. No data was modified
+    at async l.runWithReconnect (.next/server/chunks/[root-of-the-server]__0xj3wtb._.js:1:1282) {
+  statusClass: '57014',
+  subclass: '000',
+  code: '57014',
+  anchor: '',
+  additional: [],
+  findings: []
+}
+Error in graph database GET handler: Error [DriverError]: geode: 57014: ReadQueryCancelled: the client disconnected or the server canceled this read (stall watchdog); execution aborted at a row/batch boundary. No data was modified
+    at async l.runWithReconnect (.next/server/chunks/[root-of-the-server]__0xj3wtb._.js:1:1282) {
+  statusClass: '57014',
+  subclass: '000',
+  code: '57014',
+  anchor: '',
+  additional: [],
+  findings: []
+}
+Error getting graph data from Geode: Error [DriverError]: geode: 57014: ReadQueryCancelled: the client disconnected or the server canceled this read (stall watchdog); execution aborted at a row/batch boundary. No data was modified
+    at async l.runWithReconnect (.next/server/chunks/[root-of-the-server]__0xj3wtb._.js:1:1059) {
+  statusClass: '57014',
+  subclass: '000',
+  code: '57014',
+  anchor: '',
+  additional: [],
+  findings: []
+}
+Error fetching triples from graph database: Error [DriverError]: geode: 57014: ReadQueryCancelled: the client disconnected or the server canceled this read (stall watchdog); execution aborted at a row/batch boundary. No data was modified
+    at async l.runWithReconnect (.next/server/chunks/[root-of-the-server]__0xj3wtb._.js:1:1059) {
+  statusClass: '57014',
+  subclass: '000',
+  code: '57014',
+  anchor: '',
+  additional: [],
+  findings: []
+}
+Error getting graph data from Geode: Error [DriverError]: geode: 57014: ReadQueryCancelled: the client disconnected or the server canceled this read (stall watchdog); execution aborted at a row/batch boundary. No data was modified
+    at async l.runWithReconnect (.next/server/chunks/[root-of-the-server]__0xj3wtb._.js:1:1059) {
+  statusClass: '57014',
+  subclass: '000',
+  code: '57014',
+  anchor: '',
+  additional: [],
+  findings: []
+}
+Error fetching triples from graph database: Error [DriverError]: geode: 57014: ReadQueryCancelled: the client disconnected or the server canceled this read (stall watchdog); execution aborted at a row/batch boundary. No data was modified
+    at async l.runWithReconnect (.next/server/chunks/[root-of-the-server]__0xj3wtb._.js:1:1059) {
+  statusClass: '57014',
+  subclass: '000',
+  code: '57014',
+  anchor: '',
+  additional: [],
+  findings: []
+}
+INFO:QUICClient:ErrorQUICConnectionPeer: QUIC Connection peer error - Peer closed with transport code 0
+INFO:QUICConnection 8e44c4bd9b544f38732fe68ff1c14378c2b251a6:ErrorQUICConnectionPeer: QUIC Connection peer error - Peer closed with transport code 0
+INFO:QUICConnection 8e44c4bd9b544f38732fe68ff1c14378c2b251a6:Stop QUICConnection
+INFO:QUICStream 0:Destroy QUICStream
+INFO:QUICStream 0:Destroyed QUICStream
+INFO:QUICConnection 8e44c4bd9b544f38732fe68ff1c14378c2b251a6:Stopped QUICConnection
+INFO:QUICSocket:Stop QUICSocket on [::]:43098
+INFO:QUICSocket:Stopped QUICSocket on [::]:43098
+INFO:QUICClient:Destroy QUICClient
+INFO:QUICClient:Destroyed QUICClient
+[graph-db GET] Request received
+[graph-db GET] Ensuring connection...
+[graph-db GET] Using database type: geode
+[graph-db GET] Fetching graph data...
+Geode connection lost; reconnecting and retrying once: geode: transport sendProto to 127.0.0.1:3151: Peer closed with transport code 0
+Connecting to Geode at quic://127.0.0.1:3151?insecure_tls_skip_verify=true
+SECURITY WARNING: insecureSkipVerify is enabled in production environment. This disables TLS certificate verification and exposes the connection to MITM attacks. Set GEODE_ALLOW_INSECURE_PRODUCTION=true to override this warning.
+INFO:QUICClient:Create QUICClient to 127.0.0.1:3151
+INFO:QUICSocket:Start QUICSocket on [::]:0
+INFO:QUICSocket:Started QUICSocket on [::]:16083
+INFO:QUICConnection b772fc64a79708e6c1a855b99de7e0e8856b3e48:Connect QUICConnection
+INFO:QUICConnection b772fc64a79708e6c1a855b99de7e0e8856b3e48:Start QUICConnection
+INFO:QUICConnection b772fc64a79708e6c1a855b99de7e0e8856b3e48:Started QUICConnection
+INFO:QUICClient:Created QUICClient to [::ffff:127.0.0.1]:3151
+INFO:QUICStream 0:Create QUICStream
+INFO:QUICStream 0:Created QUICStream
+Geode initialized successfully
+SECURITY WARNING: insecureSkipVerify is enabled in production environment. This disables TLS certificate verification and exposes the connection to MITM attacks. Set GEODE_ALLOW_INSECURE_PRODUCTION=true to override this warning.
+INFO:QUICClient:Create QUICClient to 127.0.0.1:3151
+INFO:QUICSocket:Start QUICSocket on [::]:0
+INFO:QUICSocket:Started QUICSocket on [::]:49085
+INFO:QUICConnection bd6b9d1526e414b13cc51f99ce878fe154e13da7:Connect QUICConnection
+INFO:QUICConnection bd6b9d1526e414b13cc51f99ce878fe154e13da7:Start QUICConnection
+INFO:QUICConnection bd6b9d1526e414b13cc51f99ce878fe154e13da7:Started QUICConnection
+INFO:QUICClient:Created QUICClient to [::ffff:127.0.0.1]:3151
+INFO:QUICStream 0:Create QUICStream
+INFO:QUICStream 0:Created QUICStream
+INFO:QUICClient:Destroy QUICClient to [::ffff:127.0.0.1]:3151
+INFO:QUICConnection b772fc64a79708e6c1a855b99de7e0e8856b3e48:Stop QUICConnection
+INFO:QUICStream 0:Destroy QUICStream
+INFO:QUICStream 0:Destroyed QUICStream
+INFO:QUICClient:ErrorQUICConnectionLocal: QUIC Connection local error - Locally closed with application code 0
+INFO:QUICConnection b772fc64a79708e6c1a855b99de7e0e8856b3e48:ErrorQUICConnectionLocal: QUIC Connection local error - Locally closed with application code 0
+INFO:QUICConnection b772fc64a79708e6c1a855b99de7e0e8856b3e48:Stopped QUICConnection
+INFO:QUICSocket:Stop QUICSocket on [::]:16083
+INFO:QUICSocket:Stopped QUICSocket on [::]:16083
+INFO:QUICClient:Destroyed QUICClient to [::ffff:127.0.0.1]:3151
+Geode connection lost; reconnecting and retrying once: geode: transport query: Invalid execute response
+INFO:QUICClient:Destroy QUICClient to [::ffff:127.0.0.1]:3151
+INFO:QUICConnection bd6b9d1526e414b13cc51f99ce878fe154e13da7:Stop QUICConnection
+INFO:QUICStream 0:Destroy QUICStream
+INFO:QUICStream 0:Destroyed QUICStream
+INFO:QUICClient:ErrorQUICConnectionLocal: QUIC Connection local error - Locally closed with application code 0
+INFO:QUICConnection bd6b9d1526e414b13cc51f99ce878fe154e13da7:ErrorQUICConnectionLocal: QUIC Connection local error - Locally closed with application code 0
+INFO:QUICConnection bd6b9d1526e414b13cc51f99ce878fe154e13da7:Stopped QUICConnection
+INFO:QUICSocket:Stop QUICSocket on [::]:49085
+INFO:QUICSocket:Stopped QUICSocket on [::]:49085
+INFO:QUICClient:Destroyed QUICClient to [::ffff:127.0.0.1]:3151
+Connecting to Geode at quic://127.0.0.1:3151?insecure_tls_skip_verify=true
+SECURITY WARNING: insecureSkipVerify is enabled in production environment. This disables TLS certificate verification and exposes the connection to MITM attacks. Set GEODE_ALLOW_INSECURE_PRODUCTION=true to override this warning.
+INFO:QUICClient:Create QUICClient to 127.0.0.1:3151
+INFO:QUICSocket:Start QUICSocket on [::]:0
+INFO:QUICSocket:Started QUICSocket on [::]:35363
+INFO:QUICConnection d5a4584c2c332426ba2ee1c2b33f5d1325ffc01a:Connect QUICConnection
+INFO:QUICConnection d5a4584c2c332426ba2ee1c2b33f5d1325ffc01a:Start QUICConnection
+INFO:QUICConnection d5a4584c2c332426ba2ee1c2b33f5d1325ffc01a:Started QUICConnection
+INFO:QUICClient:Created QUICClient to [::ffff:127.0.0.1]:3151
+INFO:QUICStream 0:Create QUICStream
+INFO:QUICStream 0:Created QUICStream
+Geode initialized successfully
+Fetching all triples from geode...
+[graph-db GET] Got 2199 nodes, 1892 relationships
+INFO:QUICClient:Destroy QUICClient to [::ffff:127.0.0.1]:3151
+INFO:QUICConnection d5a4584c2c332426ba2ee1c2b33f5d1325ffc01a:Stop QUICConnection
+INFO:QUICStream 0:Destroy QUICStream
+INFO:QUICStream 0:Destroyed QUICStream
+INFO:QUICClient:ErrorQUICConnectionLocal: QUIC Connection local error - Locally closed with application code 0
+INFO:QUICConnection d5a4584c2c332426ba2ee1c2b33f5d1325ffc01a:ErrorQUICConnectionLocal: QUIC Connection local error - Locally closed with application code 0
+INFO:QUICConnection d5a4584c2c332426ba2ee1c2b33f5d1325ffc01a:Stopped QUICConnection
+INFO:QUICSocket:Stop QUICSocket on [::]:35363
+INFO:QUICSocket:Stopped QUICSocket on [::]:35363
+INFO:QUICClient:Destroyed QUICClient to [::ffff:127.0.0.1]:3151
+Geode connection lost; reconnecting and retrying once: geode: transport query: Invalid execute response
+Connecting to Geode at quic://127.0.0.1:3151?insecure_tls_skip_verify=true
+SECURITY WARNING: insecureSkipVerify is enabled in production environment. This disables TLS certificate verification and exposes the connection to MITM attacks. Set GEODE_ALLOW_INSECURE_PRODUCTION=true to override this warning.
+INFO:QUICClient:Create QUICClient to 127.0.0.1:3151
+INFO:QUICSocket:Start QUICSocket on [::]:0
+INFO:QUICSocket:Started QUICSocket on [::]:38019
+INFO:QUICConnection a779c48fc88ef744f6b59b7e80856670fd435a59:Connect QUICConnection
+INFO:QUICConnection a779c48fc88ef744f6b59b7e80856670fd435a59:Start QUICConnection
+INFO:QUICConnection a779c48fc88ef744f6b59b7e80856670fd435a59:Started QUICConnection
+INFO:QUICClient:Created QUICClient to [::ffff:127.0.0.1]:3151
+INFO:QUICStream 0:Create QUICStream
+INFO:QUICStream 0:Created QUICStream
+Geode initialized successfully
+INFO:QUICClient:Destroy QUICClient to [::ffff:127.0.0.1]:3151
+INFO:QUICConnection a779c48fc88ef744f6b59b7e80856670fd435a59:Stop QUICConnection
+INFO:QUICStream 0:Destroy QUICStream
+INFO:QUICStream 0:Destroyed QUICStream
+INFO:QUICClient:ErrorQUICConnectionLocal: QUIC Connection local error - Locally closed with application code 0
+INFO:QUICConnection a779c48fc88ef744f6b59b7e80856670fd435a59:ErrorQUICConnectionLocal: QUIC Connection local error - Locally closed with application code 0
+INFO:QUICConnection a779c48fc88ef744f6b59b7e80856670fd435a59:Stopped QUICConnection
+INFO:QUICSocket:Stop QUICSocket on [::]:38019
+INFO:QUICSocket:Stopped QUICSocket on [::]:38019
+INFO:QUICClient:Destroyed QUICClient to [::ffff:127.0.0.1]:3151
+Geode connection lost; reconnecting and retrying once: geode: transport query: Invalid execute response
+Connecting to Geode at quic://127.0.0.1:3151?insecure_tls_skip_verify=true
+SECURITY WARNING: insecureSkipVerify is enabled in production environment. This disables TLS certificate verification and exposes the connection to MITM attacks. Set GEODE_ALLOW_INSECURE_PRODUCTION=true to override this warning.
+INFO:QUICClient:Create QUICClient to 127.0.0.1:3151
+INFO:QUICSocket:Start QUICSocket on [::]:0
+INFO:QUICSocket:Started QUICSocket on [::]:65264
+INFO:QUICConnection 8fe18c4c469abc56db3057c247c76d3583d3b790:Connect QUICConnection
+INFO:QUICConnection 8fe18c4c469abc56db3057c247c76d3583d3b790:Start QUICConnection
+INFO:QUICConnection 8fe18c4c469abc56db3057c247c76d3583d3b790:Started QUICConnection
+INFO:QUICClient:Created QUICClient to [::ffff:127.0.0.1]:3151
+INFO:QUICStream 0:Create QUICStream
+INFO:QUICStream 0:Created QUICStream
+Geode initialized successfully
+Successfully fetched 1888 unique triples from geode
+INFO:QUICClient:ErrorQUICConnectionPeer: QUIC Connection peer error - Peer closed with transport code 0
+INFO:QUICConnection 8fe18c4c469abc56db3057c247c76d3583d3b790:ErrorQUICConnectionPeer: QUIC Connection peer error - Peer closed with transport code 0
+INFO:QUICConnection 8fe18c4c469abc56db3057c247c76d3583d3b790:Stop QUICConnection
+INFO:QUICStream 0:Destroy QUICStream
+INFO:QUICStream 0:Destroyed QUICStream
+INFO:QUICConnection 8fe18c4c469abc56db3057c247c76d3583d3b790:Stopped QUICConnection
+INFO:QUICSocket:Stop QUICSocket on [::]:65264
+INFO:QUICSocket:Stopped QUICSocket on [::]:65264
+INFO:QUICClient:Destroy QUICClient
+INFO:QUICClient:Destroyed QUICClient
+[graph-db GET] Request received
+[graph-db GET] Ensuring connection...
+[graph-db GET] Using database type: geode
+[graph-db GET] Fetching graph data...
+Geode connection lost; reconnecting and retrying once: geode: transport sendProto to 127.0.0.1:3151: Peer closed with transport code 0
+Connecting to Geode at quic://127.0.0.1:3151?insecure_tls_skip_verify=true
+SECURITY WARNING: insecureSkipVerify is enabled in production environment. This disables TLS certificate verification and exposes the connection to MITM attacks. Set GEODE_ALLOW_INSECURE_PRODUCTION=true to override this warning.
+INFO:QUICClient:Create QUICClient to 127.0.0.1:3151
+INFO:QUICSocket:Start QUICSocket on [::]:0
+INFO:QUICSocket:Started QUICSocket on [::]:25310
+INFO:QUICConnection 50429d23d27c15fae548d697889f5af95cef1d52:Connect QUICConnection
+INFO:QUICConnection 50429d23d27c15fae548d697889f5af95cef1d52:Start QUICConnection
+INFO:QUICConnection 50429d23d27c15fae548d697889f5af95cef1d52:Started QUICConnection
+INFO:QUICClient:Created QUICClient to [::ffff:127.0.0.1]:3151
+INFO:QUICStream 0:Create QUICStream
+INFO:QUICStream 0:Created QUICStream
+Geode initialized successfully
+SECURITY WARNING: insecureSkipVerify is enabled in production environment. This disables TLS certificate verification and exposes the connection to MITM attacks. Set GEODE_ALLOW_INSECURE_PRODUCTION=true to override this warning.
+INFO:QUICClient:Create QUICClient to 127.0.0.1:3151
+INFO:QUICSocket:Start QUICSocket on [::]:0
+INFO:QUICSocket:Started QUICSocket on [::]:54767
+INFO:QUICConnection 64a956b9292f991b161d9bbc95319b7d57759e36:Connect QUICConnection
+INFO:QUICConnection 64a956b9292f991b161d9bbc95319b7d57759e36:Start QUICConnection
+INFO:QUICConnection 64a956b9292f991b161d9bbc95319b7d57759e36:Started QUICConnection
+INFO:QUICClient:Created QUICClient to [::ffff:127.0.0.1]:3151
+INFO:QUICStream 0:Create QUICStream
+INFO:QUICStream 0:Created QUICStream
+INFO:QUICClient:Destroy QUICClient to [::ffff:127.0.0.1]:3151
+INFO:QUICConnection 50429d23d27c15fae548d697889f5af95cef1d52:Stop QUICConnection
+INFO:QUICStream 0:Destroy QUICStream
+INFO:QUICStream 0:Destroyed QUICStream
+INFO:QUICClient:ErrorQUICConnectionLocal: QUIC Connection local error - Locally closed with application code 0
+INFO:QUICConnection 50429d23d27c15fae548d697889f5af95cef1d52:ErrorQUICConnectionLocal: QUIC Connection local error - Locally closed with application code 0
+INFO:QUICConnection 50429d23d27c15fae548d697889f5af95cef1d52:Stopped QUICConnection
+INFO:QUICSocket:Stop QUICSocket on [::]:25310
+INFO:QUICSocket:Stopped QUICSocket on [::]:25310
+INFO:QUICClient:Destroyed QUICClient to [::ffff:127.0.0.1]:3151
+Geode connection lost; reconnecting and retrying once: geode: transport query: Invalid execute response
+INFO:QUICClient:Destroy QUICClient to [::ffff:127.0.0.1]:3151
+INFO:QUICConnection 64a956b9292f991b161d9bbc95319b7d57759e36:Stop QUICConnection
+INFO:QUICStream 0:Destroy QUICStream
+INFO:QUICStream 0:Destroyed QUICStream
+INFO:QUICClient:ErrorQUICConnectionLocal: QUIC Connection local error - Locally closed with application code 0
+INFO:QUICConnection 64a956b9292f991b161d9bbc95319b7d57759e36:ErrorQUICConnectionLocal: QUIC Connection local error - Locally closed with application code 0
+INFO:QUICConnection 64a956b9292f991b161d9bbc95319b7d57759e36:Stopped QUICConnection
+INFO:QUICSocket:Stop QUICSocket on [::]:54767
+INFO:QUICSocket:Stopped QUICSocket on [::]:54767
+INFO:QUICClient:Destroyed QUICClient to [::ffff:127.0.0.1]:3151
+Connecting to Geode at quic://127.0.0.1:3151?insecure_tls_skip_verify=true
+SECURITY WARNING: insecureSkipVerify is enabled in production environment. This disables TLS certificate verification and exposes the connection to MITM attacks. Set GEODE_ALLOW_INSECURE_PRODUCTION=true to override this warning.
+INFO:QUICClient:Create QUICClient to 127.0.0.1:3151
+INFO:QUICSocket:Start QUICSocket on [::]:0
+INFO:QUICSocket:Started QUICSocket on [::]:43388
+INFO:QUICConnection 6694c9c7c4ed191ed3642252c80175ad651e2233:Connect QUICConnection
+INFO:QUICConnection 6694c9c7c4ed191ed3642252c80175ad651e2233:Start QUICConnection
+INFO:QUICConnection 6694c9c7c4ed191ed3642252c80175ad651e2233:Started QUICConnection
+INFO:QUICClient:Created QUICClient to [::ffff:127.0.0.1]:3151
+INFO:QUICStream 0:Create QUICStream
+INFO:QUICStream 0:Created QUICStream
+Geode initialized successfully
+Fetching all triples from geode...
+[graph-db GET] Got 2199 nodes, 1892 relationships
+INFO:QUICClient:Destroy QUICClient to [::ffff:127.0.0.1]:3151
+INFO:QUICConnection 6694c9c7c4ed191ed3642252c80175ad651e2233:Stop QUICConnection
+INFO:QUICStream 0:Destroy QUICStream
+INFO:QUICStream 0:Destroyed QUICStream
+INFO:QUICClient:ErrorQUICConnectionLocal: QUIC Connection local error - Locally closed with application code 0
+INFO:QUICConnection 6694c9c7c4ed191ed3642252c80175ad651e2233:ErrorQUICConnectionLocal: QUIC Connection local error - Locally closed with application code 0
+INFO:QUICConnection 6694c9c7c4ed191ed3642252c80175ad651e2233:Stopped QUICConnection
+INFO:QUICSocket:Stop QUICSocket on [::]:43388
+INFO:QUICSocket:Stopped QUICSocket on [::]:43388
+INFO:QUICClient:Destroyed QUICClient to [::ffff:127.0.0.1]:3151
+Geode connection lost; reconnecting and retrying once: geode: transport query: Invalid execute response
+Connecting to Geode at quic://127.0.0.1:3151?insecure_tls_skip_verify=true
+SECURITY WARNING: insecureSkipVerify is enabled in production environment. This disables TLS certificate verification and exposes the connection to MITM attacks. Set GEODE_ALLOW_INSECURE_PRODUCTION=true to override this warning.
+INFO:QUICClient:Create QUICClient to 127.0.0.1:3151
+INFO:QUICSocket:Start QUICSocket on [::]:0
+INFO:QUICSocket:Started QUICSocket on [::]:18582
+INFO:QUICConnection 23710dffd7b08ab2c76854eff2fb7b250a578747:Connect QUICConnection
+INFO:QUICConnection 23710dffd7b08ab2c76854eff2fb7b250a578747:Start QUICConnection
+INFO:QUICConnection 23710dffd7b08ab2c76854eff2fb7b250a578747:Started QUICConnection
+INFO:QUICClient:Created QUICClient to [::ffff:127.0.0.1]:3151
+INFO:QUICStream 0:Create QUICStream
+INFO:QUICStream 0:Created QUICStream
+Geode initialized successfully
+INFO:QUICClient:Destroy QUICClient to [::ffff:127.0.0.1]:3151
+INFO:QUICConnection 23710dffd7b08ab2c76854eff2fb7b250a578747:Stop QUICConnection
+INFO:QUICStream 0:Destroy QUICStream
+INFO:QUICStream 0:Destroyed QUICStream
+INFO:QUICClient:ErrorQUICConnectionLocal: QUIC Connection local error - Locally closed with application code 0
+INFO:QUICConnection 23710dffd7b08ab2c76854eff2fb7b250a578747:ErrorQUICConnectionLocal: QUIC Connection local error - Locally closed with application code 0
+INFO:QUICConnection 23710dffd7b08ab2c76854eff2fb7b250a578747:Stopped QUICConnection
+INFO:QUICSocket:Stop QUICSocket on [::]:18582
+INFO:QUICSocket:Stopped QUICSocket on [::]:18582
+INFO:QUICClient:Destroyed QUICClient to [::ffff:127.0.0.1]:3151
+Geode connection lost; reconnecting and retrying once: geode: transport query: Invalid execute response
+Connecting to Geode at quic://127.0.0.1:3151?insecure_tls_skip_verify=true
+SECURITY WARNING: insecureSkipVerify is enabled in production environment. This disables TLS certificate verification and exposes the connection to MITM attacks. Set GEODE_ALLOW_INSECURE_PRODUCTION=true to override this warning.
+INFO:QUICClient:Create QUICClient to 127.0.0.1:3151
+INFO:QUICSocket:Start QUICSocket on [::]:0
+INFO:QUICSocket:Started QUICSocket on [::]:52829
+INFO:QUICConnection 132e815392ddfdcd916e85dfdc6a9780893f606d:Connect QUICConnection
+INFO:QUICConnection 132e815392ddfdcd916e85dfdc6a9780893f606d:Start QUICConnection
+INFO:QUICConnection 132e815392ddfdcd916e85dfdc6a9780893f606d:Started QUICConnection
+INFO:QUICClient:Created QUICClient to [::ffff:127.0.0.1]:3151
+INFO:QUICStream 0:Create QUICStream
+INFO:QUICStream 0:Created QUICStream
+Geode initialized successfully
+Successfully fetched 1888 unique triples from geode
+INFO:QUICClient:ErrorQUICConnectionPeer: QUIC Connection peer error - Peer closed with transport code 0
+INFO:QUICConnection 132e815392ddfdcd916e85dfdc6a9780893f606d:ErrorQUICConnectionPeer: QUIC Connection peer error - Peer closed with transport code 0
+INFO:QUICConnection 132e815392ddfdcd916e85dfdc6a9780893f606d:Stop QUICConnection
+INFO:QUICStream 0:Destroy QUICStream
+INFO:QUICStream 0:Destroyed QUICStream
+INFO:QUICConnection 132e815392ddfdcd916e85dfdc6a9780893f606d:Stopped QUICConnection
+INFO:QUICSocket:Stop QUICSocket on [::]:52829
+INFO:QUICSocket:Stopped QUICSocket on [::]:52829
+INFO:QUICClient:Destroy QUICClient
+INFO:QUICClient:Destroyed QUICClient

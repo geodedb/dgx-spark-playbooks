@@ -1,0 +1,551 @@
+$ next start --port 3001
+▲ Next.js 16.3.2
+- Local:         http://localhost:3001
+- Network:       http://10.0.0.245:3001
+✓ Ready in 190ms
+⚠ `eslint` configuration in next.config.mjs is no longer supported. See more info here: https://nextjs.org/docs/app/api-reference/cli/next#next-lint-options
+⚠ Invalid next.config.mjs options detected: 
+⚠     Unrecognized key(s) in object: 'eslint', 'serverRuntimeConfig'
+⚠ See more info here: https://nextjs.org/docs/messages/invalid-next-config
+✓ Running next.config.mjs took 25ms
+⚠ "next start" does not work with "output: standalone" configuration. Use "node .next/standalone/server.js" instead.
+EmbeddingsService initialized with useNvidiaApi: false format: openai model: Qwen/Qwen3-Embedding-4B
+Initializing RAG service...
+NVIDIA LLM initialized successfully
+Connecting to Geode at quic://127.0.0.1:3141?insecure_tls_skip_verify=true
+SECURITY WARNING: insecureSkipVerify is enabled in production environment. This disables TLS certificate verification and exposes the connection to MITM attacks. Set GEODE_ALLOW_INSECURE_PRODUCTION=true to override this warning.
+INFO:QUICClient:Create QUICClient to 127.0.0.1:3141
+INFO:QUICSocket:Start QUICSocket on [::]:0
+INFO:QUICSocket:Started QUICSocket on [::]:12587
+INFO:QUICConnection 940cc36f7293f053e4ab79dd408a43dce268f940:Connect QUICConnection
+INFO:QUICConnection 940cc36f7293f053e4ab79dd408a43dce268f940:Start QUICConnection
+INFO:QUICConnection 940cc36f7293f053e4ab79dd408a43dce268f940:Started QUICConnection
+INFO:QUICClient:Created QUICClient to [::ffff:127.0.0.1]:3141
+INFO:QUICStream 0:Create QUICStream
+INFO:QUICStream 0:Created QUICStream
+Geode initialized successfully
+(node:290995) Warning: Setting the NODE_TLS_REJECT_UNAUTHORIZED environment variable to '0' makes TLS connections and HTTPS requests insecure by disabling certificate verification.
+(Use `node --trace-warnings ...` to show where the warning was created)
+Embeddings service initialized successfully using model: Qwen/Qwen3-Embedding-4B
+RAG service initialized successfully
+Processing Pure RAG query: "How can software fault measurement be used to estimate fault content?" with topK=4
+Performing RAG query with topK=4
+Encoding batch 1/1
+Found 4 relevant document chunks
+Extracted context length: 20809 characters
+Generating answer with NVIDIA LLM...
+Error generating answer with NVIDIA LLM: Error: Missing credentials. Please pass an `apiKey`, `workloadIdentity`, `adminAPIKey`, or set the `OPENAI_API_KEY` or `OPENAI_ADMIN_KEY` environment variable.
+    at new n3 (.next/server/chunks/1rn2_openai_index_mjs_1kf3umf._.js:16:89657)
+    at eA._getClientOptions (.next/server/chunks/[root-of-the-server]__1fn3c4_._.js:264:47138)
+    at eA.completionWithRetry (.next/server/chunks/[root-of-the-server]__1fn3c4_._.js:264:70717)
+    at eA._generate (.next/server/chunks/[root-of-the-server]__1fn3c4_._.js:264:66846)
+    at e._generate (.next/server/chunks/[root-of-the-server]__1fn3c4_._.js:264:97377)
+    at <unknown> (.next/server/chunks/[root-of-the-server]__1fn3c4_._.js:264:37208)
+    at Array.map (<anonymous>)
+    at e._generateUncached (.next/server/chunks/[root-of-the-server]__1fn3c4_._.js:264:37174)
+    at async e.invoke (.next/server/chunks/[root-of-the-server]__1fn3c4_._.js:264:32090)
+    at async e.invoke (.next/server/chunks/[root-of-the-server]__1fn3c4_._.js:257:7458)
+Error in RAG query: Error: Missing credentials. Please pass an `apiKey`, `workloadIdentity`, `adminAPIKey`, or set the `OPENAI_API_KEY` or `OPENAI_ADMIN_KEY` environment variable.
+    at new n3 (.next/server/chunks/1rn2_openai_index_mjs_1kf3umf._.js:16:89657)
+    at eA._getClientOptions (.next/server/chunks/[root-of-the-server]__1fn3c4_._.js:264:47138)
+    at eA.completionWithRetry (.next/server/chunks/[root-of-the-server]__1fn3c4_._.js:264:70717)
+    at eA._generate (.next/server/chunks/[root-of-the-server]__1fn3c4_._.js:264:66846)
+    at e._generate (.next/server/chunks/[root-of-the-server]__1fn3c4_._.js:264:97377)
+    at <unknown> (.next/server/chunks/[root-of-the-server]__1fn3c4_._.js:264:37208)
+    at Array.map (<anonymous>)
+    at e._generateUncached (.next/server/chunks/[root-of-the-server]__1fn3c4_._.js:264:37174)
+    at async e.invoke (.next/server/chunks/[root-of-the-server]__1fn3c4_._.js:264:32090)
+    at async e.invoke (.next/server/chunks/[root-of-the-server]__1fn3c4_._.js:257:7458)
+Enhanced RAG query: "software fault measurement" with params: { kNeighbors: 50, fanout: 400, numHops: 2, topK: 3 }
+Query mode: undefined, useTraditional: undefined
+Initializing remote backend with Geode...
+Geode service initialized
+Embeddings service initialized successfully using model: Qwen/Qwen3-Embedding-4B
+Embeddings service initialized
+Remote backend initialized successfully
+Enhanced query with: "software fault measurement"
+Encoding batch 1/1
+Found 0 seed nodes using KNN with metadata
+Error getting graph data from Geode: Error [TransportError]: geode: transport query: Invalid execute response
+    at async c.getGraphData (.next/server/chunks/[root-of-the-server]__13m5v_c._.js:2:505)
+    at async a.enhancedQuery (.next/server/chunks/[root-of-the-server]__1ld9ul4._.js:1:13797)
+    at async s (.next/server/chunks/_11cmkuu._.js:1:859)
+    at async z (.next/server/chunks/_11cmkuu._.js:1:4353) {
+  statusClass: '58000',
+  operation: 'query',
+  address: undefined,
+  [cause]: Error: Invalid execute response
+      at async c.getGraphData (.next/server/chunks/[root-of-the-server]__13m5v_c._.js:2:505)
+      at async a.enhancedQuery (.next/server/chunks/[root-of-the-server]__1ld9ul4._.js:1:13797)
+      at async s (.next/server/chunks/_11cmkuu._.js:1:859)
+      at async z (.next/server/chunks/_11cmkuu._.js:1:4353)
+}
+Error in enhanced RAG query: Error [TransportError]: geode: transport query: Invalid execute response
+    at async c.getGraphData (.next/server/chunks/[root-of-the-server]__13m5v_c._.js:2:505)
+    at async a.enhancedQuery (.next/server/chunks/[root-of-the-server]__1ld9ul4._.js:1:13797)
+    at async s (.next/server/chunks/_11cmkuu._.js:1:859)
+    at async z (.next/server/chunks/_11cmkuu._.js:1:4353) {
+  statusClass: '58000',
+  operation: 'query',
+  address: undefined,
+  [cause]: Error: Invalid execute response
+      at async c.getGraphData (.next/server/chunks/[root-of-the-server]__13m5v_c._.js:2:505)
+      at async a.enhancedQuery (.next/server/chunks/[root-of-the-server]__1ld9ul4._.js:1:13797)
+      at async s (.next/server/chunks/_11cmkuu._.js:1:859)
+      at async z (.next/server/chunks/_11cmkuu._.js:1:4353)
+}
+INFO:QUICClient:ErrorQUICConnectionIdleTimeout: QUIC Connection max idle timeout exhausted - 
+INFO:QUICConnection 940cc36f7293f053e4ab79dd408a43dce268f940:ErrorQUICConnectionIdleTimeout: QUIC Connection max idle timeout exhausted - 
+INFO:QUICConnection 940cc36f7293f053e4ab79dd408a43dce268f940:Stop QUICConnection
+INFO:QUICStream 0:Destroy QUICStream
+INFO:QUICConnection 940cc36f7293f053e4ab79dd408a43dce268f940:ErrorQUICConnectionIdleTimeout: QUIC Connection max idle timeout exhausted - 
+INFO:QUICConnection 940cc36f7293f053e4ab79dd408a43dce268f940:ErrorQUICConnectionIdleTimeout: QUIC Connection max idle timeout exhausted - 
+INFO:QUICStream 0:Destroyed QUICStream
+INFO:QUICConnection 940cc36f7293f053e4ab79dd408a43dce268f940:Stopped QUICConnection
+INFO:QUICSocket:Stop QUICSocket on [::]:12587
+INFO:QUICSocket:Stopped QUICSocket on [::]:12587
+INFO:QUICClient:Destroy QUICClient
+INFO:QUICClient:Destroyed QUICClient
+SECURITY WARNING: insecureSkipVerify is enabled in production environment. This disables TLS certificate verification and exposes the connection to MITM attacks. Set GEODE_ALLOW_INSECURE_PRODUCTION=true to override this warning.
+INFO:QUICClient:Create QUICClient to 127.0.0.1:3141
+INFO:QUICSocket:Start QUICSocket on [::]:0
+INFO:QUICSocket:Started QUICSocket on [::]:34992
+INFO:QUICConnection f03d79974cec9ec6c06a61c937473098eb8ddc7d:Connect QUICConnection
+INFO:QUICConnection f03d79974cec9ec6c06a61c937473098eb8ddc7d:Start QUICConnection
+INFO:QUICConnection f03d79974cec9ec6c06a61c937473098eb8ddc7d:Started QUICConnection
+INFO:QUICClient:Created QUICClient to [::ffff:127.0.0.1]:3141
+INFO:QUICStream 0:Create QUICStream
+INFO:QUICStream 0:Created QUICStream
+INFO:QUICClient:ErrorQUICConnectionIdleTimeout: QUIC Connection max idle timeout exhausted - 
+INFO:QUICConnection f03d79974cec9ec6c06a61c937473098eb8ddc7d:ErrorQUICConnectionIdleTimeout: QUIC Connection max idle timeout exhausted - 
+INFO:QUICConnection f03d79974cec9ec6c06a61c937473098eb8ddc7d:Stop QUICConnection
+INFO:QUICStream 0:Destroy QUICStream
+INFO:QUICConnection f03d79974cec9ec6c06a61c937473098eb8ddc7d:ErrorQUICConnectionIdleTimeout: QUIC Connection max idle timeout exhausted - 
+INFO:QUICConnection f03d79974cec9ec6c06a61c937473098eb8ddc7d:ErrorQUICConnectionIdleTimeout: QUIC Connection max idle timeout exhausted - 
+INFO:QUICStream 0:Destroyed QUICStream
+INFO:QUICConnection f03d79974cec9ec6c06a61c937473098eb8ddc7d:Stopped QUICConnection
+INFO:QUICSocket:Stop QUICSocket on [::]:34992
+INFO:QUICSocket:Stopped QUICSocket on [::]:34992
+INFO:QUICClient:Destroy QUICClient
+INFO:QUICClient:Destroyed QUICClient
+[ELIFECYCLE] Command failed with exit code 143.
+$ next start --port 3001
+▲ Next.js 16.3.2
+- Local:         http://localhost:3001
+- Network:       http://10.0.0.245:3001
+✓ Ready in 188ms
+⚠ `eslint` configuration in next.config.mjs is no longer supported. See more info here: https://nextjs.org/docs/app/api-reference/cli/next#next-lint-options
+⚠ Invalid next.config.mjs options detected: 
+⚠     Unrecognized key(s) in object: 'eslint', 'serverRuntimeConfig'
+⚠ See more info here: https://nextjs.org/docs/messages/invalid-next-config
+✓ Running next.config.mjs took 26ms
+⚠ "next start" does not work with "output: standalone" configuration. Use "node .next/standalone/server.js" instead.
+Connecting to Geode at quic://127.0.0.1:3141?insecure_tls_skip_verify=true
+SECURITY WARNING: insecureSkipVerify is enabled in production environment. This disables TLS certificate verification and exposes the connection to MITM attacks. Set GEODE_ALLOW_INSECURE_PRODUCTION=true to override this warning.
+INFO:QUICClient:Create QUICClient to 127.0.0.1:3141
+INFO:QUICSocket:Start QUICSocket on [::]:0
+INFO:QUICSocket:Started QUICSocket on [::]:29622
+INFO:QUICConnection d3cbf7b2045ed982d14e6b69df74fb6de5167703:Connect QUICConnection
+INFO:QUICConnection d3cbf7b2045ed982d14e6b69df74fb6de5167703:Start QUICConnection
+INFO:QUICConnection d3cbf7b2045ed982d14e6b69df74fb6de5167703:Started QUICConnection
+INFO:QUICClient:Created QUICClient to [::ffff:127.0.0.1]:3141
+INFO:QUICStream 0:Create QUICStream
+INFO:QUICStream 0:Created QUICStream
+Geode initialized successfully
+INFO:QUICClient:ErrorQUICConnectionPeer: QUIC Connection peer error - Peer closed with transport code 0
+INFO:QUICConnection d3cbf7b2045ed982d14e6b69df74fb6de5167703:ErrorQUICConnectionPeer: QUIC Connection peer error - Peer closed with transport code 0
+INFO:QUICConnection d3cbf7b2045ed982d14e6b69df74fb6de5167703:Stop QUICConnection
+INFO:QUICStream 0:Destroy QUICStream
+INFO:QUICStream 0:Destroyed QUICStream
+INFO:QUICConnection d3cbf7b2045ed982d14e6b69df74fb6de5167703:Stopped QUICConnection
+INFO:QUICSocket:Stop QUICSocket on [::]:29622
+INFO:QUICSocket:Stopped QUICSocket on [::]:29622
+INFO:QUICClient:Destroy QUICClient
+INFO:QUICClient:Destroyed QUICClient
+[ELIFECYCLE] Command failed with exit code 143.
+$ next start --port 3001
+▲ Next.js 16.3.2
+- Local:         http://localhost:3001
+- Network:       http://10.0.0.245:3001
+✓ Ready in 176ms
+⚠ `eslint` configuration in next.config.mjs is no longer supported. See more info here: https://nextjs.org/docs/app/api-reference/cli/next#next-lint-options
+⚠ Invalid next.config.mjs options detected: 
+⚠     Unrecognized key(s) in object: 'eslint', 'serverRuntimeConfig'
+⚠ See more info here: https://nextjs.org/docs/messages/invalid-next-config
+✓ Running next.config.mjs took 25ms
+⚠ "next start" does not work with "output: standalone" configuration. Use "node .next/standalone/server.js" instead.
+EmbeddingsService initialized with useNvidiaApi: false format: openai model: Qwen/Qwen3-Embedding-0.6B
+Initializing RAG service...
+vLLM LLM initialized successfully (baseURL=http://curumo.shire-altair.ts.net:8000/v1)
+Connecting to Geode at quic://127.0.0.1:3141?insecure_tls_skip_verify=true
+SECURITY WARNING: insecureSkipVerify is enabled in production environment. This disables TLS certificate verification and exposes the connection to MITM attacks. Set GEODE_ALLOW_INSECURE_PRODUCTION=true to override this warning.
+INFO:QUICClient:Create QUICClient to 127.0.0.1:3141
+INFO:QUICSocket:Start QUICSocket on [::]:0
+INFO:QUICSocket:Started QUICSocket on [::]:49148
+INFO:QUICConnection a87dbf1e7ea7a0e850ba94767bf22d2ba6f29822:Connect QUICConnection
+INFO:QUICConnection a87dbf1e7ea7a0e850ba94767bf22d2ba6f29822:Start QUICConnection
+INFO:QUICConnection a87dbf1e7ea7a0e850ba94767bf22d2ba6f29822:Started QUICConnection
+INFO:QUICClient:Created QUICClient to [::ffff:127.0.0.1]:3141
+INFO:QUICStream 0:Create QUICStream
+INFO:QUICStream 0:Created QUICStream
+Geode initialized successfully
+(node:341053) Warning: Setting the NODE_TLS_REJECT_UNAUTHORIZED environment variable to '0' makes TLS connections and HTTPS requests insecure by disabling certificate verification.
+(Use `node --trace-warnings ...` to show where the warning was created)
+Embeddings service initialized successfully using model: Qwen/Qwen3-Embedding-0.6B
+RAG service initialized successfully
+Processing Pure RAG query: "What is this knowledge base about?" with topK=5
+Performing RAG query with topK=5
+Encoding batch 1/1
+Found 5 relevant document chunks
+Extracted context length: 15731 characters
+Generating answer with NVIDIA LLM...
+Error generating answer with NVIDIA LLM: Error: Missing credentials. Please pass an `apiKey`, `workloadIdentity`, `adminAPIKey`, or set the `OPENAI_API_KEY` or `OPENAI_ADMIN_KEY` environment variable.
+    at new n3 (.next/server/chunks/1rn2_openai_index_mjs_1kf3umf._.js:16:89657)
+    at eA._getClientOptions (.next/server/chunks/[root-of-the-server]__1fn3c4_._.js:264:47138)
+    at eA.completionWithRetry (.next/server/chunks/[root-of-the-server]__1fn3c4_._.js:264:70717)
+    at eA._generate (.next/server/chunks/[root-of-the-server]__1fn3c4_._.js:264:66846)
+    at e._generate (.next/server/chunks/[root-of-the-server]__1fn3c4_._.js:264:97377)
+    at <unknown> (.next/server/chunks/[root-of-the-server]__1fn3c4_._.js:264:37208)
+    at Array.map (<anonymous>)
+    at e._generateUncached (.next/server/chunks/[root-of-the-server]__1fn3c4_._.js:264:37174)
+    at async e.invoke (.next/server/chunks/[root-of-the-server]__1fn3c4_._.js:264:32090)
+    at async e.invoke (.next/server/chunks/[root-of-the-server]__1fn3c4_._.js:257:7458)
+Error in RAG query: Error: Missing credentials. Please pass an `apiKey`, `workloadIdentity`, `adminAPIKey`, or set the `OPENAI_API_KEY` or `OPENAI_ADMIN_KEY` environment variable.
+    at new n3 (.next/server/chunks/1rn2_openai_index_mjs_1kf3umf._.js:16:89657)
+    at eA._getClientOptions (.next/server/chunks/[root-of-the-server]__1fn3c4_._.js:264:47138)
+    at eA.completionWithRetry (.next/server/chunks/[root-of-the-server]__1fn3c4_._.js:264:70717)
+    at eA._generate (.next/server/chunks/[root-of-the-server]__1fn3c4_._.js:264:66846)
+    at e._generate (.next/server/chunks/[root-of-the-server]__1fn3c4_._.js:264:97377)
+    at <unknown> (.next/server/chunks/[root-of-the-server]__1fn3c4_._.js:264:37208)
+    at Array.map (<anonymous>)
+    at e._generateUncached (.next/server/chunks/[root-of-the-server]__1fn3c4_._.js:264:37174)
+    at async e.invoke (.next/server/chunks/[root-of-the-server]__1fn3c4_._.js:264:32090)
+    at async e.invoke (.next/server/chunks/[root-of-the-server]__1fn3c4_._.js:257:7458)
+[ELIFECYCLE] Command failed with exit code 143.
+$ next start --port 3001
+▲ Next.js 16.3.2
+- Local:         http://localhost:3001
+- Network:       http://10.0.0.245:3001
+✓ Ready in 184ms
+⚠ `eslint` configuration in next.config.mjs is no longer supported. See more info here: https://nextjs.org/docs/app/api-reference/cli/next#next-lint-options
+⚠ Invalid next.config.mjs options detected: 
+⚠     Unrecognized key(s) in object: 'eslint', 'serverRuntimeConfig'
+⚠ See more info here: https://nextjs.org/docs/messages/invalid-next-config
+✓ Running next.config.mjs took 24ms
+⚠ "next start" does not work with "output: standalone" configuration. Use "node .next/standalone/server.js" instead.
+EmbeddingsService initialized with useNvidiaApi: false format: openai model: Qwen/Qwen3-Embedding-0.6B
+Initializing RAG service...
+vLLM LLM initialized successfully (baseURL=http://curumo.shire-altair.ts.net:8000/v1)
+Connecting to Geode at quic://127.0.0.1:3141?insecure_tls_skip_verify=true
+SECURITY WARNING: insecureSkipVerify is enabled in production environment. This disables TLS certificate verification and exposes the connection to MITM attacks. Set GEODE_ALLOW_INSECURE_PRODUCTION=true to override this warning.
+INFO:QUICClient:Create QUICClient to 127.0.0.1:3141
+INFO:QUICSocket:Start QUICSocket on [::]:0
+INFO:QUICSocket:Started QUICSocket on [::]:13603
+INFO:QUICConnection 27d25d3ea1ce509a985c0234a5b7c1f29df1cb75:Connect QUICConnection
+INFO:QUICConnection 27d25d3ea1ce509a985c0234a5b7c1f29df1cb75:Start QUICConnection
+INFO:QUICConnection 27d25d3ea1ce509a985c0234a5b7c1f29df1cb75:Started QUICConnection
+INFO:QUICClient:Created QUICClient to [::ffff:127.0.0.1]:3141
+INFO:QUICStream 0:Create QUICStream
+INFO:QUICStream 0:Created QUICStream
+Geode initialized successfully
+(node:349555) Warning: Setting the NODE_TLS_REJECT_UNAUTHORIZED environment variable to '0' makes TLS connections and HTTPS requests insecure by disabling certificate verification.
+(Use `node --trace-warnings ...` to show where the warning was created)
+Embeddings service initialized successfully using model: Qwen/Qwen3-Embedding-0.6B
+RAG service initialized successfully
+Processing Pure RAG query: "What is this knowledge base about?" with topK=5
+Performing RAG query with topK=5
+Encoding batch 1/1
+Found 5 relevant document chunks
+Extracted context length: 15731 characters
+Generating answer with NVIDIA LLM...
+RAG query completed successfully
+Answer length: 55 characters
+Retrieved 5 document chunks
+✅ Pure RAG query completed. Retrieved 5 document chunks
+Processing Pure RAG query: "What is this knowledge base about?" with topK=5
+Performing RAG query with topK=5
+Encoding batch 1/1
+[Geode] knn() fast path unavailable for DocumentChunk, falling back to full scan: Error [TransportError]: geode: transport receiveProto: Aborted
+    at ignore-listed frames {
+  statusClass: '58000',
+  operation: 'receiveProto',
+  address: undefined,
+  [cause]: Error: Aborted
+      at ignore-listed frames
+}
+Found 5 relevant document chunks
+Extracted context length: 13878 characters
+Generating answer with NVIDIA LLM...
+RAG query completed successfully
+Answer length: 112 characters
+Retrieved 5 document chunks
+✅ Pure RAG query completed. Retrieved 5 document chunks
+INFO:QUICClient:ErrorQUICConnectionPeer: QUIC Connection peer error - Peer closed with transport code 0
+INFO:QUICConnection 27d25d3ea1ce509a985c0234a5b7c1f29df1cb75:ErrorQUICConnectionPeer: QUIC Connection peer error - Peer closed with transport code 0
+INFO:QUICConnection 27d25d3ea1ce509a985c0234a5b7c1f29df1cb75:Stop QUICConnection
+INFO:QUICStream 0:Destroy QUICStream
+INFO:QUICStream 0:Destroyed QUICStream
+INFO:QUICConnection 27d25d3ea1ce509a985c0234a5b7c1f29df1cb75:Stopped QUICConnection
+INFO:QUICSocket:Stop QUICSocket on [::]:13603
+INFO:QUICSocket:Stopped QUICSocket on [::]:13603
+INFO:QUICClient:Destroy QUICClient
+INFO:QUICClient:Destroyed QUICClient
+SECURITY WARNING: insecureSkipVerify is enabled in production environment. This disables TLS certificate verification and exposes the connection to MITM attacks. Set GEODE_ALLOW_INSECURE_PRODUCTION=true to override this warning.
+INFO:QUICClient:Create QUICClient to 127.0.0.1:3141
+INFO:QUICSocket:Start QUICSocket on [::]:0
+INFO:QUICSocket:Started QUICSocket on [::]:31056
+INFO:QUICConnection a718d29186d9f3cbecca615c813445415907c2ad:Connect QUICConnection
+INFO:QUICConnection a718d29186d9f3cbecca615c813445415907c2ad:Start QUICConnection
+INFO:QUICConnection a718d29186d9f3cbecca615c813445415907c2ad:Started QUICConnection
+INFO:QUICClient:Created QUICClient to [::ffff:127.0.0.1]:3141
+INFO:QUICStream 0:Create QUICStream
+INFO:QUICStream 0:Created QUICStream
+[SETTINGS] Initialized at runtime with graph_db_type: "geode"
+[graph-db GET] Request received
+[graph-db GET] Ensuring connection...
+[graph-db GET] Using database type: geode
+[graph-db GET] Fetching graph data...
+SECURITY WARNING: insecureSkipVerify is enabled in production environment. This disables TLS certificate verification and exposes the connection to MITM attacks. Set GEODE_ALLOW_INSECURE_PRODUCTION=true to override this warning.
+INFO:QUICClient:Create QUICClient to 127.0.0.1:3141
+INFO:QUICSocket:Start QUICSocket on [::]:0
+INFO:QUICSocket:Started QUICSocket on [::]:60975
+INFO:QUICConnection 1bdc453a34a26b4e2883fd21359dec9c63487406:Connect QUICConnection
+INFO:QUICConnection 1bdc453a34a26b4e2883fd21359dec9c63487406:Start QUICConnection
+INFO:QUICConnection 1bdc453a34a26b4e2883fd21359dec9c63487406:Started QUICConnection
+INFO:QUICClient:Created QUICClient to [::ffff:127.0.0.1]:3141
+INFO:QUICStream 0:Create QUICStream
+INFO:QUICStream 0:Created QUICStream
+Error getting graph data from Geode: Error [TransportError]: geode: transport query: Invalid execute response
+    at async l.getGraphData (.next/server/chunks/[root-of-the-server]__13m5v_c._.js:2:505)
+    at async o (.next/server/chunks/[root-of-the-server]__09bk2sn._.js:1:1879)
+    at async Z (.next/server/chunks/[root-of-the-server]__09bk2sn._.js:1:6220)
+    at async J (.next/server/chunks/[root-of-the-server]__09bk2sn._.js:1:7298) {
+  statusClass: '58000',
+  operation: 'query',
+  address: undefined,
+  [cause]: Error: Invalid execute response
+      at async l.getGraphData (.next/server/chunks/[root-of-the-server]__13m5v_c._.js:2:505)
+      at async o (.next/server/chunks/[root-of-the-server]__09bk2sn._.js:1:1879)
+      at async Z (.next/server/chunks/[root-of-the-server]__09bk2sn._.js:1:6220)
+      at async J (.next/server/chunks/[root-of-the-server]__09bk2sn._.js:1:7298)
+}
+Error in graph database GET handler: Error [TransportError]: geode: transport query: Invalid execute response
+    at async l.getGraphData (.next/server/chunks/[root-of-the-server]__13m5v_c._.js:2:505)
+    at async o (.next/server/chunks/[root-of-the-server]__09bk2sn._.js:1:1879)
+    at async Z (.next/server/chunks/[root-of-the-server]__09bk2sn._.js:1:6220)
+    at async J (.next/server/chunks/[root-of-the-server]__09bk2sn._.js:1:7298) {
+  statusClass: '58000',
+  operation: 'query',
+  address: undefined,
+  [cause]: Error: Invalid execute response
+      at async l.getGraphData (.next/server/chunks/[root-of-the-server]__13m5v_c._.js:2:505)
+      at async o (.next/server/chunks/[root-of-the-server]__09bk2sn._.js:1:1879)
+      at async Z (.next/server/chunks/[root-of-the-server]__09bk2sn._.js:1:6220)
+      at async J (.next/server/chunks/[root-of-the-server]__09bk2sn._.js:1:7298)
+}
+Fetching all triples from geode...
+Error getting graph data from Geode: Error [TransportError]: geode: transport query: Invalid execute response
+    at async l.getGraphData (.next/server/chunks/[root-of-the-server]__13m5v_c._.js:2:343)
+    at async s (.next/server/chunks/_0-n0rtr._.js:1:230)
+    at async Z (.next/server/chunks/_0-n0rtr._.js:1:5106) {
+  statusClass: '58000',
+  operation: 'query',
+  address: undefined,
+  [cause]: Error: Invalid execute response
+      at async l.getGraphData (.next/server/chunks/[root-of-the-server]__13m5v_c._.js:2:343)
+      at async s (.next/server/chunks/_0-n0rtr._.js:1:230)
+      at async Z (.next/server/chunks/_0-n0rtr._.js:1:5106)
+}
+Error fetching triples from graph database: Error [TransportError]: geode: transport query: Invalid execute response
+    at async l.getGraphData (.next/server/chunks/[root-of-the-server]__13m5v_c._.js:2:343)
+    at async s (.next/server/chunks/_0-n0rtr._.js:1:230)
+    at async Z (.next/server/chunks/_0-n0rtr._.js:1:5106) {
+  statusClass: '58000',
+  operation: 'query',
+  address: undefined,
+  [cause]: Error: Invalid execute response
+      at async l.getGraphData (.next/server/chunks/[root-of-the-server]__13m5v_c._.js:2:343)
+      at async s (.next/server/chunks/_0-n0rtr._.js:1:230)
+      at async Z (.next/server/chunks/_0-n0rtr._.js:1:5106)
+}
+[graph-db GET] Request received
+[graph-db GET] Ensuring connection...
+[graph-db GET] Using database type: geode
+[graph-db GET] Fetching graph data...
+[graph-db GET] Got 1892 nodes, 2199 relationships
+Fetching all triples from geode...
+Error getting graph data from Geode: Error [TransportError]: geode: transport query: Expected schema response
+    at async l.getGraphData (.next/server/chunks/[root-of-the-server]__13m5v_c._.js:2:343)
+    at async s (.next/server/chunks/_0-n0rtr._.js:1:230)
+    at async Z (.next/server/chunks/_0-n0rtr._.js:1:5106) {
+  statusClass: '58000',
+  operation: 'query',
+  address: undefined,
+  [cause]: Error: Expected schema response
+      at async l.getGraphData (.next/server/chunks/[root-of-the-server]__13m5v_c._.js:2:343)
+      at async s (.next/server/chunks/_0-n0rtr._.js:1:230)
+      at async Z (.next/server/chunks/_0-n0rtr._.js:1:5106)
+}
+Error fetching triples from graph database: Error [TransportError]: geode: transport query: Expected schema response
+    at async l.getGraphData (.next/server/chunks/[root-of-the-server]__13m5v_c._.js:2:343)
+    at async s (.next/server/chunks/_0-n0rtr._.js:1:230)
+    at async Z (.next/server/chunks/_0-n0rtr._.js:1:5106) {
+  statusClass: '58000',
+  operation: 'query',
+  address: undefined,
+  [cause]: Error: Expected schema response
+      at async l.getGraphData (.next/server/chunks/[root-of-the-server]__13m5v_c._.js:2:343)
+      at async s (.next/server/chunks/_0-n0rtr._.js:1:230)
+      at async Z (.next/server/chunks/_0-n0rtr._.js:1:5106)
+}
+[graph-db GET] Request received
+[graph-db GET] Ensuring connection...
+[graph-db GET] Using database type: geode
+[graph-db GET] Fetching graph data...
+Error getting graph data from Geode: Error [TransportError]: geode: transport query: Invalid execute response
+    at async l.getGraphData (.next/server/chunks/[root-of-the-server]__13m5v_c._.js:2:343)
+    at async o (.next/server/chunks/[root-of-the-server]__09bk2sn._.js:1:1879)
+    at async Z (.next/server/chunks/[root-of-the-server]__09bk2sn._.js:1:6220) {
+  statusClass: '58000',
+  operation: 'query',
+  address: undefined,
+  [cause]: Error: Invalid execute response
+      at async l.getGraphData (.next/server/chunks/[root-of-the-server]__13m5v_c._.js:2:343)
+      at async o (.next/server/chunks/[root-of-the-server]__09bk2sn._.js:1:1879)
+      at async Z (.next/server/chunks/[root-of-the-server]__09bk2sn._.js:1:6220)
+}
+Error in graph database GET handler: Error [TransportError]: geode: transport query: Invalid execute response
+    at async l.getGraphData (.next/server/chunks/[root-of-the-server]__13m5v_c._.js:2:343)
+    at async o (.next/server/chunks/[root-of-the-server]__09bk2sn._.js:1:1879)
+    at async Z (.next/server/chunks/[root-of-the-server]__09bk2sn._.js:1:6220) {
+  statusClass: '58000',
+  operation: 'query',
+  address: undefined,
+  [cause]: Error: Invalid execute response
+      at async l.getGraphData (.next/server/chunks/[root-of-the-server]__13m5v_c._.js:2:343)
+      at async o (.next/server/chunks/[root-of-the-server]__09bk2sn._.js:1:1879)
+      at async Z (.next/server/chunks/[root-of-the-server]__09bk2sn._.js:1:6220)
+}
+[graph-db GET] Request received
+[graph-db GET] Ensuring connection...
+[graph-db GET] Using database type: geode
+[graph-db GET] Fetching graph data...
+Error getting graph data from Geode: Error [TransportError]: geode: transport query: Invalid execute response
+    at async l.getGraphData (.next/server/chunks/[root-of-the-server]__13m5v_c._.js:2:343)
+    at async o (.next/server/chunks/[root-of-the-server]__09bk2sn._.js:1:1879)
+    at async Z (.next/server/chunks/[root-of-the-server]__09bk2sn._.js:1:6220) {
+  statusClass: '58000',
+  operation: 'query',
+  address: undefined,
+  [cause]: Error: Invalid execute response
+      at async l.getGraphData (.next/server/chunks/[root-of-the-server]__13m5v_c._.js:2:343)
+      at async o (.next/server/chunks/[root-of-the-server]__09bk2sn._.js:1:1879)
+      at async Z (.next/server/chunks/[root-of-the-server]__09bk2sn._.js:1:6220)
+}
+Error in graph database GET handler: Error [TransportError]: geode: transport query: Invalid execute response
+    at async l.getGraphData (.next/server/chunks/[root-of-the-server]__13m5v_c._.js:2:343)
+    at async o (.next/server/chunks/[root-of-the-server]__09bk2sn._.js:1:1879)
+    at async Z (.next/server/chunks/[root-of-the-server]__09bk2sn._.js:1:6220) {
+  statusClass: '58000',
+  operation: 'query',
+  address: undefined,
+  [cause]: Error: Invalid execute response
+      at async l.getGraphData (.next/server/chunks/[root-of-the-server]__13m5v_c._.js:2:343)
+      at async o (.next/server/chunks/[root-of-the-server]__09bk2sn._.js:1:1879)
+      at async Z (.next/server/chunks/[root-of-the-server]__09bk2sn._.js:1:6220)
+}
+[QueryLogger] Initialized empty log file at /data/home/benji/src/gl/gitlab.com/devnw/codepros/geode/dgx-spark-playbooks/nvidia/txt2kg/assets/frontend/data/query-logs.json
+Getting query logs from file
+[QueryLogger] Getting query logs with limit: 25
+[QueryLogger] No query logs found
+Found 0 query logs from file-based logger
+Initializing backend with graph DB type: geode
+Failed to connect to sentence-transformer service: Error: getaddrinfo EAI_AGAIN sentence-transformers
+Error in graph query with LLM: Error: Sentence transformer service is not available
+    at i.initialize (.next/server/chunks/[root-of-the-server]__1u_t1jv._.js:1:12603)
+    at async i (.next/server/chunks/[root-of-the-server]__1u_t1jv._.js:1:2045)
+    at async J (.next/server/chunks/[root-of-the-server]__1u_t1jv._.js:1:5817)
+    at async Y (.next/server/chunks/[root-of-the-server]__1u_t1jv._.js:1:6895)
+    at async Module.b [as handler] (.next/server/chunks/[root-of-the-server]__1u_t1jv._.js:1:8952)
+Received query log request: {"query":"LLM","queryMode":"traditional","metrics":{"executionTimeMs":106,"resultCount":0,"error":"Sentence transformer service is not available"}}
+Logging query "LLM" with mode "traditional"
+[QueryLogger] Logging query: "LLM" (traditional)
+[QueryLogger] Query logged successfully to file
+Query logged successfully to file
+INFO:QUICClient:Destroy QUICClient to [::ffff:127.0.0.1]:3141
+INFO:QUICConnection 1bdc453a34a26b4e2883fd21359dec9c63487406:Stop QUICConnection
+INFO:QUICStream 0:Destroy QUICStream
+INFO:QUICStream 0:Destroyed QUICStream
+INFO:QUICClient:ErrorQUICConnectionLocal: QUIC Connection local error - Locally closed with application code 0
+INFO:QUICConnection 1bdc453a34a26b4e2883fd21359dec9c63487406:ErrorQUICConnectionLocal: QUIC Connection local error - Locally closed with application code 0
+INFO:QUICConnection 1bdc453a34a26b4e2883fd21359dec9c63487406:Stopped QUICConnection
+INFO:QUICSocket:Stop QUICSocket on [::]:60975
+INFO:QUICSocket:Stopped QUICSocket on [::]:60975
+INFO:QUICClient:Destroyed QUICClient to [::ffff:127.0.0.1]:3141
+[graph-db GET] Request received
+[graph-db GET] Ensuring connection...
+[graph-db GET] Using database type: geode
+[graph-db GET] Fetching graph data...
+Error getting graph data from Geode: Error [TransportError]: geode: transport query: Expected schema response
+    at async l.getGraphData (.next/server/chunks/[root-of-the-server]__13m5v_c._.js:2:343)
+    at async o (.next/server/chunks/[root-of-the-server]__09bk2sn._.js:1:1879)
+    at async Z (.next/server/chunks/[root-of-the-server]__09bk2sn._.js:1:6220) {
+  statusClass: '58000',
+  operation: 'query',
+  address: undefined,
+  [cause]: Error: Expected schema response
+      at async l.getGraphData (.next/server/chunks/[root-of-the-server]__13m5v_c._.js:2:343)
+      at async o (.next/server/chunks/[root-of-the-server]__09bk2sn._.js:1:1879)
+      at async Z (.next/server/chunks/[root-of-the-server]__09bk2sn._.js:1:6220)
+}
+Error in graph database GET handler: Error [TransportError]: geode: transport query: Expected schema response
+    at async l.getGraphData (.next/server/chunks/[root-of-the-server]__13m5v_c._.js:2:343)
+    at async o (.next/server/chunks/[root-of-the-server]__09bk2sn._.js:1:1879)
+    at async Z (.next/server/chunks/[root-of-the-server]__09bk2sn._.js:1:6220) {
+  statusClass: '58000',
+  operation: 'query',
+  address: undefined,
+  [cause]: Error: Expected schema response
+      at async l.getGraphData (.next/server/chunks/[root-of-the-server]__13m5v_c._.js:2:343)
+      at async o (.next/server/chunks/[root-of-the-server]__09bk2sn._.js:1:1879)
+      at async Z (.next/server/chunks/[root-of-the-server]__09bk2sn._.js:1:6220)
+}
+[graph-db GET] Request received
+[graph-db GET] Ensuring connection...
+[graph-db GET] Using database type: geode
+[graph-db GET] Fetching graph data...
+[graph-db GET] Got 2199 nodes, 1 relationships
+[graph-db GET] Request received
+[graph-db GET] Ensuring connection...
+[graph-db GET] Using database type: geode
+[graph-db GET] Fetching graph data...
+Error getting graph data from Geode: Error [TransportError]: geode: transport query: Expected schema response
+    at async l.getGraphData (.next/server/chunks/[root-of-the-server]__13m5v_c._.js:2:343)
+    at async o (.next/server/chunks/[root-of-the-server]__09bk2sn._.js:1:1879)
+    at async Z (.next/server/chunks/[root-of-the-server]__09bk2sn._.js:1:6220) {
+  statusClass: '58000',
+  operation: 'query',
+  address: undefined,
+  [cause]: Error: Expected schema response
+      at async l.getGraphData (.next/server/chunks/[root-of-the-server]__13m5v_c._.js:2:343)
+      at async o (.next/server/chunks/[root-of-the-server]__09bk2sn._.js:1:1879)
+      at async Z (.next/server/chunks/[root-of-the-server]__09bk2sn._.js:1:6220)
+}
+Error in graph database GET handler: Error [TransportError]: geode: transport query: Expected schema response
+    at async l.getGraphData (.next/server/chunks/[root-of-the-server]__13m5v_c._.js:2:343)
+    at async o (.next/server/chunks/[root-of-the-server]__09bk2sn._.js:1:1879)
+    at async Z (.next/server/chunks/[root-of-the-server]__09bk2sn._.js:1:6220) {
+  statusClass: '58000',
+  operation: 'query',
+  address: undefined,
+  [cause]: Error: Expected schema response
+      at async l.getGraphData (.next/server/chunks/[root-of-the-server]__13m5v_c._.js:2:343)
+      at async o (.next/server/chunks/[root-of-the-server]__09bk2sn._.js:1:1879)
+      at async Z (.next/server/chunks/[root-of-the-server]__09bk2sn._.js:1:6220)
+}
+[ELIFECYCLE] Command failed with exit code 143.
+mise ERROR No version is set for shim: pnpm
+Set a global default version with one of the following:
+mise use -g node@22.23.1
+mise ERROR Version: 2026.8.12 linux-x64 (2026-08-24)
+mise ERROR Run with --verbose or MISE_VERBOSE=1 for more information

@@ -10,7 +10,7 @@ services:
   app:
     environment:
       - VLLM_BASE_URL=${VLLM_BASE_URL:-http://curumo.shire-altair.ts.net:8000/v1}
-      - VLLM_MODEL=${VLLM_MODEL:-Qwen/Qwen3.8-27B}
+      - VLLM_MODEL=${VLLM_MODEL:-Qwen/Qwen3.8-Flash-Next-FP8}
       - VLLM_API_KEY=${VLLM_API_KEY}
       - OLLAMA_MODEL=disabled
       - EMBEDDINGS_API_URL=${EMBEDDINGS_API_URL:-https://celebrimbor.shire-altair.ts.net:8001}

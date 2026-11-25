@@ -132,7 +132,9 @@ DEFAULT_EMBEDDINGS_URL = "https://celebrimbor.shire-altair.ts.net:8001/v1/embedd
 # (e.g. Qwen/Qwen3-Embedding-0.6B for throughput-bound full-corpus runs).
 DEFAULT_EMBEDDINGS_MODEL = os.getenv("EMBEDDINGS_MODEL_ID", "Qwen/Qwen3-Embedding-4B")
 DEFAULT_LLM_URL = "http://curumo.shire-altair.ts.net:8000/v1/chat/completions"
-DEFAULT_LLM_MODEL = "Qwen/Qwen3.8-27B"
+# 2026-09-02: curumo's /v1/models now reports Qwen/Qwen3.8-Flash-Next-FP8
+# (was Qwen/Qwen3.8-27B) — verified live via GET :8000/v1/models.
+DEFAULT_LLM_MODEL = "Qwen/Qwen3.8-Flash-Next-FP8"
 
 # ENG-3911: geode v0.8.5 caps property VALUE size (~8KB). vectorf32 storage
 # works at <=1792 dims and fails with `58000 PropertyKeyTooLong` at >=2040;
@@ -173,6 +175,23 @@ LLM_MAX_TOKENS = 2000
 LLM_TEMPERATURE = 0.1
 HTTP_TIMEOUT = 300
 MAX_RETRIES = 5
+# 2026-09-02: a whitespace-poor chunk (e.g. from an 90-125MB corpus file with
+# a single multi-hundred-KB "line") can make the encoder pathologically slow
+# to tokenize a single request — observed making vLLM appear hung (GPU pinned,
+# scheduler queue stuck) for 25+ min at the shared HTTP_TIMEOUT x MAX_RETRIES
+# budget. Give embedding its own much shorter timeout so a poison chunk fails
+# fast (and gets skipped via the existing FAIL/resume path) instead of
+# blocking the whole embed_concurrency=1 pipeline for the full retry budget.
+#
+# EMBED_HTTP_TIMEOUT alone is NOT sufficient: requests' `timeout=` bounds the
+# gap between socket reads, not total wall-clock time — a connection that
+# trickles even one byte every <45s never trips it (observed: still blocked
+# 27+ min with this set). EMBED_TOTAL_TIMEOUT below is an asyncio.wait_for
+# hard cap around the whole to_thread() call (all retries included) as the
+# real backstop; EMBED_HTTP_TIMEOUT is kept as a tighter per-read bound so
+# a truly dead connection still fails fast on its own.
+EMBED_HTTP_TIMEOUT = 45
+EMBED_TOTAL_TIMEOUT = 300
 # The dev server occasionally stalls for minutes (background work?) while the
 # QUIC client's read timeout is a hardcoded 30s; ride the stall out with a
 # generous retry budget (worst case ~6.5 min of backoff). MERGE semantics make
@@ -368,7 +387,9 @@ def parse_triples(content: str) -> list:
 # ---------------------------------------------------------------------------
 
 
-def _post_with_retry(url: str, payload: dict, headers: dict, verify: bool) -> dict:
+def _post_with_retry(
+    url: str, payload: dict, headers: dict, verify: bool, timeout: float = HTTP_TIMEOUT
+) -> dict:
     """POST with retry+backoff for transient failures only.
 
     Retryable: HTTP 429, 5xx, connection/timeout errors. Non-retryable
@@ -379,7 +400,7 @@ def _post_with_retry(url: str, payload: dict, headers: dict, verify: bool) -> di
     for attempt in range(MAX_RETRIES):
         try:
             resp = requests.post(
-                url, json=payload, headers=headers, verify=verify, timeout=HTTP_TIMEOUT
+                url, json=payload, headers=headers, verify=verify, timeout=timeout
             )
             if resp.status_code == 429 or resp.status_code >= 500:
                 last_err = f"HTTP {resp.status_code}: {resp.text[:200]}"
@@ -429,6 +450,7 @@ class Embedder:
             {"model": self.model, "input": truncated},
             {"Content-Type": "application/json"},
             verify=False,  # self-signed tailscale cert
+            timeout=EMBED_HTTP_TIMEOUT,
         )
         rows = sorted(data["data"], key=lambda d: d.get("index", 0))
         # ENG-3911: shrink at the single point every embedding flows through,
@@ -769,7 +791,22 @@ class Ingestor:
         async def one(batch):
             async with self.embed_sem:
                 t0 = time.monotonic()
-                result = await asyncio.to_thread(self.embedder.embed_batch, batch)
+                try:
+                    result = await asyncio.wait_for(
+                        asyncio.to_thread(self.embedder.embed_batch, batch),
+                        timeout=EMBED_TOTAL_TIMEOUT,
+                    )
+                except asyncio.TimeoutError:
+                    # Hard wall-clock backstop (see EMBED_TOTAL_TIMEOUT):
+                    # the underlying thread may still be blocked in the
+                    # encoder and is abandoned here rather than waited on —
+                    # it self-resolves whenever that request eventually
+                    # returns or errors, harmless for a batch job.
+                    raise RuntimeError(
+                        f"embed_batch exceeded EMBED_TOTAL_TIMEOUT={EMBED_TOTAL_TIMEOUT}s "
+                        f"({len(batch)} chunks) — likely a pathological/whitespace-poor "
+                        f"chunk making the encoder stall"
+                    ) from None
                 self.stats.embed_seconds += time.monotonic() - t0
                 return result
 
