@@ -1,0 +1,45 @@
+minimum_pre_commit_version: '4.6.0'
+default_install_hook_types: [pre-commit, commit-msg, pre-push]
+default_stages: [pre-commit]
+fail_fast: false
+exclude: |
+  (?x)^(
+    vendor/|
+    legacy/|
+    dist/|
+    build/|
+    node_modules/|
+    .*/.terraform/|
+    .*/zig-cache/|
+    .*/zig-out/
+  )
+
+repos:
+  - repo: git@gitlab.com:devnw/utility-projects/org-pre-commit-hooks
+    rev: v0.1.5
+    hooks:
+      - id: org-trailing-whitespace
+      - id: org-end-of-file-fixer
+      - id: org-mixed-line-ending
+        args: ["--fix=lf"]
+      - id: org-check-yaml
+      - id: org-check-json
+      - id: org-check-toml
+      - id: org-check-xml
+      - id: org-check-merge-conflict
+      - id: org-check-case-conflict
+      - id: org-check-symlinks
+      - id: org-check-shebang-scripts-are-executable
+      - id: org-check-executables-have-shebangs
+      - id: org-check-added-large-files
+        args: ["--maxkb=1024"]
+      - id: org-detect-private-key
+      - id: org-check-todos
+      - id: org-conventional-commit
+      - id: org-conventional-branch
+      - id: org-shellcheck
+      - id: org-shfmt
+      - id: org-markdownlint-cli2
+      - id: org-make-pre-commit
+      - id: org-ruff
+      - id: org-ruff-format
