@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-FROM nvcr.io/nvidia/pytorch:26.09-py3
+FROM nvcr.io/nvidia/pytorch:26.11-py3
 
 RUN cd /workspace/ && \
     git clone https://github.com/comfyanonymous/ComfyUI.git && \

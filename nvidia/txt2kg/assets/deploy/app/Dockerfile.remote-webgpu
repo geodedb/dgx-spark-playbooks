@@ -1,7 +1,7 @@
 # Remote WebGPU Clustering Service Dockerfile
 # Based on NVIDIA PyTorch Geometric container which includes cuGraph/RAPIDS for GPU acceleration
 
-FROM nvcr.io/nvidia/pyg:26.09-py3
+FROM nvcr.io/nvidia/pyg:26.11-py3
 
 # Set working directory
 WORKDIR /app
